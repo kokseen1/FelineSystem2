@@ -5331,9 +5331,130 @@ var ASM_CONSTS = {
         }
         return null;
       }};
-  function _SDL_Flip(surf) {
-      // We actually do this in Unlock, since the screen surface has as its canvas
-      // backing the page canvas element
+  
+  /** @param {number|boolean=} freesrc */
+  function _Mix_LoadWAV_RW(rwopsID, freesrc) {
+      var rwops = SDL.rwops[rwopsID];
+  
+      if (rwops === undefined)
+        return 0;
+  
+      var filename = '';
+      var audio;
+      var webAudio;
+      var bytes;
+  
+      if (rwops.filename !== undefined) {
+        filename = PATH_FS.resolve(rwops.filename);
+        var raw = preloadedAudios[filename];
+        if (!raw) {
+          if (raw === null) err('Trying to reuse preloaded audio, but freePreloadedMediaOnUse is set!');
+          if (!Module.noAudioDecoding) warnOnce('Cannot find preloaded audio ' + filename);
+  
+          // see if we can read the file-contents from the in-memory FS
+          try {
+            bytes = FS.readFile(filename);
+          } catch (e) {
+            err('Couldn\'t find file for: ' + filename);
+            return 0;
+          }
+        }
+        if (Module['freePreloadedMediaOnUse']) {
+          preloadedAudios[filename] = null;
+        }
+        audio = raw;
+      }
+      else if (rwops.bytes !== undefined) {
+        // For Web Audio context buffer decoding, we must make a clone of the audio data, but for <media> element,
+        // a view to existing data is sufficient.
+        if (SDL.webAudioAvailable()) bytes = HEAPU8.buffer.slice(rwops.bytes, rwops.bytes + rwops.count);
+        else bytes = HEAPU8.subarray(rwops.bytes, rwops.bytes + rwops.count);
+      }
+      else {
+        return 0;
+      }
+  
+      var arrayBuffer = bytes ? bytes.buffer || bytes : bytes;
+  
+      // To allow user code to work around browser bugs with audio playback on <audio> elements an Web Audio, enable
+      // the user code to hook in a callback to decide on a file basis whether each file should use Web Audio or <audio> for decoding and playback.
+      // In particular, see https://bugzilla.mozilla.org/show_bug.cgi?id=654787 and ?id=1012801 for tradeoffs.
+      var canPlayWithWebAudio = Module['SDL_canPlayWithWebAudio'] === undefined || Module['SDL_canPlayWithWebAudio'](filename, arrayBuffer);
+  
+      if (bytes !== undefined && SDL.webAudioAvailable() && canPlayWithWebAudio) {
+        audio = undefined;
+        webAudio = {};
+        // The audio decoding process is asynchronous, which gives trouble if user code plays the audio data back immediately
+        // after loading. Therefore prepare an array of callback handlers to run when this audio decoding is complete, which
+        // will then start the playback (with some delay).
+        webAudio.onDecodeComplete = []; // While this member array exists, decoding hasn't finished yet.
+        var onDecodeComplete = function(data) {
+          webAudio.decodedBuffer = data;
+          // Call all handlers that were waiting for this decode to finish, and clear the handler list.
+          webAudio.onDecodeComplete.forEach(function(e) { e(); });
+          webAudio.onDecodeComplete = undefined; // Don't allow more callback handlers since audio has finished decoding.
+        };
+        SDL.audioContext['decodeAudioData'](arrayBuffer, onDecodeComplete);
+      } else if (audio === undefined && bytes) {
+        // Here, we didn't find a preloaded audio but we either were passed a filepath for
+        // which we loaded bytes, or we were passed some bytes
+        var blob = new Blob([bytes], {type: rwops.mimetype});
+        var url = URL.createObjectURL(blob);
+        audio = new Audio();
+        audio.src = url;
+        audio.mozAudioChannelType = 'content'; // bugzilla 910340
+      }
+  
+      var id = SDL.audios.length;
+      // Keep the loaded audio in the audio arrays, ready for playback
+      SDL.audios.push({
+        source: filename,
+        audio: audio, // Points to the <audio> element, if loaded
+        webAudio: webAudio // Points to a Web Audio -specific resource object, if loaded
+      });
+      return id;
+    }
+  /** @param {number|boolean=} a1 */
+  var _Mix_LoadMUS_RW = _Mix_LoadWAV_RW;
+
+  function _Mix_HaltMusic() {
+      var audio = /** @type {HTMLMediaElement} */ (SDL.music.audio);
+      if (audio) {
+        audio.src = audio.src; // rewind <media> element
+        audio.currentPosition = 0; // rewind Web Audio graph playback.
+        audio.pause();
+      }
+      SDL.music.audio = null;
+      if (SDL.hookMusicFinished) {
+        getWasmTableEntry(SDL.hookMusicFinished)();
+      }
+      return 0;
+    }
+  function _Mix_PlayMusic(id, loops) {
+      // Pause old music if it exists.
+      if (SDL.music.audio) {
+        if (!SDL.music.audio.paused) err('Music is already playing. ' + SDL.music.source);
+        SDL.music.audio.pause();
+      }
+      var info = SDL.audios[id];
+      var audio;
+      if (info.webAudio) { // Play via Web Audio API
+        // Create an instance of the WebAudio object.
+        audio = {};
+        audio.resource = info; // This new webAudio object is an instance that refers to this existing resource.
+        audio.paused = false;
+        audio.currentPosition = 0;
+        audio.play = function() { SDL.playWebAudio(this); }
+        audio.pause = function() { SDL.pauseWebAudio(this); }
+      } else if (info.audio) { // Play via the <audio> element
+        audio = info.audio;
+      }
+      audio['onended'] = function() { if (SDL.music.audio == this) _Mix_HaltMusic(); } // will send callback
+      audio.loop = loops != 0 && loops != 1; // TODO: handle N loops for finite N
+      audio.volume = SDL.music.volume;
+      SDL.music.audio = audio;
+      audio.play();
+      return 0;
     }
 
   /** @param{number=} initFlags */
@@ -5381,28 +5502,10 @@ var ASM_CONSTS = {
       return 0; // success
     }
 
-
-  function _SDL_MapRGBA(fmt, r, g, b, a) {
-      SDL.checkPixelFormat(fmt);
-      // We assume the machine is little-endian.
-      return r&0xff|(g&0xff)<<8|(b&0xff)<<16|(a&0xff)<<24;
-    }
-
-  function _SDL_AudioQuit() {
-      for (var i = 0; i < SDL.numChannels; ++i) {
-        var chan = /** @type {{ audio: (HTMLMediaElement|undefined) }} */ (SDL.channels[i]);
-        if (chan.audio) {
-          chan.audio.pause();
-          chan.audio = undefined;
-        }
-      }
-      var audio = /** @type {HTMLMediaElement} */ (SDL.music.audio);
-      if (audio) audio.pause();
-      SDL.music.audio = undefined;
-    }
-  function _SDL_Quit() {
-      _SDL_AudioQuit();
-      out('SDL_Quit called (and ignored)');
+  function _SDL_RWFromConstMem(mem, size) {
+      var id = SDL.rwops.length; // TODO: recycle ids when they are null
+      SDL.rwops.push({ bytes: mem, count: size });
+      return id;
     }
 
   function __webgl_enable_ANGLE_instanced_arrays(ctx) {
@@ -5591,109 +5694,24 @@ var ASM_CONSTS = {
       return SDL.screen;
     }
 
-  function _SDL_UnlockSurface(surf) {
-      assert(!SDL.GL); // in GL mode we do not keep around 2D canvases and contexts
-  
-      var surfData = SDL.surfaces[surf];
-  
-      if (!surfData.locked || --surfData.locked > 0) {
-        return;
-      }
-  
-      // Copy pixel data to image
-      if (surfData.isFlagSet(0x00200000 /* SDL_HWPALETTE */)) {
-        SDL.copyIndexedColorData(surfData);
-      } else if (!surfData.colors) {
-        var data = surfData.image.data;
-        var buffer = surfData.buffer;
-        assert(buffer % 4 == 0, 'Invalid buffer offset: ' + buffer);
-        var src = buffer >> 2;
-        var dst = 0;
-        var isScreen = surf == SDL.screen;
-        var num;
-        if (typeof CanvasPixelArray != 'undefined' && data instanceof CanvasPixelArray) {
-          // IE10/IE11: ImageData objects are backed by the deprecated CanvasPixelArray,
-          // not UInt8ClampedArray. These don't have buffers, so we need to revert
-          // to copying a byte at a time. We do the undefined check because modern
-          // browsers do not define CanvasPixelArray anymore.
-          num = data.length;
-          while (dst < num) {
-            var val = HEAP32[src]; // This is optimized. Instead, we could do HEAP32[(((buffer)+(dst))>>2)];
-            data[dst  ] = val & 0xff;
-            data[dst+1] = (val >> 8) & 0xff;
-            data[dst+2] = (val >> 16) & 0xff;
-            data[dst+3] = isScreen ? 0xff : ((val >> 24) & 0xff);
-            src++;
-            dst += 4;
-          }
-        } else {
-          var data32 = new Uint32Array(data.buffer);
-          if (isScreen && SDL.defaults.opaqueFrontBuffer) {
-            num = data32.length;
-            // logically we need to do
-            //      while (dst < num) {
-            //          data32[dst++] = HEAP32[src++] | 0xff000000
-            //      }
-            // the following code is faster though, because
-            // .set() is almost free - easily 10x faster due to
-            // native memcpy efficiencies, and the remaining loop
-            // just stores, not load + store, so it is faster
-            data32.set(HEAP32.subarray(src, src + num));
-            var data8 = new Uint8Array(data.buffer);
-            var i = 3;
-            var j = i + 4*num;
-            if (num % 8 == 0) {
-              // unrolling gives big speedups
-              while (i < j) {
-                data8[i] = 0xff;
-                i = i + 4 | 0;
-                data8[i] = 0xff;
-                i = i + 4 | 0;
-                data8[i] = 0xff;
-                i = i + 4 | 0;
-                data8[i] = 0xff;
-                i = i + 4 | 0;
-                data8[i] = 0xff;
-                i = i + 4 | 0;
-                data8[i] = 0xff;
-                i = i + 4 | 0;
-                data8[i] = 0xff;
-                i = i + 4 | 0;
-                data8[i] = 0xff;
-                i = i + 4 | 0;
-              }
-             } else {
-              while (i < j) {
-                data8[i] = 0xff;
-                i = i + 4 | 0;
-              }
-            }
-          } else {
-            data32.set(HEAP32.subarray(src, src + data32.length));
-          }
+  function _emscripten_async_wget_data(url, arg, onload, onerror) {
+      
+      asyncLoad(UTF8ToString(url), function(byteArray) {
+        
+        callUserCallback(function() {
+          var buffer = _malloc(byteArray.length);
+          HEAPU8.set(byteArray, buffer);
+          getWasmTableEntry(onload)(arg, buffer, byteArray.length);
+          _free(buffer);
+        });
+      }, function() {
+        if (onerror) {
+          
+          callUserCallback(function() {
+            getWasmTableEntry(onerror)(arg);
+          });
         }
-      } else {
-        var width = Module['canvas'].width;
-        var height = Module['canvas'].height;
-        var s = surfData.buffer;
-        var data = surfData.image.data;
-        var colors = surfData.colors; // TODO: optimize using colors32
-        for (var y = 0; y < height; y++) {
-          var base = y*width*4;
-          for (var x = 0; x < width; x++) {
-            // See comment above about signs
-            var val = HEAPU8[((s++)>>0)] * 4;
-            var start = base + x*4;
-            data[start]   = colors[val];
-            data[start+1] = colors[val+1];
-            data[start+2] = colors[val+2];
-          }
-          s += width*3;
-        }
-      }
-      // Copy to canvas
-      surfData.ctx.putImageData(surfData.image, 0, 0);
-      // Note that we save the image, so future writes are fast. But, memory is not yet released
+      }, true /* no need for run dependency, this is async but will not do any prepare etc. step */ );
     }
 
   function _emscripten_memcpy_big(dest, src, num) {
@@ -6405,13 +6423,12 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var asmLibraryArg = {
-  "SDL_Flip": _SDL_Flip,
+  "Mix_LoadMUS_RW": _Mix_LoadMUS_RW,
+  "Mix_PlayMusic": _Mix_PlayMusic,
   "SDL_Init": _SDL_Init,
-  "SDL_LockSurface": _SDL_LockSurface,
-  "SDL_MapRGBA": _SDL_MapRGBA,
-  "SDL_Quit": _SDL_Quit,
+  "SDL_RWFromConstMem": _SDL_RWFromConstMem,
   "SDL_SetVideoMode": _SDL_SetVideoMode,
-  "SDL_UnlockSurface": _SDL_UnlockSurface,
+  "emscripten_async_wget_data": _emscripten_async_wget_data,
   "emscripten_memcpy_big": _emscripten_memcpy_big,
   "emscripten_resize_heap": _emscripten_resize_heap,
   "fd_write": _fd_write
