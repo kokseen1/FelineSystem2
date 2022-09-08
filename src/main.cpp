@@ -79,7 +79,6 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *rende
       {
         Mix_HaltMusic();
         Mix_FreeMusic(mus);
-        return 0;
       }
 
       char fpath[255] = {0};
