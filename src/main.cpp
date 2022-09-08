@@ -17,9 +17,20 @@ void onLoad(void *arg, void *buf, int sz)
   // buf will be freed after returning from this callback
   // void* buffer = new char[sz];
   // SDL_memcpy(buffer, buf, sz);
+
+  // Seems to help free memory
+  Mix_HaltMusic();
+  Mix_FreeMusic(mus);
+  
   SDL_RWops *rw = SDL_RWFromConstMem(buf, sz);
+  // Above function is freed upon returning
+
   mus = Mix_LoadMUS_RW(rw);
+  // Mix_Music *mus = Mix_LoadMUSType_RW(rw, MUS_OGG, 1);
   Mix_PlayMusic(mus, -1);
+
+  printf("rw: %p\n", rw);
+  printf("mus: %p\n", mus);
 }
 
 void onError(void *arg)
@@ -53,14 +64,24 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *rende
     if (eventType == EMSCRIPTEN_EVENT_CLICK)
     {
       if (e->ctrlKey)
-        track_id--;
+      {
+        if (mus != NULL)
+        {
+          Mix_HaltMusic();
+          Mix_FreeMusic(mus);
+          return 0;
+        }
+      }
       else
+      {
         track_id++;
+      }
 
       char fpath[255] = {0};
       sprintf(fpath, TRACK, track_id);
       printf("%s\n", fpath);
-      emscripten_async_wget_data(fpath, NULL, onLoad, onError);
+      for (int i = 0; i < 50; i++)
+        emscripten_async_wget_data(fpath, NULL, onLoad, onError);
     }
   }
 
@@ -70,6 +91,7 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *rende
 int main(int argc, char **argv)
 {
   SDL_Init(SDL_INIT_EVERYTHING);
+  Mix_Init(MIX_INIT_OGG);
   SDL_Surface *screen = SDL_SetVideoMode(256, 256, 32, SDL_SWSURFACE);
 
   EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, screen, 1, mouse_callback);

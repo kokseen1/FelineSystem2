@@ -5332,6 +5332,30 @@ var ASM_CONSTS = {
         return null;
       }};
   
+  function _Mix_FreeChunk(id) {
+      SDL.audios[id] = null;
+    }
+  var _Mix_FreeMusic = _Mix_FreeChunk;
+
+  function _Mix_HaltMusic() {
+      var audio = /** @type {HTMLMediaElement} */ (SDL.music.audio);
+      if (audio) {
+        audio.src = audio.src; // rewind <media> element
+        audio.currentPosition = 0; // rewind Web Audio graph playback.
+        audio.pause();
+      }
+      SDL.music.audio = null;
+      if (SDL.hookMusicFinished) {
+        getWasmTableEntry(SDL.hookMusicFinished)();
+      }
+      return 0;
+    }
+
+  function _Mix_Init(flags) {
+      if (!flags) return 0;
+      return 8; /* MIX_INIT_OGG */
+    }
+
   /** @param {number|boolean=} freesrc */
   function _Mix_LoadWAV_RW(rwopsID, freesrc) {
       var rwops = SDL.rwops[rwopsID];
@@ -5417,19 +5441,6 @@ var ASM_CONSTS = {
   /** @param {number|boolean=} a1 */
   var _Mix_LoadMUS_RW = _Mix_LoadWAV_RW;
 
-  function _Mix_HaltMusic() {
-      var audio = /** @type {HTMLMediaElement} */ (SDL.music.audio);
-      if (audio) {
-        audio.src = audio.src; // rewind <media> element
-        audio.currentPosition = 0; // rewind Web Audio graph playback.
-        audio.pause();
-      }
-      SDL.music.audio = null;
-      if (SDL.hookMusicFinished) {
-        getWasmTableEntry(SDL.hookMusicFinished)();
-      }
-      return 0;
-    }
   function _Mix_PlayMusic(id, loops) {
       // Pause old music if it exists.
       if (SDL.music.audio) {
@@ -6599,6 +6610,9 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var asmLibraryArg = {
+  "Mix_FreeMusic": _Mix_FreeMusic,
+  "Mix_HaltMusic": _Mix_HaltMusic,
+  "Mix_Init": _Mix_Init,
   "Mix_LoadMUS_RW": _Mix_LoadMUS_RW,
   "Mix_PlayMusic": _Mix_PlayMusic,
   "SDL_Init": _SDL_Init,
