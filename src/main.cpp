@@ -19,9 +19,12 @@ void onLoad(void *arg, void *buf, int sz)
   // SDL_memcpy(buffer, buf, sz);
 
   // Seems to help free memory
-  Mix_HaltMusic();
-  Mix_FreeMusic(mus);
-  
+  if (mus != NULL)
+  {
+    Mix_HaltMusic();
+    Mix_FreeMusic(mus);
+  }
+
   SDL_RWops *rw = SDL_RWFromConstMem(buf, sz);
   // Above function is freed upon returning
 
@@ -65,23 +68,25 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *rende
     {
       if (e->ctrlKey)
       {
-        if (mus != NULL)
-        {
-          Mix_HaltMusic();
-          Mix_FreeMusic(mus);
-          return 0;
-        }
+        track_id--;
       }
       else
       {
         track_id++;
       }
 
+      if (mus != NULL)
+      {
+        Mix_HaltMusic();
+        Mix_FreeMusic(mus);
+        return 0;
+      }
+
       char fpath[255] = {0};
       sprintf(fpath, TRACK, track_id);
       printf("%s\n", fpath);
-      for (int i = 0; i < 50; i++)
-        emscripten_async_wget_data(fpath, NULL, onLoad, onError);
+      // for (int i = 0; i < 50; i++)
+      emscripten_async_wget_data(fpath, NULL, onLoad, onError);
     }
   }
 
