@@ -4,16 +4,19 @@
 		{
 			"label": "Build with emcc",
 			"type": "shell",
-			"command": "emcc",
+			"command": "em++",
 			// "..\\emsdk\\upstream\\emscripten\\emcc.py",
 			"args": [
-				"src\\main.cpp",
-				"--preload-file",
-				"assets",
+				"src/main.cpp",
+				"src/music.cpp",
+				"-Isrc/include",
+				// "--preload-file",
+				// "assets",
 				"-o",
 				"index.html",
 				"-sUSE_SDL_MIXER=2",
 				"-sUSE_SDL=2",
+				"-sALLOW_MEMORY_GROWTH"
 				// "-sUSE_OGG=1 -sUSE_VORBIS=1",
 			],
 			"options": {

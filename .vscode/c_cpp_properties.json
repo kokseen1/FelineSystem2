@@ -8,7 +8,8 @@
                 "${vcpkgRoot}/x64-windows-static/include",
                 "${vcpkgRoot}/x86-windows/include",
                 // "..\\emsdk\\upstream\\emscripten\\system\\include",
-                "..\\emsdk\\upstream\\emscripten\\cache\\sysroot\\include"
+                "..\\emsdk\\upstream\\emscripten\\cache\\sysroot\\include",
+                "src\\include"
             ],
             "defines": [
                 "_DEBUG",
