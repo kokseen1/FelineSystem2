@@ -1,6 +1,8 @@
 #include <stdio.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_mixer.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+
+#include <memory>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -14,10 +16,6 @@ int track_id = 0;
 
 void onLoad(void *arg, void *buf, int sz)
 {
-  // buf will be freed after returning from this callback
-  // void* buffer = new char[sz];
-  // SDL_memcpy(buffer, buf, sz);
-
   // Seems to help free memory
   if (mus != NULL)
   {
@@ -25,15 +23,22 @@ void onLoad(void *arg, void *buf, int sz)
     Mix_FreeMusic(mus);
   }
 
-  SDL_RWops *rw = SDL_RWFromConstMem(buf, sz);
+  // buf will be freed after returning from this callback
+  // char *buffer = new char[sz];
+  std::unique_ptr<char[]> buffer(new char[sz]);
+  SDL_memcpy(buffer.get(), buf, sz);
+
+  printf("sz: %x\n", sz);
+  SDL_RWops *rw = SDL_RWFromConstMem(buffer.get(), sz);
+  printf("rw: %p\n", rw);
   // Above function is freed upon returning
 
-  mus = Mix_LoadMUS_RW(rw);
-  // Mix_Music *mus = Mix_LoadMUSType_RW(rw, MUS_OGG, 1);
-  Mix_PlayMusic(mus, -1);
-
-  printf("rw: %p\n", rw);
+  mus = Mix_LoadMUS_RW(rw, 1);
+  // mus = Mix_LoadMUSType_RW(rw, MUS_NONE, 1);
   printf("mus: %p\n", mus);
+  Mix_PlayMusic(mus, 1);
+
+  // delete[] buffer;
 }
 
 void onError(void *arg)
@@ -75,17 +80,21 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *rende
         track_id++;
       }
 
-      if (mus != NULL)
-      {
-        Mix_HaltMusic();
-        Mix_FreeMusic(mus);
-      }
+      // if (mus != NULL)
+      // {
+      //   Mix_HaltMusic();
+      //   Mix_FreeMusic(mus);
+      // }
 
       char fpath[255] = {0};
       sprintf(fpath, TRACK, track_id);
       printf("%s\n", fpath);
       // for (int i = 0; i < 50; i++)
       emscripten_async_wget_data(fpath, NULL, onLoad, onError);
+
+      // Play via filename
+      // mus = Mix_LoadMUS(fpath);
+      // Mix_PlayMusic(mus, -1);
     }
   }
 
@@ -94,11 +103,22 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *rende
 
 int main(int argc, char **argv)
 {
-  SDL_Init(SDL_INIT_EVERYTHING);
-  Mix_Init(MIX_INIT_OGG);
-  SDL_Surface *screen = SDL_SetVideoMode(256, 256, 32, SDL_SWSURFACE);
+  // SDL_Init(SDL_INIT_EVERYTHING);
+  // Mix_Init(MIX_INIT_OGG);
+  // SDL_Surface *screen = SDL_SetVideoMode(256, 256, 32, SDL_SWSURFACE);
 
-  EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, screen, 1, mouse_callback);
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0)
+  {
+    SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
+    return 1;
+  }
+
+  if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)
+  {
+    printf("%s", Mix_GetError());
+  }
+
+  EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);
 
   return 0;
 }

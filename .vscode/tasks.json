@@ -3,14 +3,18 @@
 	"tasks": [
 		{
 			"label": "Build with emcc",
-			"command": "emcc",
 			"type": "shell",
+			"command": "emcc",
+			// "..\\emsdk\\upstream\\emscripten\\emcc.py",
 			"args": [
 				"src\\main.cpp",
+				"--preload-file",
+				"assets",
 				"-o",
 				"index.html",
-				// "-sUSE_SDL_MIXER=2",
-				// "--preload-file assets"
+				"-sUSE_SDL_MIXER=2",
+				"-sUSE_SDL=2",
+				// "-sUSE_OGG=1 -sUSE_VORBIS=1",
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
