@@ -51,7 +51,7 @@ byte *HGDecoder::getPixelsFromFrame(Frame frame)
         return NULL;
     }
 
-    // Calculate bit depth
+    // Calculate byte depth
     int depthBytes = BYTE_DEPTH(frame.Stdinfo->BitDepth);
 
     // Allocate memory for rgbaBuffer
@@ -127,11 +127,13 @@ SDL_Surface *HGDecoder::getSurfaceFromPixels(byte *rgbaBuffer, Frame frame)
     if (surface != NULL)
     {
         result = flip_vertical(surface);
+        SDL_FreeSurface(surface);
     }
 
     return result;
 }
 
+// Get a vector of Frame structures that contain pointers to frame data
 std::vector<Frame> HGDecoder::getFrames(FrameHeader *frameHeader)
 {
     std::vector<Frame> frames;
@@ -147,7 +149,7 @@ std::vector<Frame> HGDecoder::getFrames(FrameHeader *frameHeader)
             break;
         }
 
-        frameHeader = (FrameHeader *)((char *)frameHeader + frameHeader->OffsetNext);
+        frameHeader = (FrameHeader *)((byte *)frameHeader + frameHeader->OffsetNext);
     }
 
     return frames;
