@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 
+#include <fstream>
+#include <vector>
+
 #include <music.hpp>
+#include <image.hpp>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -74,7 +78,7 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
 
 int main(int argc, char **argv)
 {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0)
+    if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
         return 1;
@@ -85,7 +89,31 @@ int main(int argc, char **argv)
         printf("%s", Mix_GetError());
     }
 
-    // Must dynamically allocate, as variables in main are freed
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    SDL_CreateWindowAndRenderer(1024, 576, 0, &window, &renderer);
+
+    SDL_Surface *screen = SDL_GetWindowSurface(window);
+
+    std::ifstream hgfile("assets/bg09.hg3", std::ios_base::binary);
+    std::vector<char> hgbuf((std::istreambuf_iterator<char>(hgfile)),
+                            (std::istreambuf_iterator<char>()));
+    HGHeader *hgHeader = (HGHeader *)hgbuf.data();
+
+    for (auto frame : HGDecoder::getFrames(&hgHeader->FrameHeaderStart))
+    {
+        SDL_Surface *surface = HGDecoder::getSurfaceFromFrame(frame);
+
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
+        SDL_RenderPresent(renderer);
+
+        SDL_FreeSurface(surface);
+        SDL_DestroyTexture(texture);
+    }
+
+    // Must dynamically allocate as variables in main are freed
     MusicPlayer *musicPlayer = new MusicPlayer();
 
     EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, musicPlayer, 1, mouse_callback);

@@ -21,6 +21,7 @@ void MusicPlayer::playFromMem(void *buf, int sz)
     printf("musicBuf: %p\n", musicBuf);
 }
 
+// Play via filename
 void MusicPlayer::playFromFile(char *fpath)
 {
     freeMusic();
@@ -29,6 +30,7 @@ void MusicPlayer::playFromFile(char *fpath)
     playMusic();
 }
 
+// Free any existing music
 void MusicPlayer::freeMusic()
 {
     if (mus != NULL)
@@ -38,6 +40,7 @@ void MusicPlayer::freeMusic()
         Mix_FreeMusic(mus);
     }
 }
+// Free any existing SDL_RWops
 void MusicPlayer::freeOps()
 {
     if (rw != NULL)
@@ -51,6 +54,7 @@ void MusicPlayer::freeOps()
     }
 }
 
+// Free any existing buffer
 void MusicPlayer::freeBuf()
 {
     if (musicBuf != NULL)

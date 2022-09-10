@@ -2,21 +2,27 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Build with emcc",
+			"label": "Build wasm",
 			"type": "shell",
 			"command": "em++",
 			// "..\\emsdk\\upstream\\emscripten\\emcc.py",
 			"args": [
 				"src/main.cpp",
 				"src/music.cpp",
+				"src/image.cpp",
+				"src/asmodean/hgx2bmp.cpp",
 				"-Isrc/include",
-				// "--preload-file",
-				// "assets",
+				"-Isrc/asmodean/include",
+				"--preload-file",
+				"assets",
 				"-o",
 				"index.html",
 				"-sUSE_SDL_MIXER=2",
 				"-sUSE_SDL=2",
-				"-sALLOW_MEMORY_GROWTH"
+				"-sALLOW_MEMORY_GROWTH",
+				"-fdeclspec",
+				"-sUSE_ZLIB=1"
+				// "-fms-extensions"
 				// "-sUSE_OGG=1 -sUSE_VORBIS=1",
 			],
 			"options": {
@@ -25,6 +31,38 @@
 			"group": {
 				"kind": "build",
 				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+			}
+		},
+		{
+			"label": "Build offline",
+			"type": "process",
+			"command": "g++",
+			"args": [
+				"src/main_offline.cpp",
+				"src/music.cpp",
+				"src/image.cpp",
+				"src/asmodean/hgx2bmp.cpp",
+				"-Isrc/include",
+				"-Isrc/asmodean/include",
+				"-IC:/x86_64-w64-mingw32/include",
+				"-LC:/x86_64-w64-mingw32/lib",
+				"-lmingw32",
+				"-lSDL2main",
+				"-lSDL2",
+				"-lSDL2_mixer",
+				"-lz",
+				"-o",
+				"a.exe",
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"group": {
+				"kind": "build",
 			},
 			"presentation": {
 				"reveal": "silent",

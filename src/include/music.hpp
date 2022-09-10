@@ -17,7 +17,6 @@ public:
 
     void playFromMem(void *, int);
 
-    // Play via filename
     void playFromFile(char *);
 
     void init();
@@ -27,13 +26,10 @@ private:
     SDL_RWops *rw = NULL;
     char *musicBuf = NULL;
 
-    // Free any existing music
     void freeMusic();
 
-    // Free any existing SDL_RWops
     void freeOps();
 
-    // Free any existing buffer
     void freeBuf();
 
     void playMusic();
