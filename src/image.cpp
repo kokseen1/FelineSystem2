@@ -152,3 +152,33 @@ std::vector<Frame> HGDecoder::getFrames(FrameHeader *frameHeader)
 
     return frames;
 }
+
+void HGDecoder::displayFromMem(void *hgHeader, SDL_Renderer *renderer)
+{
+    for (auto frame : HGDecoder::getFrames(&((HGHeader *)hgHeader)->FrameHeaderStart))
+    {
+        SDL_Surface *surface = HGDecoder::getSurfaceFromFrame(frame);
+
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
+        SDL_RenderPresent(renderer);
+
+        SDL_FreeSurface(surface);
+        SDL_DestroyTexture(texture);
+    }
+}
+
+void HGDecoder::displayFromMem(void *hgHeader, SDL_Window *window)
+{
+    for (auto frame : HGDecoder::getFrames(&((HGHeader *)hgHeader)->FrameHeaderStart))
+    {
+        SDL_Surface *surface = HGDecoder::getSurfaceFromFrame(frame);
+
+        SDL_Surface *screen = SDL_GetWindowSurface(window);
+        SDL_BlitSurface(surface, NULL, screen, NULL);
+        SDL_UpdateWindowSurface(window);
+
+        SDL_FreeSurface(surface);
+    }
+}

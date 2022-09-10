@@ -5,7 +5,6 @@
 			"label": "Build wasm",
 			"type": "shell",
 			"command": "em++",
-			// "..\\emsdk\\upstream\\emscripten\\emcc.py",
 			"args": [
 				"src/main.cpp",
 				"src/music.cpp",
@@ -13,8 +12,6 @@
 				"src/asmodean/hgx2bmp.cpp",
 				"-Isrc/include",
 				"-Isrc/asmodean/include",
-				"--preload-file",
-				"assets",
 				"-o",
 				"index.html",
 				"-sUSE_SDL_MIXER=2",
@@ -22,8 +19,6 @@
 				"-sALLOW_MEMORY_GROWTH",
 				"-fdeclspec",
 				"-sUSE_ZLIB=1"
-				// "-fms-extensions"
-				// "-sUSE_OGG=1 -sUSE_VORBIS=1",
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
@@ -34,15 +29,16 @@
 			},
 			"presentation": {
 				"reveal": "silent",
-				"revealProblems": "onProblem",
-			}
+				"revealProblems": "onProblem"
+			},
+			"problemMatcher": []
 		},
 		{
 			"label": "Build offline",
 			"type": "process",
 			"command": "g++",
 			"args": [
-				"src/main_offline.cpp",
+				"src/main.cpp",
 				"src/music.cpp",
 				"src/image.cpp",
 				"src/asmodean/hgx2bmp.cpp",
@@ -56,18 +52,17 @@
 				"-lSDL2_mixer",
 				"-lz",
 				"-o",
-				"a.exe",
+				"a.exe"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
-			"group": {
-				"kind": "build",
-			},
+			"group": "build",
 			"presentation": {
 				"reveal": "silent",
-				"revealProblems": "onProblem",
-			}
+				"revealProblems": "onProblem"
+			},
+			"problemMatcher": []
 		}
 	]
 }

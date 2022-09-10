@@ -25,6 +25,10 @@ class HGDecoder
 {
 
 public:
+    static void displayFromMem(void *, SDL_Renderer *);
+
+    static void displayFromMem(void *, SDL_Window *);
+
     static SDL_Surface *getSurfaceFromFrame(Frame);
 
     static std::vector<Frame> getFrames(FrameHeader *);

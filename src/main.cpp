@@ -13,6 +13,7 @@
 #endif
 
 int track_id = 0;
+#ifdef __EMSCRIPTEN__
 
 void onLoad(void *arg, void *buf, int sz)
 {
@@ -75,10 +76,11 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
 
     return 0;
 }
+#endif
 
 int main(int argc, char **argv)
 {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
         return 1;
@@ -89,35 +91,35 @@ int main(int argc, char **argv)
         printf("%s", Mix_GetError());
     }
 
-    SDL_Window *window;
-    SDL_Renderer *renderer;
-    SDL_CreateWindowAndRenderer(1024, 576, 0, &window, &renderer);
+    // Must dynamically allocate as variables in main are freed
+    MusicPlayer *musicPlayer = new MusicPlayer();
 
-    SDL_Surface *screen = SDL_GetWindowSurface(window);
+    SDL_Window *window = NULL;
+#ifdef __EMSCRIPTEN__
+    EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, musicPlayer, 1, mouse_callback);
+    ret = emscripten_set_wheel_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, musicPlayer, 1, wheel_callback);
+
+    SDL_Renderer *renderer = NULL;
+    SDL_CreateWindowAndRenderer(1024, 576, 0, &window, &renderer);
+#else
+    window = SDL_CreateWindow("FelineSystem2",
+                              SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                              1024,
+                              576,
+                              SDL_WINDOW_SHOWN);
+
+    std::ifstream infile("assets/bgm01.ogg", std::ios_base::binary);
+    std::vector<char> buffer((std::istreambuf_iterator<char>(infile)),
+                             (std::istreambuf_iterator<char>()));
+    musicPlayer->playFromMem(buffer.data(), buffer.size());
 
     std::ifstream hgfile("assets/bg09.hg3", std::ios_base::binary);
     std::vector<char> hgbuf((std::istreambuf_iterator<char>(hgfile)),
                             (std::istreambuf_iterator<char>()));
-    HGHeader *hgHeader = (HGHeader *)hgbuf.data();
+    HGDecoder::displayFromMem(hgbuf.data(), window);
 
-    for (auto frame : HGDecoder::getFrames(&hgHeader->FrameHeaderStart))
-    {
-        SDL_Surface *surface = HGDecoder::getSurfaceFromFrame(frame);
-
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-        SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
-        SDL_RenderPresent(renderer);
-
-        SDL_FreeSurface(surface);
-        SDL_DestroyTexture(texture);
-    }
-
-    // Must dynamically allocate as variables in main are freed
-    MusicPlayer *musicPlayer = new MusicPlayer();
-
-    EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, musicPlayer, 1, mouse_callback);
-    ret = emscripten_set_wheel_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, musicPlayer, 1, wheel_callback);
+    SDL_Delay(10000);
+#endif
 
     return 0;
 }
