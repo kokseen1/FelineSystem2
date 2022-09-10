@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <music.hpp>
 
 MusicPlayer::MusicPlayer()
@@ -44,7 +45,6 @@ void MusicPlayer::freeMusic()
 {
     if (mus != NULL)
     {
-        printf("Mix_FreeMusic %p\n", mus);
         Mix_HaltMusic();
         Mix_FreeMusic(mus);
     }
@@ -54,7 +54,6 @@ void MusicPlayer::freeOps()
 {
     if (rw != NULL)
     {
-        printf("SDL_RWclose %p\n", rw);
         // Will break if next SDL_RWops allocation is at 0xa1;
         if (SDL_RWclose(rw) < 0)
         {
@@ -68,7 +67,6 @@ void MusicPlayer::freeBuf()
 {
     if (musicBuf != NULL)
     {
-        printf("freeBuf %p\n", musicBuf);
         delete[] musicBuf;
     }
 }

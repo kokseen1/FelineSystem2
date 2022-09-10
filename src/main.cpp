@@ -5,7 +5,6 @@
 #include <vector>
 
 #include <music.hpp>
-#include <hgdecoder.hpp>
 #include <scene.hpp>
 
 #ifdef __EMSCRIPTEN__

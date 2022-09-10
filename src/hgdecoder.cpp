@@ -6,7 +6,7 @@
 #include "zlib.h"
 
 // Allocates and returns a flipped surface
-SDL_Surface *flip_vertical(SDL_Surface *sfc)
+SDL_Surface *HGDecoder::flip_vertical(SDL_Surface *sfc)
 {
     SDL_Surface *result = SDL_CreateRGBSurface(sfc->flags, sfc->w, sfc->h,
                                                sfc->format->BytesPerPixel * 8, sfc->format->Rmask, sfc->format->Gmask,

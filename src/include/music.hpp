@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdio.h>
 #include <SDL2/SDL_mixer.h>
 
 #define FMT_TRACK "assets/bgm%02d.ogg"
