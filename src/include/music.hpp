@@ -3,17 +3,13 @@
 #include <stdio.h>
 #include <SDL2/SDL_mixer.h>
 
-#define TRACK "assets/bgm%02d.ogg"
+#define FMT_TRACK "assets/bgm%02d.ogg"
 
 class MusicPlayer
 {
 
 public:
-    MusicPlayer()
-    {
-        printf("Init MusicPlayer\n");
-        // init();
-    }
+    MusicPlayer();
 
     void playFromMem(void *, int);
 

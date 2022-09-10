@@ -5,20 +5,25 @@
 #include <vector>
 
 #include <music.hpp>
-#include <image.hpp>
+#include <hgdecoder.hpp>
+#include <scene.hpp>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/html5.h>
 #endif
 
-int track_id = 0;
-#ifdef __EMSCRIPTEN__
+MusicPlayer *musicPlayer = NULL;
+SceneManager *sceneManager = NULL;
 
+#ifdef __EMSCRIPTEN__
+int track_id = 0;
+
+// MusicPlayer should be handling this
 void onLoad(void *arg, void *buf, int sz)
 {
     // buf will be freed after returning from this callback
-    ((MusicPlayer *)arg)->playFromMem(buf, sz);
+    musicPlayer->playFromMem(buf, sz);
 }
 
 void onError(void *arg)
@@ -40,22 +45,25 @@ static inline const char *emscripten_event_type_to_string(int eventType)
     return events[eventType];
 }
 
-void nextTrack(void *userData)
+void nextTrack()
 {
+    char fpath[255] = {0};
+
     track_id++;
-    if (track_id == 31)
+    if (track_id == 10)
         track_id = 1;
 
-    char fpath[255] = {0};
-    sprintf(fpath, TRACK, track_id);
+    sprintf(fpath, FMT_SCENE, track_id);
+    sceneManager->setScene(fpath);
 
+    sprintf(fpath, FMT_TRACK, track_id);
     // for (int i = 0; i < 50; i++)
-    emscripten_async_wget_data(fpath, userData, onLoad, onError);
+    emscripten_async_wget_data(fpath, NULL, onLoad, onError);
 }
 
 EM_BOOL wheel_callback(int eventType, const EmscriptenWheelEvent *e, void *userData)
 {
-    nextTrack(userData);
+    nextTrack();
     return 0;
 }
 
@@ -70,7 +78,7 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
     {
         if (eventType == EMSCRIPTEN_EVENT_CLICK)
         {
-            nextTrack(userData);
+            nextTrack();
         }
     }
 
@@ -86,37 +94,22 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)
-    {
-        printf("%s", Mix_GetError());
-    }
-
     // Must dynamically allocate as variables in main are freed
-    MusicPlayer *musicPlayer = new MusicPlayer();
+    sceneManager = new SceneManager();
+    musicPlayer = new MusicPlayer();
 
-    SDL_Window *window = NULL;
 #ifdef __EMSCRIPTEN__
-    EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, musicPlayer, 1, mouse_callback);
-    ret = emscripten_set_wheel_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, musicPlayer, 1, wheel_callback);
+    EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);
+    ret = emscripten_set_wheel_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, wheel_callback);
 
-    SDL_Renderer *renderer = NULL;
-    SDL_CreateWindowAndRenderer(1024, 576, 0, &window, &renderer);
 #else
-    window = SDL_CreateWindow("FelineSystem2",
-                              SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                              1024,
-                              576,
-                              SDL_WINDOW_SHOWN);
-
+    // Platform specific implementation
     std::ifstream infile("assets/bgm01.ogg", std::ios_base::binary);
     std::vector<char> buffer((std::istreambuf_iterator<char>(infile)),
                              (std::istreambuf_iterator<char>()));
     musicPlayer->playFromMem(buffer.data(), buffer.size());
 
-    std::ifstream hgfile("assets/bg09.hg3", std::ios_base::binary);
-    std::vector<char> hgbuf((std::istreambuf_iterator<char>(hgfile)),
-                            (std::istreambuf_iterator<char>()));
-    HGDecoder::displayFromMem(hgbuf.data(), window);
+    sceneManager->setScene("assets/bg01.hg3");
 
     SDL_Delay(10000);
 #endif

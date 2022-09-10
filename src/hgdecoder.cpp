@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <image.hpp>
+#include <hgdecoder.hpp>
 #include <hgx2bmp.h>
 
 #include "zlib.h"
@@ -57,7 +57,7 @@ byte *HGDecoder::getPixelsFromFrame(Frame frame)
     // Allocate memory for rgbaBuffer
     uint32 szRgbaBuffer = frame.Stdinfo->Width * frame.Stdinfo->Height * depthBytes;
     byte *rgbaBuffer = (byte *)malloc(szRgbaBuffer);
-    printf("Allocated %lu bytes\n", szRgbaBuffer);
+    // printf("Allocated %lu bytes\n", szRgbaBuffer);
 
     // Decode image
     ReturnCode ret = ProcessImage(RleDataDecompressed, frame.Img->DecompressedDataLength, RleCmdDecompressed, frame.Img->DecompressedCmdLength, rgbaBuffer, szRgbaBuffer, frame.Stdinfo->Width, frame.Stdinfo->Height, depthBytes, STRIDE(frame.Stdinfo->Width, depthBytes));
@@ -92,7 +92,7 @@ Frame HGDecoder::getFrame(FrameTag *frameTag)
         }
         else
         {
-            printf("Ignoring tag %s\n", frameTag->TagName);
+            // printf("Ignoring tag %s\n", frameTag->TagName);
         }
 
         // Reached last tag
@@ -100,7 +100,7 @@ Frame HGDecoder::getFrame(FrameTag *frameTag)
             break;
 
         // Shift by byte offset
-        frameTag = (FrameTag *)((char *)frameTag + frameTag->OffsetNext);
+        frameTag = (FrameTag *)((byte *)frameTag + frameTag->OffsetNext);
     }
 
     return frame;
@@ -151,34 +151,4 @@ std::vector<Frame> HGDecoder::getFrames(FrameHeader *frameHeader)
     }
 
     return frames;
-}
-
-void HGDecoder::displayFromMem(void *hgHeader, SDL_Renderer *renderer)
-{
-    for (auto frame : HGDecoder::getFrames(&((HGHeader *)hgHeader)->FrameHeaderStart))
-    {
-        SDL_Surface *surface = HGDecoder::getSurfaceFromFrame(frame);
-
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-        SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
-        SDL_RenderPresent(renderer);
-
-        SDL_FreeSurface(surface);
-        SDL_DestroyTexture(texture);
-    }
-}
-
-void HGDecoder::displayFromMem(void *hgHeader, SDL_Window *window)
-{
-    for (auto frame : HGDecoder::getFrames(&((HGHeader *)hgHeader)->FrameHeaderStart))
-    {
-        SDL_Surface *surface = HGDecoder::getSurfaceFromFrame(frame);
-
-        SDL_Surface *screen = SDL_GetWindowSurface(window);
-        SDL_BlitSurface(surface, NULL, screen, NULL);
-        SDL_UpdateWindowSurface(window);
-
-        SDL_FreeSurface(surface);
-    }
 }

@@ -1,5 +1,14 @@
 #include <music.hpp>
 
+MusicPlayer::MusicPlayer()
+{
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)
+    {
+        printf("%s", Mix_GetError());
+    }
+    printf("MusicPlayer initialized\n");
+}
+
 void MusicPlayer::playFromMem(void *buf, int sz)
 {
     freeBuf();
@@ -16,9 +25,9 @@ void MusicPlayer::playFromMem(void *buf, int sz)
 
     playMusic();
 
-    printf("rw: %p\n", rw);
-    printf("mus: %p\n", mus);
-    printf("musicBuf: %p\n", musicBuf);
+    // printf("rw: %p\n", rw);
+    // printf("mus: %p\n", mus);
+    // printf("musicBuf: %p\n", musicBuf);
 }
 
 // Play via filename
