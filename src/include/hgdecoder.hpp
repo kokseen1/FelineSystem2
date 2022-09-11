@@ -14,17 +14,17 @@
 #define STRIDE(width, bytes) ((width * bytes + 3) & ~3)
 #define PITCH(width, bits) (width * BYTE_DEPTH(bits))
 
-// Holds pointers to structs necessary for decoding image
-typedef struct
-{
-    Stdinfo *Stdinfo;
-    Img *Img;
-} Frame;
-
 class HGDecoder
 {
 
 public:
+    // Holds pointers to structs necessary for decoding image
+    typedef struct
+    {
+        Stdinfo *Stdinfo;
+        Img *Img;
+    } Frame;
+
     static SDL_Surface *getSurfaceFromFrame(Frame);
 
     static std::vector<Frame> getFrames(FrameHeader *);

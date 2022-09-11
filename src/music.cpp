@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <music.hpp>
 
+#include <utils.hpp>
+
 MusicPlayer::MusicPlayer()
 {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)
@@ -8,6 +10,28 @@ MusicPlayer::MusicPlayer()
         printf("%s", Mix_GetError());
     }
     printf("MusicPlayer initialized\n");
+}
+
+void MusicPlayer::setMusic(char *fpath)
+{
+#ifdef __EMSCRIPTEN__
+    Utils::getData(fpath, this, onLoad, onError);
+#else
+    // auto buf = Utils::getData(fpath);
+    // playFromMem(buf.data(), buf.size());
+    playFromFile(fpath);
+#endif
+}
+
+void MusicPlayer::onLoad(void *arg, void *buf, int sz)
+{
+    MusicPlayer *musicPlayer = (MusicPlayer *)arg;
+    musicPlayer->playFromMem(buf, sz);
+}
+
+void MusicPlayer::onError(void *arg)
+{
+    printf("MusicPlayer onError\n");
 }
 
 void MusicPlayer::playFromMem(void *buf, int sz)
@@ -74,11 +98,4 @@ void MusicPlayer::freeBuf()
 void MusicPlayer::playMusic()
 {
     Mix_PlayMusic(mus, -1);
-}
-
-void MusicPlayer::init()
-{
-    mus = NULL;
-    rw = NULL;
-    musicBuf = NULL;
 }

@@ -14,14 +14,13 @@ public:
 
     void setScene(char *, int);
 
+    void displayFrame(void *);
+
     SDL_Window *window = NULL;
 
     SDL_Renderer *renderer = NULL;
 
 private:
-    // Static callbacks
     static void onLoad(void *, void *, int);
     static void onError(void *);
-
-    void displayFrame(void *);
 };

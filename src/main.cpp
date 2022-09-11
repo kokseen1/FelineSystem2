@@ -15,45 +15,8 @@
 MusicPlayer *musicPlayer = NULL;
 SceneManager *sceneManager = NULL;
 
-#ifdef __EMSCRIPTEN__
-
 int track_id = 1;
 int scene_id = 1;
-
-// MusicPlayer should be handling this
-void onLoad(void *arg, void *buf, int sz)
-{
-    // buf will be freed after returning from this callback
-    musicPlayer->playFromMem(buf, sz);
-}
-
-void onError(void *arg)
-{
-    printf("onError\n");
-}
-
-static inline const char *emscripten_event_type_to_string(int eventType)
-{
-    const char *events[] = {"(invalid)", "(none)", "keypress", "keydown", "keyup", "click", "mousedown", "mouseup", "dblclick", "mousemove", "wheel", "resize",
-                            "scroll", "blur", "focus", "focusin", "focusout", "deviceorientation", "devicemotion", "orientationchange", "fullscreenchange", "pointerlockchange",
-                            "visibilitychange", "touchstart", "touchend", "touchmove", "touchcancel", "gamepadconnected", "gamepaddisconnected", "beforeunload",
-                            "batterychargingchange", "batterylevelchange", "webglcontextlost", "webglcontextrestored", "(invalid)"};
-    ++eventType;
-    if (eventType < 0)
-        eventType = 0;
-    if (eventType >= sizeof(events) / sizeof(events[0]))
-        eventType = sizeof(events) / sizeof(events[0]) - 1;
-    return events[eventType];
-}
-
-void nextTrack()
-{
-    char fpath[255] = {0};
-    sprintf(fpath, FMT_TRACK, track_id);
-    emscripten_async_wget_data(fpath, NULL, onLoad, onError);
-
-    track_id = track_id == 9 ? 1 : track_id + 1;
-}
 
 void nextScene()
 {
@@ -61,8 +24,19 @@ void nextScene()
     sprintf(fpath, FMT_SCENE, scene_id);
     sceneManager->setScene(fpath, 0);
 
-    scene_id = scene_id == 9 ? 1 : scene_id + 1;
+    scene_id = scene_id == 11 ? 1 : scene_id + 1;
 }
+
+void nextTrack()
+{
+    char fpath[255] = {0};
+    sprintf(fpath, FMT_TRACK, track_id);
+    musicPlayer->setMusic(fpath);
+
+    track_id = track_id == 9 ? 1 : track_id + 1;
+}
+
+#ifdef __EMSCRIPTEN__
 
 EM_BOOL wheel_callback(int eventType, const EmscriptenWheelEvent *e, void *userData)
 {
@@ -109,16 +83,33 @@ int main(int argc, char **argv)
 
     // emscripten_set_main_loop(nextTrack, 0, 1);
 #else
-    // Platform specific implementation
-    std::ifstream infile("assets/bgm01.ogg", std::ios_base::binary);
-    std::vector<char> buffer((std::istreambuf_iterator<char>(infile)),
-                             (std::istreambuf_iterator<char>()));
-    musicPlayer->playFromMem(buffer.data(), buffer.size());
+    bool done = false;
+    SDL_Event event;
 
-    sceneManager->setScene("assets/bg01.hg3", 1);
+    while ((!done) && (SDL_WaitEvent(&event)))
+    {
+        switch (event.type)
+        {
+        case SDL_USEREVENT:
+            break;
 
-    SDL_Delay(10000);
+        case SDL_KEYDOWN:
+            nextScene();
+            break;
+
+        case SDL_MOUSEBUTTONDOWN:
+            nextTrack();
+            break;
+
+        case SDL_QUIT:
+            done = true;
+            break;
+
+        default:
+            break;
+        }
+    }
+
 #endif
-
     return 0;
 }

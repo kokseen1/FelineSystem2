@@ -10,11 +10,11 @@ class MusicPlayer
 public:
     MusicPlayer();
 
+    void setMusic(char *);
+
     void playFromMem(void *, int);
 
     void playFromFile(char *);
-
-    void init();
 
 private:
     Mix_Music *mus = NULL;
@@ -28,4 +28,7 @@ private:
     void freeBuf();
 
     void playMusic();
+
+    static void onLoad(void *, void *, int);
+    static void onError(void *);
 };

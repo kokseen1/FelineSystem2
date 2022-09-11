@@ -74,7 +74,7 @@ byte *HGDecoder::getPixelsFromFrame(Frame frame)
 }
 
 // Parses frame tags and returns a Frame struct pointing to the frame data
-Frame HGDecoder::getFrame(FrameTag *frameTag)
+HGDecoder::Frame HGDecoder::getFrame(FrameTag *frameTag)
 {
     Frame frame;
 
@@ -134,7 +134,7 @@ SDL_Surface *HGDecoder::getSurfaceFromPixels(byte *rgbaBuffer, Frame frame)
 }
 
 // Get a vector of Frame structures that contain pointers to frame data
-std::vector<Frame> HGDecoder::getFrames(FrameHeader *frameHeader)
+std::vector<HGDecoder::Frame> HGDecoder::getFrames(FrameHeader *frameHeader)
 {
     std::vector<Frame> frames;
 

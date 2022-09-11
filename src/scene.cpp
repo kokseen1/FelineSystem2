@@ -2,12 +2,7 @@
 #include <scene.hpp>
 #include <hgdecoder.hpp>
 
-#include <fstream>
-#include <vector>
-
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
+#include <utils.hpp>
 
 SceneManager::SceneManager()
 {
@@ -29,7 +24,7 @@ void SceneManager::displayFrame(void *buf)
     HGHeader *hgHeader = (HGHeader *)buf;
     FrameHeader *frameHeader = &hgHeader->FrameHeaderStart;
 
-    std::vector<Frame> frames = HGDecoder::getFrames(frameHeader);
+    std::vector<HGDecoder::Frame> frames = HGDecoder::getFrames(frameHeader);
 
     for (auto frame : frames)
     {
@@ -37,8 +32,16 @@ void SceneManager::displayFrame(void *buf)
 
 #ifdef __EMSCRIPTEN__
         SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-        // SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
+
+        SDL_RenderClear(renderer);
+
+        SDL_Rect DestR;
+        DestR.x = 0;
+        DestR.y = 0;
+        DestR.w = frame.Stdinfo->Width;
+        DestR.h = frame.Stdinfo->Height;
+
+        SDL_RenderCopy(renderer, texture, NULL, &DestR);
         SDL_RenderPresent(renderer);
 
         SDL_DestroyTexture(texture);
@@ -56,7 +59,6 @@ void SceneManager::displayFrame(void *buf)
 
 void SceneManager::onLoad(void *arg, void *buf, int sz)
 {
-    // buf will be freed after returning from this callback
     SceneManager *sceneManager = (SceneManager *)arg;
     sceneManager->displayFrame(buf);
 }
@@ -68,29 +70,17 @@ void SceneManager::onError(void *arg)
 
 void SceneManager::setScene(char *fpath, int local)
 {
+#ifdef __EMSCRIPTEN__
     if (local)
     {
-        // Does not work well with emscripten
-        // std::ifstream hgfile(fpath, std::ios_base::binary);
-        // std::vector<char> buffer((std::istreambuf_iterator<char>(hgfile)),
-        //                          (std::istreambuf_iterator<char>()));
-        // displayFrame(buffer.data());
-
-        // Read file and get size
-        FILE *fp = fopen(fpath, "rb");
-        fseek(fp, 0, SEEK_END);
-        int sz = ftell(fp);
-        rewind(fp);
-
-        // Read file into buffer
-        char *buf = (char *)malloc(sz * sizeof(char));
-        fread(buf, sizeof(char), sz, fp);
-        displayFrame(buf);
-
-        free(buf);
+#endif
+        auto buf = Utils::getData(fpath);
+        displayFrame(buf.data());
+#ifdef __EMSCRIPTEN__
     }
     else
     {
-        emscripten_async_wget_data(fpath, this, onLoad, onError);
+        Utils::getData(fpath, this, onLoad, onError);
     }
+#endif
 }
