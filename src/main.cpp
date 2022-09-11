@@ -16,7 +16,9 @@ MusicPlayer *musicPlayer = NULL;
 SceneManager *sceneManager = NULL;
 
 #ifdef __EMSCRIPTEN__
-int track_id = 0;
+
+int track_id = 1;
+int scene_id = 1;
 
 // MusicPlayer should be handling this
 void onLoad(void *arg, void *buf, int sz)
@@ -47,22 +49,24 @@ static inline const char *emscripten_event_type_to_string(int eventType)
 void nextTrack()
 {
     char fpath[255] = {0};
-
-    track_id++;
-    if (track_id == 10)
-        track_id = 1;
-
-    sprintf(fpath, FMT_SCENE, track_id);
-    sceneManager->setScene(fpath);
-
     sprintf(fpath, FMT_TRACK, track_id);
-    // for (int i = 0; i < 50; i++)
     emscripten_async_wget_data(fpath, NULL, onLoad, onError);
+
+    track_id = track_id == 9 ? 1 : track_id + 1;
+}
+
+void nextScene()
+{
+    char fpath[255] = {0};
+    sprintf(fpath, FMT_SCENE, scene_id);
+    sceneManager->setScene(fpath, 0);
+
+    scene_id = scene_id == 9 ? 1 : scene_id + 1;
 }
 
 EM_BOOL wheel_callback(int eventType, const EmscriptenWheelEvent *e, void *userData)
 {
-    nextTrack();
+    nextScene();
     return 0;
 }
 
@@ -77,12 +81,14 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
     {
         if (eventType == EMSCRIPTEN_EVENT_CLICK)
         {
+            // for (int i = 0; i < 10000; i++)
             nextTrack();
         }
     }
 
     return 0;
 }
+
 #endif
 
 int main(int argc, char **argv)
@@ -101,6 +107,7 @@ int main(int argc, char **argv)
     EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);
     ret = emscripten_set_wheel_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, wheel_callback);
 
+    // emscripten_set_main_loop(nextTrack, 0, 1);
 #else
     // Platform specific implementation
     std::ifstream infile("assets/bgm01.ogg", std::ios_base::binary);
@@ -108,7 +115,7 @@ int main(int argc, char **argv)
                              (std::istreambuf_iterator<char>()));
     musicPlayer->playFromMem(buffer.data(), buffer.size());
 
-    sceneManager->setScene("assets/bg01.hg3");
+    sceneManager->setScene("assets/bg01.hg3", 1);
 
     SDL_Delay(10000);
 #endif

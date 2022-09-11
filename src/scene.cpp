@@ -37,7 +37,7 @@ void SceneManager::displayFrame(void *buf)
 
 #ifdef __EMSCRIPTEN__
         SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-        SDL_RenderClear(renderer);
+        // SDL_RenderClear(renderer);
         SDL_RenderCopy(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
 
@@ -66,15 +66,31 @@ void SceneManager::onError(void *arg)
     printf("SceneManager onError\n");
 }
 
-void SceneManager::setScene(char *fpath)
+void SceneManager::setScene(char *fpath, int local)
 {
-#ifdef __EMSCRIPTEN__
-    emscripten_async_wget_data(fpath, this, onLoad, onError);
-#else
-    std::ifstream hgfile(fpath, std::ios_base::binary);
-    std::vector<char> buffer((std::istreambuf_iterator<char>(hgfile)),
-                             (std::istreambuf_iterator<char>()));
+    if (local)
+    {
+        // Does not work well with emscripten
+        // std::ifstream hgfile(fpath, std::ios_base::binary);
+        // std::vector<char> buffer((std::istreambuf_iterator<char>(hgfile)),
+        //                          (std::istreambuf_iterator<char>()));
+        // displayFrame(buffer.data());
 
-    displayFrame(buffer.data());
-#endif
+        // Read file and get size
+        FILE *fp = fopen(fpath, "rb");
+        fseek(fp, 0, SEEK_END);
+        int sz = ftell(fp);
+        rewind(fp);
+
+        // Read file into buffer
+        char *buf = (char *)malloc(sz * sizeof(char));
+        fread(buf, sizeof(char), sz, fp);
+        displayFrame(buf);
+
+        free(buf);
+    }
+    else
+    {
+        emscripten_async_wget_data(fpath, this, onLoad, onError);
+    }
 }

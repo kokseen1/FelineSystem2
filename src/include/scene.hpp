@@ -12,7 +12,7 @@ class SceneManager
 public:
     SceneManager();
 
-    void setScene(char *);
+    void setScene(char *, int);
 
     SDL_Window *window = NULL;
 
