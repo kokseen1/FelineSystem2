@@ -18,7 +18,7 @@ namespace Utils
         rewind(fp);
         // char *buf = (char *)malloc(sz * sizeof(char));
         std::vector<char> buf(sz);
-        size_t bytesRead = fread(&buf[0], sizeof(char), sz, fp);
+        fread(&buf[0], sizeof(char), sz, fp);
         fclose(fp);
 
         return buf;
