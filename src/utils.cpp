@@ -6,12 +6,6 @@ namespace Utils
 {
     std::vector<char> getData(char *fpath)
     {
-        // Does not work well with emscripten
-        // std::ifstream hgfile(fpath, std::ios_base::binary);
-        // std::vector<char> buffer((std::istreambuf_iterator<char>(hgfile)),
-        //                          (std::istreambuf_iterator<char>()));
-        // displayFrame(buffer.data());
-
         FILE *fp = fopen(fpath, "rb");
         fseek(fp, 0, SEEK_END);
         auto sz = ftell(fp);
