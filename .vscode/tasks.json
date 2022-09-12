@@ -14,6 +14,7 @@
 				"src/asmodean/hgx2bmp.cpp",
 				"-Isrc/include",
 				"-Isrc/asmodean/include",
+				"-w",
 				"-o",
 				"index.html",
 				"-sUSE_SDL_MIXER=2",
@@ -27,7 +28,10 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
-			"group": "build",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
 			"presentation": {
 				"reveal": "silent",
 				"revealProblems": "onProblem"
@@ -60,10 +64,7 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
+			"group": "build",
 			"presentation": {
 				"reveal": "silent",
 				"revealProblems": "onProblem"
