@@ -15,9 +15,9 @@ MusicPlayer::MusicPlayer()
 void MusicPlayer::setMusic(char *fpath)
 {
 #ifdef __EMSCRIPTEN__
-    Utils::getData(fpath, this, onLoad, onError);
+    Utils::readFile(fpath, this, onLoad, onError);
 #else
-    // auto buf = Utils::getData(fpath);
+    // auto buf = Utils::readFile(fpath);
     // playFromMem(buf.data(), buf.size());
     playFromFile(fpath);
 #endif

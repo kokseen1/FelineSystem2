@@ -3,13 +3,16 @@
 #endif
 
 #include <vector>
+#include <asmodean.h>
 
 namespace Utils
 {
-    std::vector<char> getData(char *);
+    std::vector<byte> zlibUncompress(uint32, byte *, uint32);
+
+    std::vector<byte> readFile(char *);
 
 #ifdef __EMSCRIPTEN__
-    void getData(char *, void *, em_async_wget_onload_func, em_arg_callback_func);
+    void readFile(char *, void *, em_async_wget_onload_func, em_arg_callback_func);
 
     static inline const char *emscripten_event_type_to_string(int eventType)
     {

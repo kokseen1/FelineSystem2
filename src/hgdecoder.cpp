@@ -3,7 +3,7 @@
 #include <hgdecoder.hpp>
 #include <hgx2bmp.h>
 
-#include "zlib.h"
+#include <utils.hpp>
 
 // Allocates and returns a flipped surface
 SDL_Surface *HGDecoder::flip_vertical(SDL_Surface *sfc)
@@ -33,21 +33,21 @@ byte *HGDecoder::getPixelsFromFrame(Frame frame)
     byte *RleCmd = RleData + frame.Img->CompressedDataLength;
 
     // Allocate memory for decompressed buffer
-    byte *RleDataDecompressed = (byte *)malloc(frame.Img->DecompressedDataLength);
-    byte *RleCmdDecompressed = (byte *)malloc(frame.Img->DecompressedCmdLength);
+    // byte *RleDataDecompressed = (byte *)malloc(frame.Img->DecompressedDataLength);
+    // byte *RleCmdDecompressed = (byte *)malloc(frame.Img->DecompressedCmdLength);
 
     // Zlib decompress
-    int res = uncompress(RleDataDecompressed, &frame.Img->DecompressedDataLength, RleData, frame.Img->CompressedDataLength);
-    if (Z_OK != res)
+    auto RleDataDecompressed = Utils::zlibUncompress(frame.Img->DecompressedDataLength, RleData, frame.Img->CompressedDataLength);
+    if (RleDataDecompressed.empty())
     {
-        printf("uncompress error\n");
+        printf("RleData uncompress error\n");
         return NULL;
     }
 
-    res = uncompress(RleCmdDecompressed, &frame.Img->DecompressedCmdLength, RleCmd, frame.Img->CompressedCmdLength);
-    if (Z_OK != res)
+    auto RleCmdDecompressed = Utils::zlibUncompress(frame.Img->DecompressedCmdLength, RleCmd, frame.Img->CompressedCmdLength);
+    if (RleCmdDecompressed.empty())
     {
-        printf("uncompress error\n");
+        printf("RleCmd uncompress error\n");
         return NULL;
     }
 
@@ -60,15 +60,15 @@ byte *HGDecoder::getPixelsFromFrame(Frame frame)
     // printf("Allocated %lu bytes\n", szRgbaBuffer);
 
     // Decode image
-    ReturnCode ret = ProcessImage(RleDataDecompressed, frame.Img->DecompressedDataLength, RleCmdDecompressed, frame.Img->DecompressedCmdLength, rgbaBuffer, szRgbaBuffer, frame.Stdinfo->Width, frame.Stdinfo->Height, depthBytes, STRIDE(frame.Stdinfo->Width, depthBytes));
+    ReturnCode ret = ProcessImage(&RleDataDecompressed[0], frame.Img->DecompressedDataLength, &RleCmdDecompressed[0], frame.Img->DecompressedCmdLength, rgbaBuffer, szRgbaBuffer, frame.Stdinfo->Width, frame.Stdinfo->Height, depthBytes, STRIDE(frame.Stdinfo->Width, depthBytes));
     if (ReturnCode::Success != ret)
     {
         printf("ProcessImage error %lx\n", ret);
         return NULL;
     }
 
-    free(RleDataDecompressed);
-    free(RleCmdDecompressed);
+    // free(RleDataDecompressed);
+    // free(RleCmdDecompressed);
 
     return rgbaBuffer;
 }

@@ -74,13 +74,13 @@ void SceneManager::setScene(char *fpath, int local)
     if (local)
     {
 #endif
-        auto buf = Utils::getData(fpath);
+        auto buf = Utils::readFile(fpath);
         displayFrame(buf.data());
 #ifdef __EMSCRIPTEN__
     }
     else
     {
-        Utils::getData(fpath, this, onLoad, onError);
+        Utils::readFile(fpath, this, onLoad, onError);
     }
 #endif
 }
