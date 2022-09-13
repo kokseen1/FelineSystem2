@@ -6,6 +6,7 @@
 
 namespace Utils
 {
+    // Uncompress a buffer and return it as a vector
     std::vector<byte> zlibUncompress(uint32 destLen, byte *source, uint32 sourceLen)
     {
         std::vector<byte> dest(destLen);
