@@ -8,5 +8,6 @@ public:
 
     void readFromBuf(void *);
 
+private:
     void parseScript(ScriptDataHeader *);
-}
+};

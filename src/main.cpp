@@ -6,6 +6,7 @@
 
 #include <music.hpp>
 #include <scene.hpp>
+#include <parser.hpp>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -14,6 +15,7 @@
 
 MusicPlayer *musicPlayer = NULL;
 SceneManager *sceneManager = NULL;
+ScriptParser *scriptParser = NULL;
 
 int track_id = 1;
 int scene_id = 1;
@@ -40,7 +42,7 @@ void nextTrack()
 
 EM_BOOL wheel_callback(int eventType, const EmscriptenWheelEvent *e, void *userData)
 {
-    nextScene();
+    nextTrack();
     return 0;
 }
 
@@ -55,8 +57,8 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
     {
         if (eventType == EMSCRIPTEN_EVENT_CLICK)
         {
-            // for (int i = 0; i < 10000; i++)
-            nextTrack();
+            scriptParser->readFromFile("assets/sample_2.cst");
+            nextScene();
         }
     }
 
@@ -76,6 +78,7 @@ int main(int argc, char **argv)
     // Must dynamically allocate as variables in main are freed
     sceneManager = new SceneManager();
     musicPlayer = new MusicPlayer();
+    scriptParser = new ScriptParser();
 
 #ifdef __EMSCRIPTEN__
     EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);
