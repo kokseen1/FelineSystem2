@@ -4,8 +4,6 @@
 
 #include <vector>
 
-#include <scene.hpp>
-
 namespace Utils
 {
     std::vector<char> getData(char *);

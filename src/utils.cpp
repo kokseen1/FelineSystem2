@@ -7,6 +7,11 @@ namespace Utils
     std::vector<char> getData(char *fpath)
     {
         FILE *fp = fopen(fpath, "rb");
+        if (fp == NULL)
+        {
+            printf("Could not read file %s\n", fpath);
+            return {};
+        }
         fseek(fp, 0, SEEK_END);
         auto sz = ftell(fp);
         rewind(fp);

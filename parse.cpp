@@ -1,7 +1,7 @@
 #include <iostream>
 #include <utils.hpp>
 #include <cstformat.h>
-#include <memory>
+#include <vector>
 
 #include "zlib.h"
 
@@ -15,6 +15,11 @@ public:
     void readScript(char *fpath)
     {
         auto scriptBuf = Utils::getData(fpath);
+        if (scriptBuf.empty())
+        {
+            printf("readScript failed\n");
+            return;
+        }
         scriptHeader = (CSTHeader *)scriptBuf.data();
 
         printf("CompressedSize: %d\n", scriptHeader->CompressedSize);
@@ -26,21 +31,19 @@ public:
         }
         else
         {
-            // auto scriptDecompressedS = std::make_shared<byte>(scriptHeader->DecompressedSize);
-            // auto scriptDecompressed = scriptDecompressedS.get();
-            auto scriptDecompressed = new byte[scriptHeader->DecompressedSize];
+            // auto scriptDecompressed = std::make_unique<byte[]>(scriptHeader->DecompressedSize);
+            std::vector<byte> scriptDecompressed(scriptHeader->DecompressedSize);
 
-            // Zlib decompress
-            int res = uncompress(scriptDecompressed, &scriptHeader->DecompressedSize, (byte *)&scriptHeader->ScriptDataHeader, scriptHeader->CompressedSize);
+            int res = uncompress(&scriptDecompressed[0], &scriptHeader->DecompressedSize, (byte *)&scriptHeader->ScriptDataHeader, scriptHeader->CompressedSize);
             if (Z_OK != res)
             {
                 printf("uncompress error\n");
             }
 
-            printf("Last byte: %hhx\n", scriptDecompressed[scriptHeader->DecompressedSize - 1]);
-            printf("Last char: %c\n", scriptDecompressed[scriptHeader->DecompressedSize - 1]);
+            // printf("Last byte: %hhx\n", scriptDecompressed[scriptHeader->DecompressedSize - 1]);
+            // printf("Last char: %c\n", scriptDecompressed[scriptHeader->DecompressedSize - 1]);
 
-            parseScript((ScriptDataHeader *)scriptDecompressed);
+            parseScript((ScriptDataHeader *)&scriptDecompressed[0]);
         }
     }
 
@@ -53,21 +56,22 @@ public:
 
         for (int i = 0; i < StringEntryCount; i++)
         {
-            printf("Offset: %02x\n", stringOffsetTable->Offset);
+            // printf("Offset: %02x\n", stringOffsetTable->Offset);
             StringTable *stringTable = (StringTable *)((byte *)stringTableBase + stringOffsetTable->Offset);
-            printf("Type: %02x\n", stringTable->Type);
-            printf("String: %s\n", &stringTable->StringStart);
+            // printf("Type: %02x\n", stringTable->Type);
+
+            // printf("Type: %02x String: %s Strlen: %d\n", stringTable->Type, &stringTable->StringStart, strlen(&stringTable->StringStart));
 
             stringOffsetTable++;
         }
     }
 };
 
-int main()
+int main(int argc, char **argv)
 {
     ScriptParser sp;
 
-    sp.readScript((char *)R"(..\CatSystemParser\cs2_full_v301\system\scene\fes_start.cst)");
+    sp.readScript(argv[1]);
 
     return 0;
 }
