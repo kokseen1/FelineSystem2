@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <asmodean.h>
 
 #define FMT_SCENE "assets/bg%02d.hg3"
 #define WINDOW_WIDTH 1024
@@ -14,7 +15,7 @@ public:
 
     void setScene(char *, int);
 
-    void displayFrame(void *);
+    void displayFrame(byte *);
 
     SDL_Window *window = NULL;
 

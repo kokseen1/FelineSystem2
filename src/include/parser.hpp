@@ -6,8 +6,8 @@ class ScriptParser
 public:
     void readFromFile(char *);
 
-    void readFromBuf(void *);
+    void readFromBuf(byte *);
 
 private:
-    void parseScript(ScriptDataHeader *);
+    void parseScriptData(byte *);
 };

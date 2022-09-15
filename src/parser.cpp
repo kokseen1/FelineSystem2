@@ -19,9 +19,9 @@ void ScriptParser::readFromFile(char *fpath)
 }
 
 // Read a script from a memory buffer
-void ScriptParser::readFromBuf(void *buf)
+void ScriptParser::readFromBuf(byte *buf)
 {
-    CSTHeader *scriptHeader = (CSTHeader *)buf;
+    CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
     if (strncmp(scriptHeader->FileSignature, "CatScene", sizeof(scriptHeader->FileSignature)) != 0)
     {
         printf("Invalid CST file signature!\n");
@@ -31,36 +31,40 @@ void ScriptParser::readFromBuf(void *buf)
     printf("CompressedSize: %d\n", scriptHeader->CompressedSize);
     printf("DecompressedSize: %d\n", scriptHeader->DecompressedSize);
 
+    auto *scriptData = reinterpret_cast<byte *>(scriptHeader + 1);
+
     if (scriptHeader->CompressedSize == 0)
     {
         // Uncompressed script
-        parseScript(&scriptHeader->ScriptDataHeader);
+        parseScriptData(scriptData);
     }
     else
     {
-        auto scriptDataDecompressed = Utils::zlibUncompress(scriptHeader->DecompressedSize, (byte *)&scriptHeader->ScriptDataHeader, scriptHeader->CompressedSize);
+        auto scriptDataDecompressed = Utils::zlibUncompress(scriptHeader->DecompressedSize, scriptData, scriptHeader->CompressedSize);
         if (scriptDataDecompressed.empty())
         {
             printf("Script uncompress error\n");
             return;
         }
 
-        parseScript((ScriptDataHeader *)&scriptDataDecompressed[0]);
+        parseScriptData(&scriptDataDecompressed[0]);
     }
 }
 
-void ScriptParser::parseScript(ScriptDataHeader *scriptDataHeader)
+void ScriptParser::parseScriptData(byte *scriptData)
 {
-    StringOffsetTable *stringOffsetTable = (StringOffsetTable *)(&scriptDataHeader->TablesStart + scriptDataHeader->StringOffsetTableOffset);
-    StringTable *stringTableBase = (StringTable *)(&scriptDataHeader->TablesStart + scriptDataHeader->StringTableOffset);
+    ScriptDataHeader *scriptDataHeader = reinterpret_cast<ScriptDataHeader *>(scriptData);
+    byte *tablesStart = reinterpret_cast<byte *>(scriptDataHeader + 1);
 
-    auto StringEntryCount = (scriptDataHeader->StringTableOffset - scriptDataHeader->StringOffsetTableOffset) / sizeof(StringOffsetTable);
+    StringOffsetTable *stringOffsetTable = reinterpret_cast<StringOffsetTable *>(tablesStart + scriptDataHeader->StringOffsetTableOffset);
+    byte *stringTableBase = tablesStart + scriptDataHeader->StringTableOffset;
 
-    for (int i = 0; i < StringEntryCount; i++)
+    auto stringEntryCount = (stringTableBase - reinterpret_cast<byte *>(stringOffsetTable)) / sizeof(StringOffsetTable);
+    StringTable *stringTable = NULL;
+
+    for (int i = 0; i < stringEntryCount; i++, stringOffsetTable++)
     {
-        StringTable *stringTable = (StringTable *)((byte *)stringTableBase + stringOffsetTable->Offset);
+        stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
         printf("Type: %02x String: %s Strlen: %d\n", stringTable->Type, &stringTable->StringStart, strlen(&stringTable->StringStart));
-
-        stringOffsetTable++;
     }
 }

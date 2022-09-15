@@ -4,7 +4,7 @@ typedef struct
 {
     byte Byte;
     byte Type;
-    char StringStart;
+    char StringStart; // Null terminated; Arbitrary length
 } StringTable;
 
 typedef struct
@@ -16,7 +16,6 @@ typedef struct
 {
     uint32 OffsetNext;
     uint32 Index;
-    byte next;
 } InputOffsetTable;
 
 typedef struct
@@ -25,7 +24,6 @@ typedef struct
     uint32 InputCount;
     uint32 StringOffsetTableOffset;
     uint32 StringTableOffset;
-    byte TablesStart;
 } ScriptDataHeader;
 
 typedef struct
@@ -33,5 +31,4 @@ typedef struct
     char FileSignature[8];
     uint32 CompressedSize;
     uint32 DecompressedSize;
-    ScriptDataHeader ScriptDataHeader;
 } CSTHeader;

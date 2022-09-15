@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL_mixer.h>
+#include <asmodean.h>
 
 #define FMT_TRACK "assets/bgm%02d.ogg"
 
@@ -12,7 +13,7 @@ public:
 
     void setMusic(char *);
 
-    void playFromMem(void *, int);
+    void playFromMem(byte *, int);
 
     void playFromFile(char *);
 

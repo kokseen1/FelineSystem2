@@ -26,7 +26,7 @@ void MusicPlayer::setMusic(char *fpath)
 void MusicPlayer::onLoad(void *arg, void *buf, int sz)
 {
     MusicPlayer *musicPlayer = (MusicPlayer *)arg;
-    musicPlayer->playFromMem(buf, sz);
+    musicPlayer->playFromMem(static_cast<byte*>(buf), sz);
 }
 
 void MusicPlayer::onError(void *arg)
@@ -34,7 +34,7 @@ void MusicPlayer::onError(void *arg)
     printf("MusicPlayer onError\n");
 }
 
-void MusicPlayer::playFromMem(void *buf, int sz)
+void MusicPlayer::playFromMem(byte *buf, int sz)
 {
     freeBuf();
     musicBuf = new char[sz];
