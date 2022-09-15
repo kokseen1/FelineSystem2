@@ -19,10 +19,11 @@ SceneManager::SceneManager()
     printf("SceneManager initialized\n");
 }
 
+// Decode a HG buffer and display the first frame
 void SceneManager::displayFrame(byte *buf)
 {
-    HGHeader *hgHeader = (HGHeader *)buf;
-    FrameHeader *frameHeader = &hgHeader->FrameHeaderStart;
+    HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
+    FrameHeader *frameHeader = reinterpret_cast<FrameHeader *>(hgHeader + 1);
 
     std::vector<HGDecoder::Frame> frames = HGDecoder::getFrames(frameHeader);
 
@@ -59,8 +60,8 @@ void SceneManager::displayFrame(byte *buf)
 
 void SceneManager::onLoad(void *arg, void *buf, int sz)
 {
-    SceneManager *sceneManager = (SceneManager *)arg;
-    sceneManager->displayFrame(static_cast<byte*>(buf));
+    SceneManager *sceneManager = reinterpret_cast<SceneManager *>(arg);
+    sceneManager->displayFrame(static_cast<byte *>(buf));
 }
 
 void SceneManager::onError(void *arg)

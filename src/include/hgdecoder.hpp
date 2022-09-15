@@ -32,9 +32,9 @@ public:
 private:
     static Frame getFrame(FrameTag *);
 
-    static byte *getPixelsFromFrame(Frame);
+    static std::vector<byte> getPixelsFromFrame(Frame);
 
-    static SDL_Surface *getSurfaceFromPixels(byte *, Frame);
+    static SDL_Surface *getSurfaceFromPixels(std::vector<byte>, Frame);
 
     static SDL_Surface *flip_vertical(SDL_Surface *);
 };

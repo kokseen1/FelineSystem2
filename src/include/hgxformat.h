@@ -24,7 +24,6 @@ typedef struct
     uint32 DecompressedDataLength;
     uint32 CompressedCmdLength;
     uint32 DecompressedCmdLength;
-    byte DataStart;
 } Img;
 
 typedef struct FrameTag
@@ -43,7 +42,6 @@ typedef struct
 {
     uint32 OffsetNext;
     uint32 ID;
-    FrameTag FrameTagStart;
 } FrameHeader;
 
 typedef struct
@@ -51,5 +49,4 @@ typedef struct
     char FileSignature[4];
     uint32 HeaderSize;
     uint32 Version;
-    FrameHeader FrameHeaderStart;
 } HGHeader;

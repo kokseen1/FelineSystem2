@@ -6,6 +6,8 @@
 #include <utils.hpp>
 
 // Allocates and returns a flipped surface
+// Frees the original surface
+// Caller is responsible for freeing the returned surface
 SDL_Surface *HGDecoder::flip_vertical(SDL_Surface *sfc)
 {
     SDL_Surface *result = SDL_CreateRGBSurface(sfc->flags, sfc->w, sfc->h,
@@ -21,54 +23,46 @@ SDL_Surface *HGDecoder::flip_vertical(SDL_Surface *sfc)
         pixels -= pitch;
         rpixels += pitch;
     }
+    SDL_FreeSurface(sfc);
     return result;
 }
 
-// Decodes a frame and returns a pixel array rgbaBuffer
-// Caller is responsible for freeing the buffer
-byte *HGDecoder::getPixelsFromFrame(Frame frame)
+// Decodes a frame and returns a vector of pixels rgbaBuffer
+std::vector<byte> HGDecoder::getPixelsFromFrame(Frame frame)
 {
     // Get locations of Data and Cmd
-    byte *RleData = &frame.Img->DataStart;
+    byte *RleData = reinterpret_cast<byte *>(frame.Img + 1);
     byte *RleCmd = RleData + frame.Img->CompressedDataLength;
-
-    // Allocate memory for decompressed buffer
-    // byte *RleDataDecompressed = (byte *)malloc(frame.Img->DecompressedDataLength);
-    // byte *RleCmdDecompressed = (byte *)malloc(frame.Img->DecompressedCmdLength);
 
     // Zlib decompress
     auto RleDataDecompressed = Utils::zlibUncompress(frame.Img->DecompressedDataLength, RleData, frame.Img->CompressedDataLength);
     if (RleDataDecompressed.empty())
     {
         printf("RleData uncompress error\n");
-        return NULL;
+        return {};
     }
 
     auto RleCmdDecompressed = Utils::zlibUncompress(frame.Img->DecompressedCmdLength, RleCmd, frame.Img->CompressedCmdLength);
     if (RleCmdDecompressed.empty())
     {
         printf("RleCmd uncompress error\n");
-        return NULL;
+        return {};
     }
 
     // Calculate byte depth
     int depthBytes = BYTE_DEPTH(frame.Stdinfo->BitDepth);
 
-    // Allocate memory for rgbaBuffer
     uint32 szRgbaBuffer = frame.Stdinfo->Width * frame.Stdinfo->Height * depthBytes;
-    byte *rgbaBuffer = (byte *)malloc(szRgbaBuffer);
+    std::vector<byte> rgbaBuffer(szRgbaBuffer);
     // printf("Allocated %lu bytes\n", szRgbaBuffer);
 
     // Decode image
-    ReturnCode ret = ProcessImage(&RleDataDecompressed[0], frame.Img->DecompressedDataLength, &RleCmdDecompressed[0], frame.Img->DecompressedCmdLength, rgbaBuffer, szRgbaBuffer, frame.Stdinfo->Width, frame.Stdinfo->Height, depthBytes, STRIDE(frame.Stdinfo->Width, depthBytes));
+    ReturnCode ret = ProcessImage(&RleDataDecompressed[0], frame.Img->DecompressedDataLength, &RleCmdDecompressed[0], frame.Img->DecompressedCmdLength, &rgbaBuffer[0], szRgbaBuffer, frame.Stdinfo->Width, frame.Stdinfo->Height, depthBytes, STRIDE(frame.Stdinfo->Width, depthBytes));
     if (ReturnCode::Success != ret)
     {
         printf("ProcessImage error %lx\n", ret);
-        return NULL;
+        return {};
     }
-
-    // free(RleDataDecompressed);
-    // free(RleCmdDecompressed);
 
     return rgbaBuffer;
 }
@@ -100,7 +94,7 @@ HGDecoder::Frame HGDecoder::getFrame(FrameTag *frameTag)
             break;
 
         // Shift by byte offset
-        frameTag = (FrameTag *)((byte *)frameTag + frameTag->OffsetNext);
+        frameTag = reinterpret_cast<FrameTag *>(reinterpret_cast<byte *>(frameTag) + frameTag->OffsetNext);
     }
 
     return frame;
@@ -110,24 +104,21 @@ HGDecoder::Frame HGDecoder::getFrame(FrameTag *frameTag)
 // Caller is responsible for freeing the surface
 SDL_Surface *HGDecoder::getSurfaceFromFrame(Frame frame)
 {
-    byte *rgbaBuffer = getPixelsFromFrame(frame);
-    SDL_Surface *flipped = getSurfaceFromPixels(rgbaBuffer, frame);
+    auto rgbaBuffer = getPixelsFromFrame(frame);
+    SDL_Surface *surface = getSurfaceFromPixels(rgbaBuffer, frame);
 
-    free(rgbaBuffer);
-
-    return flipped;
+    return surface;
 }
 
-// Returns an image surface in proper orientation from a rgbaBuffer
+// Returns an image surface in proper orientation from a rgbaBuffer vector
 // Caller is responsible for freeing the surface
-SDL_Surface *HGDecoder::getSurfaceFromPixels(byte *rgbaBuffer, Frame frame)
+SDL_Surface *HGDecoder::getSurfaceFromPixels(std::vector<byte> rgbaBuffer, Frame frame)
 {
     SDL_Surface *result = NULL;
-    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(rgbaBuffer, frame.Stdinfo->Width, frame.Stdinfo->Height, frame.Stdinfo->BitDepth, PITCH(frame.Stdinfo->Width, frame.Stdinfo->BitDepth), RMASK, GMASK, BMASK, AMASK);
+    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(rgbaBuffer.data(), frame.Stdinfo->Width, frame.Stdinfo->Height, frame.Stdinfo->BitDepth, PITCH(frame.Stdinfo->Width, frame.Stdinfo->BitDepth), RMASK, GMASK, BMASK, AMASK);
     if (surface != NULL)
     {
         result = flip_vertical(surface);
-        SDL_FreeSurface(surface);
     }
 
     return result;
@@ -140,7 +131,7 @@ std::vector<HGDecoder::Frame> HGDecoder::getFrames(FrameHeader *frameHeader)
 
     while (1)
     {
-        Frame frame = getFrame(&frameHeader->FrameTagStart);
+        Frame frame = getFrame(reinterpret_cast<FrameTag *>(frameHeader + 1));
         frames.push_back(frame);
 
         // Reach last frame
@@ -149,7 +140,7 @@ std::vector<HGDecoder::Frame> HGDecoder::getFrames(FrameHeader *frameHeader)
             break;
         }
 
-        frameHeader = (FrameHeader *)((byte *)frameHeader + frameHeader->OffsetNext);
+        frameHeader = reinterpret_cast<FrameHeader *>((reinterpret_cast<byte *>(frameHeader) + frameHeader->OffsetNext));
     }
 
     return frames;
