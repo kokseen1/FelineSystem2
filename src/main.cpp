@@ -27,6 +27,8 @@ void nextScene()
     sceneManager->setScene(fpath, 0);
 
     scene_id = scene_id == 11 ? 1 : scene_id + 1;
+
+    scriptParser->parseNext();
 }
 
 void nextTrack()
@@ -42,7 +44,7 @@ void nextTrack()
 
 EM_BOOL wheel_callback(int eventType, const EmscriptenWheelEvent *e, void *userData)
 {
-    nextTrack();
+    nextScene();
     return 0;
 }
 
@@ -57,8 +59,7 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
     {
         if (eventType == EMSCRIPTEN_EVENT_CLICK)
         {
-            scriptParser->readFromFile("assets/sample_2.cst");
-            nextScene();
+            nextTrack();
         }
     }
 
