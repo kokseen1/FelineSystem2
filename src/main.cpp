@@ -77,9 +77,11 @@ int main(int argc, char **argv)
     }
 
     // Must dynamically allocate as variables in main are freed
-    sceneManager = new SceneManager();
     musicPlayer = new MusicPlayer();
-    scriptParser = new ScriptParser();
+    sceneManager = new SceneManager();
+    scriptParser = new ScriptParser(musicPlayer);
+
+    scriptParser->setScript("assets/sac_022.cst");
 
 #ifdef __EMSCRIPTEN__
     EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);

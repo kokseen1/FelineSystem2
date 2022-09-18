@@ -5,6 +5,8 @@
 #include <utils.hpp>
 #include <parser.hpp>
 
+ScriptParser::ScriptParser(MusicPlayer *mp) : musicPlayer(mp){};
+
 void ScriptParser::onLoad(void *arg, void *buf, int sz)
 {
     ScriptParser *scriptParser = (ScriptParser *)arg;
@@ -129,9 +131,9 @@ void ScriptParser::handleCommand(std::string cmdString)
     std::smatch matches;
     if (std::regex_match(cmdString, matches, std::regex("^pcm (.+)")))
     {
-        for (size_t i = 0; i < matches.size(); ++i)
+        if (matches.size() == 2)
         {
-            std::cout << i << ": '" << matches[i].str() << "'\n";
+            musicPlayer->playPcm(matches[1].str());
         }
     }
 }

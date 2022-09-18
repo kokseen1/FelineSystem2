@@ -2,9 +2,13 @@
 #include <string>
 #include <cstformat.h>
 
+#include <music.hpp>
+
 class ScriptParser
 {
 private:
+    MusicPlayer *musicPlayer;
+
     std::vector<byte> currScriptData;
     StringOffsetTable *stringOffsetTable;
     byte *stringTableBase;
@@ -21,6 +25,8 @@ private:
     static void onError(void *);
 
 public:
+    ScriptParser(MusicPlayer*);
+
     void parseNext();
     void setScript(char *);
 };

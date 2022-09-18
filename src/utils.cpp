@@ -21,7 +21,7 @@ namespace Utils
     }
 
     // Read a local file and return its contents as a vector
-    std::vector<byte> readFile(char *fpath)
+    std::vector<byte> readFile(const char *fpath)
     {
         // Use C-style for compatibility
         FILE *fp = fopen(fpath, "rb");
@@ -45,7 +45,7 @@ namespace Utils
 
 #ifdef __EMSCRIPTEN__
     // Asynchronously fetch a file via url and pass the buffer to a callback
-    void readFile(char *fpath, void *arg, em_async_wget_onload_func onLoad, em_arg_callback_func onError)
+    void readFile(const char *fpath, void *arg, em_async_wget_onload_func onLoad, em_arg_callback_func onError)
     {
         emscripten_async_wget_data(fpath, arg, onLoad, onError);
     }

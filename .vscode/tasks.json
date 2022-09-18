@@ -23,8 +23,6 @@
 				"-sALLOW_MEMORY_GROWTH",
 				"-fdeclspec",
 				"-sUSE_ZLIB=1",
-				"--preload-file",
-				"assets"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"

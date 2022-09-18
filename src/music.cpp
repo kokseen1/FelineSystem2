@@ -12,13 +12,42 @@ MusicPlayer::MusicPlayer()
     printf("MusicPlayer initialized\n");
 }
 
-void MusicPlayer::setMusic(char *fpath)
+void MusicPlayer::playPcm(std::string pcm)
+{
+    std::string fpath;
+    if (pcm.rfind("YUM", 0) == 0)
+    {
+        fpath = TEM_PCM "a/" + pcm;
+    }
+    else if (pcm.rfind("AMA", 0) == 0)
+    {
+        fpath = TEM_PCM "b/" + pcm;
+    }
+    else
+    {
+        return;
+    }
+
+    fpath += EXT_PCM;
+    setSound(fpath.c_str());
+}
+
+void MusicPlayer::setSound(const char *fpath)
+{
+    printf("Playing pcm %s\n", fpath);
+#ifdef __EMSCRIPTEN__
+    Utils::readFile(fpath, this, onLoadSound, onError);
+#else
+    auto buf = Utils::readFile(fpath);
+    playSoundFromMem(buf.data(), buf.size());
+#endif
+}
+
+void MusicPlayer::setMusic(const char *fpath)
 {
 #ifdef __EMSCRIPTEN__
     Utils::readFile(fpath, this, onLoad, onError);
 #else
-    // auto buf = Utils::readFile(fpath);
-    // playFromMem(buf.data(), buf.size());
     playFromFile(fpath);
 #endif
 }
@@ -26,12 +55,27 @@ void MusicPlayer::setMusic(char *fpath)
 void MusicPlayer::onLoad(void *arg, void *buf, int sz)
 {
     MusicPlayer *musicPlayer = (MusicPlayer *)arg;
-    musicPlayer->playFromMem(static_cast<byte*>(buf), sz);
+    musicPlayer->playFromMem(static_cast<byte *>(buf), sz);
+}
+
+void MusicPlayer::onLoadSound(void *arg, void *buf, int sz)
+{
+    MusicPlayer *musicPlayer = (MusicPlayer *)arg;
+    musicPlayer->playSoundFromMem(static_cast<byte *>(buf), sz);
 }
 
 void MusicPlayer::onError(void *arg)
 {
     printf("MusicPlayer onError\n");
+}
+
+void MusicPlayer::playSoundFromMem(byte *buf, int sz)
+{
+    auto soundOps = SDL_RWFromMem(buf, sz);
+    Mix_Chunk *chunk = Mix_LoadWAV_RW(soundOps, 0);
+    int channel = Mix_PlayChannel(-1, chunk, 0);
+    // Cannot be called here for local SDL
+    // Mix_FreeChunk(chunk);
 }
 
 void MusicPlayer::playFromMem(byte *buf, int sz)
@@ -49,14 +93,10 @@ void MusicPlayer::playFromMem(byte *buf, int sz)
     // mus = Mix_LoadMUSType_RW(rw, MUS_NONE, 1);
 
     playMusic();
-
-    // printf("rw: %p\n", rw);
-    // printf("mus: %p\n", mus);
-    // printf("musicBuf: %p\n", musicBuf);
 }
 
 // Play via filename
-void MusicPlayer::playFromFile(char *fpath)
+void MusicPlayer::playFromFile(const char *fpath)
 {
     freeMusic();
 

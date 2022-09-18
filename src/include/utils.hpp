@@ -9,10 +9,10 @@ namespace Utils
 {
     std::vector<byte> zlibUncompress(uint32, byte *, uint32);
 
-    std::vector<byte> readFile(char *);
+    std::vector<byte> readFile(const char *);
 
 #ifdef __EMSCRIPTEN__
-    void readFile(char *, void *, em_async_wget_onload_func, em_arg_callback_func);
+    void readFile(const char *, void *, em_async_wget_onload_func, em_arg_callback_func);
 
     static inline const char *emscripten_event_type_to_string(int eventType)
     {

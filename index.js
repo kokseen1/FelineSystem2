@@ -21,196 +21,7 @@ var Module = typeof Module != 'undefined' ? Module : {};
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-
-  if (!Module.expectedDataFileDownloads) {
-    Module.expectedDataFileDownloads = 0;
-  }
-
-  Module.expectedDataFileDownloads++;
-  (function() {
-    // When running as a pthread, FS operations are proxied to the main thread, so we don't need to
-    // fetch the .data bundle on the worker
-    if (Module['ENVIRONMENT_IS_PTHREAD']) return;
-    var loadPackage = function(metadata) {
-
-      var PACKAGE_PATH = '';
-      if (typeof window === 'object') {
-        PACKAGE_PATH = window['encodeURIComponent'](window.location.pathname.toString().substring(0, window.location.pathname.toString().lastIndexOf('/')) + '/');
-      } else if (typeof process === 'undefined' && typeof location !== 'undefined') {
-        // web worker
-        PACKAGE_PATH = encodeURIComponent(location.pathname.toString().substring(0, location.pathname.toString().lastIndexOf('/')) + '/');
-      }
-      var PACKAGE_NAME = 'index.data';
-      var REMOTE_PACKAGE_BASE = 'index.data';
-      if (typeof Module['locateFilePackage'] === 'function' && !Module['locateFile']) {
-        Module['locateFile'] = Module['locateFilePackage'];
-        err('warning: you defined Module.locateFilePackage, that has been renamed to Module.locateFile (using your locateFilePackage for now)');
-      }
-      var REMOTE_PACKAGE_NAME = Module['locateFile'] ? Module['locateFile'](REMOTE_PACKAGE_BASE, '') : REMOTE_PACKAGE_BASE;
-var REMOTE_PACKAGE_SIZE = metadata['remote_package_size'];
-
-      function fetchRemotePackage(packageName, packageSize, callback, errback) {
-        if (typeof process === 'object' && typeof process.versions === 'object' && typeof process.versions.node === 'string') {
-          require('fs').readFile(packageName, function(err, contents) {
-            if (err) {
-              errback(err);
-            } else {
-              callback(contents.buffer);
-            }
-          });
-          return;
-        }
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', packageName, true);
-        xhr.responseType = 'arraybuffer';
-        xhr.onprogress = function(event) {
-          var url = packageName;
-          var size = packageSize;
-          if (event.total) size = event.total;
-          if (event.loaded) {
-            if (!xhr.addedTotal) {
-              xhr.addedTotal = true;
-              if (!Module.dataFileDownloads) Module.dataFileDownloads = {};
-              Module.dataFileDownloads[url] = {
-                loaded: event.loaded,
-                total: size
-              };
-            } else {
-              Module.dataFileDownloads[url].loaded = event.loaded;
-            }
-            var total = 0;
-            var loaded = 0;
-            var num = 0;
-            for (var download in Module.dataFileDownloads) {
-            var data = Module.dataFileDownloads[download];
-              total += data.total;
-              loaded += data.loaded;
-              num++;
-            }
-            total = Math.ceil(total * Module.expectedDataFileDownloads/num);
-            if (Module['setStatus']) Module['setStatus']('Downloading data... (' + loaded + '/' + total + ')');
-          } else if (!Module.dataFileDownloads) {
-            if (Module['setStatus']) Module['setStatus']('Downloading data...');
-          }
-        };
-        xhr.onerror = function(event) {
-          throw new Error("NetworkError for: " + packageName);
-        }
-        xhr.onload = function(event) {
-          if (xhr.status == 200 || xhr.status == 304 || xhr.status == 206 || (xhr.status == 0 && xhr.response)) { // file URLs can return 0
-            var packageData = xhr.response;
-            callback(packageData);
-          } else {
-            throw new Error(xhr.statusText + " : " + xhr.responseURL);
-          }
-        };
-        xhr.send(null);
-      };
-
-      function handleError(error) {
-        console.error('package error:', error);
-      };
-
-      var fetchedCallback = null;
-      var fetched = Module['getPreloadedPackage'] ? Module['getPreloadedPackage'](REMOTE_PACKAGE_NAME, REMOTE_PACKAGE_SIZE) : null;
-
-      if (!fetched) fetchRemotePackage(REMOTE_PACKAGE_NAME, REMOTE_PACKAGE_SIZE, function(data) {
-        if (fetchedCallback) {
-          fetchedCallback(data);
-          fetchedCallback = null;
-        } else {
-          fetched = data;
-        }
-      }, handleError);
-
-    function runWithFS() {
-
-      function assert(check, msg) {
-        if (!check) throw msg + new Error().stack;
-      }
-Module['FS_createPath']("/", "assets", true, true);
-
-      /** @constructor */
-      function DataRequest(start, end, audio) {
-        this.start = start;
-        this.end = end;
-        this.audio = audio;
-      }
-      DataRequest.prototype = {
-        requests: {},
-        open: function(mode, name) {
-          this.name = name;
-          this.requests[name] = this;
-          Module['addRunDependency']('fp ' + this.name);
-        },
-        send: function() {},
-        onload: function() {
-          var byteArray = this.byteArray.subarray(this.start, this.end);
-          this.finish(byteArray);
-        },
-        finish: function(byteArray) {
-          var that = this;
-          // canOwn this data in the filesystem, it is a slide into the heap that will never change
-          Module['FS_createDataFile'](this.name, null, byteArray, true, true, true);
-          Module['removeRunDependency']('fp ' + that.name);
-          this.requests[this.name] = null;
-        }
-      };
-
-      var files = metadata['files'];
-      for (var i = 0; i < files.length; ++i) {
-        new DataRequest(files[i]['start'], files[i]['end'], files[i]['audio'] || 0).open('GET', files[i]['filename']);
-      }
-
-      function processPackageData(arrayBuffer) {
-        assert(arrayBuffer, 'Loading data file failed.');
-        assert(arrayBuffer instanceof ArrayBuffer, 'bad input to processPackageData');
-        var byteArray = new Uint8Array(arrayBuffer);
-        var curr;
-        // Reuse the bytearray from the XHR as the source for file reads.
-          DataRequest.prototype.byteArray = byteArray;
-          var files = metadata['files'];
-          for (var i = 0; i < files.length; ++i) {
-            DataRequest.prototype.requests[files[i].filename].onload();
-          }          Module['removeRunDependency']('datafile_index.data');
-
-      };
-      Module['addRunDependency']('datafile_index.data');
-
-      if (!Module.preloadResults) Module.preloadResults = {};
-
-      Module.preloadResults[PACKAGE_NAME] = {fromCache: false};
-      if (fetched) {
-        processPackageData(fetched);
-        fetched = null;
-      } else {
-        fetchedCallback = processPackageData;
-      }
-
-    }
-    if (Module['calledRun']) {
-      runWithFS();
-    } else {
-      if (!Module['preRun']) Module['preRun'] = [];
-      Module["preRun"].push(runWithFS); // FS is not initialized yet, wait for it
-    }
-
-    }
-    loadPackage({"files": [{"filename": "/assets/bg01.hg3", "start": 0, "end": 750103}, {"filename": "/assets/bg02.hg3", "start": 750103, "end": 1259401}, {"filename": "/assets/bg03.hg3", "start": 1259401, "end": 2121321}, {"filename": "/assets/bg04.hg3", "start": 2121321, "end": 2788967}, {"filename": "/assets/bg05.hg3", "start": 2788967, "end": 3582580}, {"filename": "/assets/bg06.hg3", "start": 3582580, "end": 4335717}, {"filename": "/assets/bg07.hg3", "start": 4335717, "end": 5401910}, {"filename": "/assets/bg08.hg3", "start": 5401910, "end": 6018547}, {"filename": "/assets/bg09.hg3", "start": 6018547, "end": 6600043}, {"filename": "/assets/bg10.hg3", "start": 6600043, "end": 6802236}, {"filename": "/assets/bg11.hg3", "start": 6802236, "end": 7013653}, {"filename": "/assets/bgm01.ogg", "start": 7013653, "end": 9605463, "audio": 1}, {"filename": "/assets/bgm02.ogg", "start": 9605463, "end": 12227052, "audio": 1}, {"filename": "/assets/bgm03.ogg", "start": 12227052, "end": 14543739, "audio": 1}, {"filename": "/assets/bgm04.ogg", "start": 14543739, "end": 16819250, "audio": 1}, {"filename": "/assets/bgm05.ogg", "start": 16819250, "end": 19236557, "audio": 1}, {"filename": "/assets/bgm06.ogg", "start": 19236557, "end": 21580461, "audio": 1}, {"filename": "/assets/bgm07.ogg", "start": 21580461, "end": 24097632, "audio": 1}, {"filename": "/assets/bgm08.ogg", "start": 24097632, "end": 26438555, "audio": 1}, {"filename": "/assets/bgm09.ogg", "start": 26438555, "end": 28955005, "audio": 1}, {"filename": "/assets/sac_022.cst", "start": 28955005, "end": 28965754}, {"filename": "/assets/sample_2.cst", "start": 28965754, "end": 28965850}], "remote_package_size": 28965850});
-
-  })();
-
-
-    // All the pre-js content up to here must remain later on, we need to run
-    // it.
-    if (Module['ENVIRONMENT_IS_PTHREAD']) Module['preRun'] = [];
-    var necessaryPreJSTasks = Module['preRun'].slice();
-  
-    if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
-    necessaryPreJSTasks.forEach(function(task) {
-      if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
-    });
-  
+// {{PRE_JSES}}
 
 // Sometimes an existing Module object exists with properties
 // meant to overwrite the default module functionality. Here
@@ -1351,21 +1162,21 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  179968: () => { if (typeof(AudioContext) !== 'undefined') { return true; } else if (typeof(webkitAudioContext) !== 'undefined') { return true; } return false; },  
- 180115: () => { if ((typeof(navigator.mediaDevices) !== 'undefined') && (typeof(navigator.mediaDevices.getUserMedia) !== 'undefined')) { return true; } else if (typeof(navigator.webkitGetUserMedia) !== 'undefined') { return true; } return false; },  
- 180349: ($0) => { if(typeof(Module['SDL2']) === 'undefined') { Module['SDL2'] = {}; } var SDL2 = Module['SDL2']; if (!$0) { SDL2.audio = {}; } else { SDL2.capture = {}; } if (!SDL2.audioContext) { if (typeof(AudioContext) !== 'undefined') { SDL2.audioContext = new AudioContext(); } else if (typeof(webkitAudioContext) !== 'undefined') { SDL2.audioContext = new webkitAudioContext(); } if (SDL2.audioContext) { autoResumeAudioContext(SDL2.audioContext); } } return SDL2.audioContext === undefined ? -1 : 0; },  
- 180842: () => { var SDL2 = Module['SDL2']; return SDL2.audioContext.sampleRate; },  
- 180910: ($0, $1, $2, $3) => { var SDL2 = Module['SDL2']; var have_microphone = function(stream) { if (SDL2.capture.silenceTimer !== undefined) { clearTimeout(SDL2.capture.silenceTimer); SDL2.capture.silenceTimer = undefined; } SDL2.capture.mediaStreamNode = SDL2.audioContext.createMediaStreamSource(stream); SDL2.capture.scriptProcessorNode = SDL2.audioContext.createScriptProcessor($1, $0, 1); SDL2.capture.scriptProcessorNode.onaudioprocess = function(audioProcessingEvent) { if ((SDL2 === undefined) || (SDL2.capture === undefined)) { return; } audioProcessingEvent.outputBuffer.getChannelData(0).fill(0.0); SDL2.capture.currentCaptureBuffer = audioProcessingEvent.inputBuffer; dynCall('vi', $2, [$3]); }; SDL2.capture.mediaStreamNode.connect(SDL2.capture.scriptProcessorNode); SDL2.capture.scriptProcessorNode.connect(SDL2.audioContext.destination); SDL2.capture.stream = stream; }; var no_microphone = function(error) { }; SDL2.capture.silenceBuffer = SDL2.audioContext.createBuffer($0, $1, SDL2.audioContext.sampleRate); SDL2.capture.silenceBuffer.getChannelData(0).fill(0.0); var silence_callback = function() { SDL2.capture.currentCaptureBuffer = SDL2.capture.silenceBuffer; dynCall('vi', $2, [$3]); }; SDL2.capture.silenceTimer = setTimeout(silence_callback, ($1 / SDL2.audioContext.sampleRate) * 1000); if ((navigator.mediaDevices !== undefined) && (navigator.mediaDevices.getUserMedia !== undefined)) { navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(have_microphone).catch(no_microphone); } else if (navigator.webkitGetUserMedia !== undefined) { navigator.webkitGetUserMedia({ audio: true, video: false }, have_microphone, no_microphone); } },  
- 182562: ($0, $1, $2, $3) => { var SDL2 = Module['SDL2']; SDL2.audio.scriptProcessorNode = SDL2.audioContext['createScriptProcessor']($1, 0, $0); SDL2.audio.scriptProcessorNode['onaudioprocess'] = function (e) { if ((SDL2 === undefined) || (SDL2.audio === undefined)) { return; } SDL2.audio.currentOutputBuffer = e['outputBuffer']; dynCall('vi', $2, [$3]); }; SDL2.audio.scriptProcessorNode['connect'](SDL2.audioContext['destination']); },  
- 182972: ($0, $1) => { var SDL2 = Module['SDL2']; var numChannels = SDL2.capture.currentCaptureBuffer.numberOfChannels; for (var c = 0; c < numChannels; ++c) { var channelData = SDL2.capture.currentCaptureBuffer.getChannelData(c); if (channelData.length != $1) { throw 'Web Audio capture buffer length mismatch! Destination size: ' + channelData.length + ' samples vs expected ' + $1 + ' samples!'; } if (numChannels == 1) { for (var j = 0; j < $1; ++j) { setValue($0 + (j * 4), channelData[j], 'float'); } } else { for (var j = 0; j < $1; ++j) { setValue($0 + (((j * numChannels) + c) * 4), channelData[j], 'float'); } } } },  
- 183577: ($0, $1) => { var SDL2 = Module['SDL2']; var numChannels = SDL2.audio.currentOutputBuffer['numberOfChannels']; for (var c = 0; c < numChannels; ++c) { var channelData = SDL2.audio.currentOutputBuffer['getChannelData'](c); if (channelData.length != $1) { throw 'Web Audio output buffer length mismatch! Destination size: ' + channelData.length + ' samples vs expected ' + $1 + ' samples!'; } for (var j = 0; j < $1; ++j) { channelData[j] = HEAPF32[$0 + ((j*numChannels + c) << 2) >> 2]; } } },  
- 184057: ($0) => { var SDL2 = Module['SDL2']; if ($0) { if (SDL2.capture.silenceTimer !== undefined) { clearTimeout(SDL2.capture.silenceTimer); } if (SDL2.capture.stream !== undefined) { var tracks = SDL2.capture.stream.getAudioTracks(); for (var i = 0; i < tracks.length; i++) { SDL2.capture.stream.removeTrack(tracks[i]); } SDL2.capture.stream = undefined; } if (SDL2.capture.scriptProcessorNode !== undefined) { SDL2.capture.scriptProcessorNode.onaudioprocess = function(audioProcessingEvent) {}; SDL2.capture.scriptProcessorNode.disconnect(); SDL2.capture.scriptProcessorNode = undefined; } if (SDL2.capture.mediaStreamNode !== undefined) { SDL2.capture.mediaStreamNode.disconnect(); SDL2.capture.mediaStreamNode = undefined; } if (SDL2.capture.silenceBuffer !== undefined) { SDL2.capture.silenceBuffer = undefined } SDL2.capture = undefined; } else { if (SDL2.audio.scriptProcessorNode != undefined) { SDL2.audio.scriptProcessorNode.disconnect(); SDL2.audio.scriptProcessorNode = undefined; } SDL2.audio = undefined; } if ((SDL2.audioContext !== undefined) && (SDL2.audio === undefined) && (SDL2.capture === undefined)) { SDL2.audioContext.close(); SDL2.audioContext = undefined; } },  
- 185229: ($0, $1, $2) => { var w = $0; var h = $1; var pixels = $2; if (!Module['SDL2']) Module['SDL2'] = {}; var SDL2 = Module['SDL2']; if (SDL2.ctxCanvas !== Module['canvas']) { SDL2.ctx = Module['createContext'](Module['canvas'], false, true); SDL2.ctxCanvas = Module['canvas']; } if (SDL2.w !== w || SDL2.h !== h || SDL2.imageCtx !== SDL2.ctx) { SDL2.image = SDL2.ctx.createImageData(w, h); SDL2.w = w; SDL2.h = h; SDL2.imageCtx = SDL2.ctx; } var data = SDL2.image.data; var src = pixels >> 2; var dst = 0; var num; if (typeof CanvasPixelArray !== 'undefined' && data instanceof CanvasPixelArray) { num = data.length; while (dst < num) { var val = HEAP32[src]; data[dst ] = val & 0xff; data[dst+1] = (val >> 8) & 0xff; data[dst+2] = (val >> 16) & 0xff; data[dst+3] = 0xff; src++; dst += 4; } } else { if (SDL2.data32Data !== data) { SDL2.data32 = new Int32Array(data.buffer); SDL2.data8 = new Uint8Array(data.buffer); SDL2.data32Data = data; } var data32 = SDL2.data32; num = data32.length; data32.set(HEAP32.subarray(src, src + num)); var data8 = SDL2.data8; var i = 3; var j = i + 4*num; if (num % 8 == 0) { while (i < j) { data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; } } else { while (i < j) { data8[i] = 0xff; i = i + 4 | 0; } } } SDL2.ctx.putImageData(SDL2.image, 0, 0); },  
- 186698: ($0, $1, $2, $3, $4) => { var w = $0; var h = $1; var hot_x = $2; var hot_y = $3; var pixels = $4; var canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h; var ctx = canvas.getContext("2d"); var image = ctx.createImageData(w, h); var data = image.data; var src = pixels >> 2; var dst = 0; var num; if (typeof CanvasPixelArray !== 'undefined' && data instanceof CanvasPixelArray) { num = data.length; while (dst < num) { var val = HEAP32[src]; data[dst ] = val & 0xff; data[dst+1] = (val >> 8) & 0xff; data[dst+2] = (val >> 16) & 0xff; data[dst+3] = (val >> 24) & 0xff; src++; dst += 4; } } else { var data32 = new Int32Array(data.buffer); num = data32.length; data32.set(HEAP32.subarray(src, src + num)); } ctx.putImageData(image, 0, 0); var url = hot_x === 0 && hot_y === 0 ? "url(" + canvas.toDataURL() + "), auto" : "url(" + canvas.toDataURL() + ") " + hot_x + " " + hot_y + ", auto"; var urlBuf = _malloc(url.length + 1); stringToUTF8(url, urlBuf, url.length + 1); return urlBuf; },  
- 187687: ($0) => { if (Module['canvas']) { Module['canvas'].style['cursor'] = UTF8ToString($0); } },  
- 187770: () => { if (Module['canvas']) { Module['canvas'].style['cursor'] = 'none'; } },  
- 187839: () => { return window.innerWidth; },  
- 187869: () => { return window.innerHeight; }
+  85200: () => { if (typeof(AudioContext) !== 'undefined') { return true; } else if (typeof(webkitAudioContext) !== 'undefined') { return true; } return false; },  
+ 85347: () => { if ((typeof(navigator.mediaDevices) !== 'undefined') && (typeof(navigator.mediaDevices.getUserMedia) !== 'undefined')) { return true; } else if (typeof(navigator.webkitGetUserMedia) !== 'undefined') { return true; } return false; },  
+ 85581: ($0) => { if(typeof(Module['SDL2']) === 'undefined') { Module['SDL2'] = {}; } var SDL2 = Module['SDL2']; if (!$0) { SDL2.audio = {}; } else { SDL2.capture = {}; } if (!SDL2.audioContext) { if (typeof(AudioContext) !== 'undefined') { SDL2.audioContext = new AudioContext(); } else if (typeof(webkitAudioContext) !== 'undefined') { SDL2.audioContext = new webkitAudioContext(); } if (SDL2.audioContext) { autoResumeAudioContext(SDL2.audioContext); } } return SDL2.audioContext === undefined ? -1 : 0; },  
+ 86074: () => { var SDL2 = Module['SDL2']; return SDL2.audioContext.sampleRate; },  
+ 86142: ($0, $1, $2, $3) => { var SDL2 = Module['SDL2']; var have_microphone = function(stream) { if (SDL2.capture.silenceTimer !== undefined) { clearTimeout(SDL2.capture.silenceTimer); SDL2.capture.silenceTimer = undefined; } SDL2.capture.mediaStreamNode = SDL2.audioContext.createMediaStreamSource(stream); SDL2.capture.scriptProcessorNode = SDL2.audioContext.createScriptProcessor($1, $0, 1); SDL2.capture.scriptProcessorNode.onaudioprocess = function(audioProcessingEvent) { if ((SDL2 === undefined) || (SDL2.capture === undefined)) { return; } audioProcessingEvent.outputBuffer.getChannelData(0).fill(0.0); SDL2.capture.currentCaptureBuffer = audioProcessingEvent.inputBuffer; dynCall('vi', $2, [$3]); }; SDL2.capture.mediaStreamNode.connect(SDL2.capture.scriptProcessorNode); SDL2.capture.scriptProcessorNode.connect(SDL2.audioContext.destination); SDL2.capture.stream = stream; }; var no_microphone = function(error) { }; SDL2.capture.silenceBuffer = SDL2.audioContext.createBuffer($0, $1, SDL2.audioContext.sampleRate); SDL2.capture.silenceBuffer.getChannelData(0).fill(0.0); var silence_callback = function() { SDL2.capture.currentCaptureBuffer = SDL2.capture.silenceBuffer; dynCall('vi', $2, [$3]); }; SDL2.capture.silenceTimer = setTimeout(silence_callback, ($1 / SDL2.audioContext.sampleRate) * 1000); if ((navigator.mediaDevices !== undefined) && (navigator.mediaDevices.getUserMedia !== undefined)) { navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(have_microphone).catch(no_microphone); } else if (navigator.webkitGetUserMedia !== undefined) { navigator.webkitGetUserMedia({ audio: true, video: false }, have_microphone, no_microphone); } },  
+ 87794: ($0, $1, $2, $3) => { var SDL2 = Module['SDL2']; SDL2.audio.scriptProcessorNode = SDL2.audioContext['createScriptProcessor']($1, 0, $0); SDL2.audio.scriptProcessorNode['onaudioprocess'] = function (e) { if ((SDL2 === undefined) || (SDL2.audio === undefined)) { return; } SDL2.audio.currentOutputBuffer = e['outputBuffer']; dynCall('vi', $2, [$3]); }; SDL2.audio.scriptProcessorNode['connect'](SDL2.audioContext['destination']); },  
+ 88204: ($0, $1) => { var SDL2 = Module['SDL2']; var numChannels = SDL2.capture.currentCaptureBuffer.numberOfChannels; for (var c = 0; c < numChannels; ++c) { var channelData = SDL2.capture.currentCaptureBuffer.getChannelData(c); if (channelData.length != $1) { throw 'Web Audio capture buffer length mismatch! Destination size: ' + channelData.length + ' samples vs expected ' + $1 + ' samples!'; } if (numChannels == 1) { for (var j = 0; j < $1; ++j) { setValue($0 + (j * 4), channelData[j], 'float'); } } else { for (var j = 0; j < $1; ++j) { setValue($0 + (((j * numChannels) + c) * 4), channelData[j], 'float'); } } } },  
+ 88809: ($0, $1) => { var SDL2 = Module['SDL2']; var numChannels = SDL2.audio.currentOutputBuffer['numberOfChannels']; for (var c = 0; c < numChannels; ++c) { var channelData = SDL2.audio.currentOutputBuffer['getChannelData'](c); if (channelData.length != $1) { throw 'Web Audio output buffer length mismatch! Destination size: ' + channelData.length + ' samples vs expected ' + $1 + ' samples!'; } for (var j = 0; j < $1; ++j) { channelData[j] = HEAPF32[$0 + ((j*numChannels + c) << 2) >> 2]; } } },  
+ 89289: ($0) => { var SDL2 = Module['SDL2']; if ($0) { if (SDL2.capture.silenceTimer !== undefined) { clearTimeout(SDL2.capture.silenceTimer); } if (SDL2.capture.stream !== undefined) { var tracks = SDL2.capture.stream.getAudioTracks(); for (var i = 0; i < tracks.length; i++) { SDL2.capture.stream.removeTrack(tracks[i]); } SDL2.capture.stream = undefined; } if (SDL2.capture.scriptProcessorNode !== undefined) { SDL2.capture.scriptProcessorNode.onaudioprocess = function(audioProcessingEvent) {}; SDL2.capture.scriptProcessorNode.disconnect(); SDL2.capture.scriptProcessorNode = undefined; } if (SDL2.capture.mediaStreamNode !== undefined) { SDL2.capture.mediaStreamNode.disconnect(); SDL2.capture.mediaStreamNode = undefined; } if (SDL2.capture.silenceBuffer !== undefined) { SDL2.capture.silenceBuffer = undefined } SDL2.capture = undefined; } else { if (SDL2.audio.scriptProcessorNode != undefined) { SDL2.audio.scriptProcessorNode.disconnect(); SDL2.audio.scriptProcessorNode = undefined; } SDL2.audio = undefined; } if ((SDL2.audioContext !== undefined) && (SDL2.audio === undefined) && (SDL2.capture === undefined)) { SDL2.audioContext.close(); SDL2.audioContext = undefined; } },  
+ 90461: ($0, $1, $2) => { var w = $0; var h = $1; var pixels = $2; if (!Module['SDL2']) Module['SDL2'] = {}; var SDL2 = Module['SDL2']; if (SDL2.ctxCanvas !== Module['canvas']) { SDL2.ctx = Module['createContext'](Module['canvas'], false, true); SDL2.ctxCanvas = Module['canvas']; } if (SDL2.w !== w || SDL2.h !== h || SDL2.imageCtx !== SDL2.ctx) { SDL2.image = SDL2.ctx.createImageData(w, h); SDL2.w = w; SDL2.h = h; SDL2.imageCtx = SDL2.ctx; } var data = SDL2.image.data; var src = pixels >> 2; var dst = 0; var num; if (typeof CanvasPixelArray !== 'undefined' && data instanceof CanvasPixelArray) { num = data.length; while (dst < num) { var val = HEAP32[src]; data[dst ] = val & 0xff; data[dst+1] = (val >> 8) & 0xff; data[dst+2] = (val >> 16) & 0xff; data[dst+3] = 0xff; src++; dst += 4; } } else { if (SDL2.data32Data !== data) { SDL2.data32 = new Int32Array(data.buffer); SDL2.data8 = new Uint8Array(data.buffer); SDL2.data32Data = data; } var data32 = SDL2.data32; num = data32.length; data32.set(HEAP32.subarray(src, src + num)); var data8 = SDL2.data8; var i = 3; var j = i + 4*num; if (num % 8 == 0) { while (i < j) { data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; } } else { while (i < j) { data8[i] = 0xff; i = i + 4 | 0; } } } SDL2.ctx.putImageData(SDL2.image, 0, 0); },  
+ 91930: ($0, $1, $2, $3, $4) => { var w = $0; var h = $1; var hot_x = $2; var hot_y = $3; var pixels = $4; var canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h; var ctx = canvas.getContext("2d"); var image = ctx.createImageData(w, h); var data = image.data; var src = pixels >> 2; var dst = 0; var num; if (typeof CanvasPixelArray !== 'undefined' && data instanceof CanvasPixelArray) { num = data.length; while (dst < num) { var val = HEAP32[src]; data[dst ] = val & 0xff; data[dst+1] = (val >> 8) & 0xff; data[dst+2] = (val >> 16) & 0xff; data[dst+3] = (val >> 24) & 0xff; src++; dst += 4; } } else { var data32 = new Int32Array(data.buffer); num = data32.length; data32.set(HEAP32.subarray(src, src + num)); } ctx.putImageData(image, 0, 0); var url = hot_x === 0 && hot_y === 0 ? "url(" + canvas.toDataURL() + "), auto" : "url(" + canvas.toDataURL() + ") " + hot_x + " " + hot_y + ", auto"; var urlBuf = _malloc(url.length + 1); stringToUTF8(url, urlBuf, url.length + 1); return urlBuf; },  
+ 92919: ($0) => { if (Module['canvas']) { Module['canvas'].style['cursor'] = UTF8ToString($0); } },  
+ 93002: () => { if (Module['canvas']) { Module['canvas'].style['cursor'] = 'none'; } },  
+ 93071: () => { return window.innerWidth; },  
+ 93101: () => { return window.innerHeight; }
 };
 
 
@@ -1553,117 +1364,24 @@ var ASM_CONSTS = {
       HEAP8.set(array, buffer);
     }
 
-  function ___cxa_allocate_exception(size) {
-      // Thrown object is prepended by exception metadata block
-      return _malloc(size + 24) + 24;
-    }
-
-  /** @constructor */
-  function ExceptionInfo(excPtr) {
-      this.excPtr = excPtr;
-      this.ptr = excPtr - 24;
-  
-      this.set_type = function(type) {
-        HEAPU32[(((this.ptr)+(4))>>2)] = type;
-      };
-  
-      this.get_type = function() {
-        return HEAPU32[(((this.ptr)+(4))>>2)];
-      };
-  
-      this.set_destructor = function(destructor) {
-        HEAPU32[(((this.ptr)+(8))>>2)] = destructor;
-      };
-  
-      this.get_destructor = function() {
-        return HEAPU32[(((this.ptr)+(8))>>2)];
-      };
-  
-      this.set_refcount = function(refcount) {
-        HEAP32[((this.ptr)>>2)] = refcount;
-      };
-  
-      this.set_caught = function (caught) {
-        caught = caught ? 1 : 0;
-        HEAP8[(((this.ptr)+(12))>>0)] = caught;
-      };
-  
-      this.get_caught = function () {
-        return HEAP8[(((this.ptr)+(12))>>0)] != 0;
-      };
-  
-      this.set_rethrown = function (rethrown) {
-        rethrown = rethrown ? 1 : 0;
-        HEAP8[(((this.ptr)+(13))>>0)] = rethrown;
-      };
-  
-      this.get_rethrown = function () {
-        return HEAP8[(((this.ptr)+(13))>>0)] != 0;
-      };
-  
-      // Initialize native structure fields. Should be called once after allocated.
-      this.init = function(type, destructor) {
-        this.set_adjusted_ptr(0);
-        this.set_type(type);
-        this.set_destructor(destructor);
-        this.set_refcount(0);
-        this.set_caught(false);
-        this.set_rethrown(false);
-      }
-  
-      this.add_ref = function() {
-        var value = HEAP32[((this.ptr)>>2)];
-        HEAP32[((this.ptr)>>2)] = value + 1;
-      };
-  
-      // Returns true if last reference released.
-      this.release_ref = function() {
-        var prev = HEAP32[((this.ptr)>>2)];
-        HEAP32[((this.ptr)>>2)] = prev - 1;
-        assert(prev > 0);
-        return prev === 1;
-      };
-  
-      this.set_adjusted_ptr = function(adjustedPtr) {
-        HEAPU32[(((this.ptr)+(16))>>2)] = adjustedPtr;
-      };
-  
-      this.get_adjusted_ptr = function() {
-        return HEAPU32[(((this.ptr)+(16))>>2)];
-      };
-  
-      // Get pointer which is expected to be received by catch clause in C++ code. It may be adjusted
-      // when the pointer is casted to some of the exception object base classes (e.g. when virtual
-      // inheritance is used). When a pointer is thrown this method should return the thrown pointer
-      // itself.
-      this.get_exception_ptr = function() {
-        // Work around a fastcomp bug, this code is still included for some reason in a build without
-        // exceptions support.
-        var isPointer = ___cxa_is_pointer_type(this.get_type());
-        if (isPointer) {
-          return HEAPU32[((this.excPtr)>>2)];
+  function getRandomDevice() {
+      if (typeof crypto == 'object' && typeof crypto['getRandomValues'] == 'function') {
+        // for modern web browsers
+        var randomBuffer = new Uint8Array(1);
+        return () => { crypto.getRandomValues(randomBuffer); return randomBuffer[0]; };
+      } else
+      if (ENVIRONMENT_IS_NODE) {
+        // for nodejs with or without crypto support included
+        try {
+          var crypto_module = require('crypto');
+          // nodejs has crypto support
+          return () => crypto_module['randomBytes'](1)[0];
+        } catch (e) {
+          // nodejs doesn't have crypto support
         }
-        var adjusted = this.get_adjusted_ptr();
-        if (adjusted !== 0) return adjusted;
-        return this.excPtr;
-      };
-    }
-  
-  var exceptionLast = 0;
-  
-  var uncaughtExceptionCount = 0;
-  function ___cxa_throw(ptr, type, destructor) {
-      var info = new ExceptionInfo(ptr);
-      // Initialize ExceptionInfo content after it was allocated in __cxa_allocate_exception.
-      info.init(type, destructor);
-      exceptionLast = ptr;
-      uncaughtExceptionCount++;
-      throw ptr + " - Exception catching is disabled, this exception cannot be caught. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.";
-    }
-
-  function setErrNo(value) {
-      HEAP32[((___errno_location())>>2)] = value;
-      return value;
+      }
+      // we couldn't find a proper implementation, as Math.random() is not suitable for /dev/random, see emscripten-core/emscripten/pull/7096
+      return () => abort("no cryptographic support found for randomDevice. consider polyfilling it if you want to use something insecure like Math.random(), e.g. put this in a --pre-js: var crypto = { getRandomValues: function(array) { for (var i = 0; i < array.length; i++) array[i] = (Math.random()*256)|0 } };");
     }
   
   var PATH = {isAbs:(path) => path.charAt(0) === '/',splitPath:(filename) => {
@@ -1730,26 +1448,6 @@ var ASM_CONSTS = {
       },join2:(l, r) => {
         return PATH.normalize(l + '/' + r);
       }};
-  
-  function getRandomDevice() {
-      if (typeof crypto == 'object' && typeof crypto['getRandomValues'] == 'function') {
-        // for modern web browsers
-        var randomBuffer = new Uint8Array(1);
-        return () => { crypto.getRandomValues(randomBuffer); return randomBuffer[0]; };
-      } else
-      if (ENVIRONMENT_IS_NODE) {
-        // for nodejs with or without crypto support included
-        try {
-          var crypto_module = require('crypto');
-          // nodejs has crypto support
-          return () => crypto_module['randomBytes'](1)[0];
-        } catch (e) {
-          // nodejs doesn't have crypto support
-        }
-      }
-      // we couldn't find a proper implementation, as Math.random() is not suitable for /dev/random, see emscripten-core/emscripten/pull/7096
-      return () => abort("no cryptographic support found for randomDevice. consider polyfilling it if you want to use something insecure like Math.random(), e.g. put this in a --pre-js: var crypto = { getRandomValues: function(array) { for (var i = 0; i < array.length; i++) array[i] = (Math.random()*256)|0 } };");
-    }
   
   var PATH_FS = {resolve:function() {
         var resolvedPath = '',
@@ -3865,209 +3563,7 @@ var ASM_CONSTS = {
       },standardizePath:() => {
         abort('FS.standardizePath has been removed; use PATH.normalize instead');
       }};
-  var SYSCALLS = {DEFAULT_POLLMASK:5,calculateAt:function(dirfd, path, allowEmpty) {
-        if (PATH.isAbs(path)) {
-          return path;
-        }
-        // relative path
-        var dir;
-        if (dirfd === -100) {
-          dir = FS.cwd();
-        } else {
-          var dirstream = SYSCALLS.getStreamFromFD(dirfd);
-          dir = dirstream.path;
-        }
-        if (path.length == 0) {
-          if (!allowEmpty) {
-            throw new FS.ErrnoError(44);;
-          }
-          return dir;
-        }
-        return PATH.join2(dir, path);
-      },doStat:function(func, path, buf) {
-        try {
-          var stat = func(path);
-        } catch (e) {
-          if (e && e.node && PATH.normalize(path) !== PATH.normalize(FS.getPath(e.node))) {
-            // an error occurred while trying to look up the path; we should just report ENOTDIR
-            return -54;
-          }
-          throw e;
-        }
-        HEAP32[((buf)>>2)] = stat.dev;
-        HEAP32[(((buf)+(8))>>2)] = stat.ino;
-        HEAP32[(((buf)+(12))>>2)] = stat.mode;
-        HEAPU32[(((buf)+(16))>>2)] = stat.nlink;
-        HEAP32[(((buf)+(20))>>2)] = stat.uid;
-        HEAP32[(((buf)+(24))>>2)] = stat.gid;
-        HEAP32[(((buf)+(28))>>2)] = stat.rdev;
-        (tempI64 = [stat.size>>>0,(tempDouble=stat.size,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((buf)+(40))>>2)] = tempI64[0],HEAP32[(((buf)+(44))>>2)] = tempI64[1]);
-        HEAP32[(((buf)+(48))>>2)] = 4096;
-        HEAP32[(((buf)+(52))>>2)] = stat.blocks;
-        (tempI64 = [Math.floor(stat.atime.getTime() / 1000)>>>0,(tempDouble=Math.floor(stat.atime.getTime() / 1000),(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((buf)+(56))>>2)] = tempI64[0],HEAP32[(((buf)+(60))>>2)] = tempI64[1]);
-        HEAPU32[(((buf)+(64))>>2)] = 0;
-        (tempI64 = [Math.floor(stat.mtime.getTime() / 1000)>>>0,(tempDouble=Math.floor(stat.mtime.getTime() / 1000),(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((buf)+(72))>>2)] = tempI64[0],HEAP32[(((buf)+(76))>>2)] = tempI64[1]);
-        HEAPU32[(((buf)+(80))>>2)] = 0;
-        (tempI64 = [Math.floor(stat.ctime.getTime() / 1000)>>>0,(tempDouble=Math.floor(stat.ctime.getTime() / 1000),(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((buf)+(88))>>2)] = tempI64[0],HEAP32[(((buf)+(92))>>2)] = tempI64[1]);
-        HEAPU32[(((buf)+(96))>>2)] = 0;
-        (tempI64 = [stat.ino>>>0,(tempDouble=stat.ino,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((buf)+(104))>>2)] = tempI64[0],HEAP32[(((buf)+(108))>>2)] = tempI64[1]);
-        return 0;
-      },doMsync:function(addr, stream, len, flags, offset) {
-        var buffer = HEAPU8.slice(addr, addr + len);
-        FS.msync(stream, buffer, offset, len, flags);
-      },varargs:undefined,get:function() {
-        assert(SYSCALLS.varargs != undefined);
-        SYSCALLS.varargs += 4;
-        var ret = HEAP32[(((SYSCALLS.varargs)-(4))>>2)];
-        return ret;
-      },getStr:function(ptr) {
-        var ret = UTF8ToString(ptr);
-        return ret;
-      },getStreamFromFD:function(fd) {
-        var stream = FS.getStream(fd);
-        if (!stream) throw new FS.ErrnoError(8);
-        return stream;
-      }};
-  function ___syscall_fcntl64(fd, cmd, varargs) {
-  SYSCALLS.varargs = varargs;
-  try {
   
-      var stream = SYSCALLS.getStreamFromFD(fd);
-      switch (cmd) {
-        case 0: {
-          var arg = SYSCALLS.get();
-          if (arg < 0) {
-            return -28;
-          }
-          var newStream;
-          newStream = FS.createStream(stream, arg);
-          return newStream.fd;
-        }
-        case 1:
-        case 2:
-          return 0;  // FD_CLOEXEC makes no sense for a single process.
-        case 3:
-          return stream.flags;
-        case 4: {
-          var arg = SYSCALLS.get();
-          stream.flags |= arg;
-          return 0;
-        }
-        case 5:
-        /* case 5: Currently in musl F_GETLK64 has same value as F_GETLK, so omitted to avoid duplicate case blocks. If that changes, uncomment this */ {
-          
-          var arg = SYSCALLS.get();
-          var offset = 0;
-          // We're always unlocked.
-          HEAP16[(((arg)+(offset))>>1)] = 2;
-          return 0;
-        }
-        case 6:
-        case 7:
-        /* case 6: Currently in musl F_SETLK64 has same value as F_SETLK, so omitted to avoid duplicate case blocks. If that changes, uncomment this */
-        /* case 7: Currently in musl F_SETLKW64 has same value as F_SETLKW, so omitted to avoid duplicate case blocks. If that changes, uncomment this */
-          
-          
-          return 0; // Pretend that the locking is successful.
-        case 16:
-        case 8:
-          return -28; // These are for sockets. We don't have them fully implemented yet.
-        case 9:
-          // musl trusts getown return values, due to a bug where they must be, as they overlap with errors. just return -1 here, so fcntl() returns that, and we set errno ourselves.
-          setErrNo(28);
-          return -1;
-        default: {
-          return -28;
-        }
-      }
-    } catch (e) {
-    if (typeof FS == 'undefined' || !(e instanceof FS.ErrnoError)) throw e;
-    return -e.errno;
-  }
-  }
-
-  function ___syscall_ioctl(fd, op, varargs) {
-  SYSCALLS.varargs = varargs;
-  try {
-  
-      var stream = SYSCALLS.getStreamFromFD(fd);
-      switch (op) {
-        case 21509:
-        case 21505: {
-          if (!stream.tty) return -59;
-          return 0;
-        }
-        case 21510:
-        case 21511:
-        case 21512:
-        case 21506:
-        case 21507:
-        case 21508: {
-          if (!stream.tty) return -59;
-          return 0; // no-op, not actually adjusting terminal settings
-        }
-        case 21519: {
-          if (!stream.tty) return -59;
-          var argp = SYSCALLS.get();
-          HEAP32[((argp)>>2)] = 0;
-          return 0;
-        }
-        case 21520: {
-          if (!stream.tty) return -59;
-          return -28; // not supported
-        }
-        case 21531: {
-          var argp = SYSCALLS.get();
-          return FS.ioctl(stream, op, argp);
-        }
-        case 21523: {
-          // TODO: in theory we should write to the winsize struct that gets
-          // passed in, but for now musl doesn't read anything on it
-          if (!stream.tty) return -59;
-          return 0;
-        }
-        case 21524: {
-          // TODO: technically, this ioctl call should change the window size.
-          // but, since emscripten doesn't have any concept of a terminal window
-          // yet, we'll just silently throw it away as we do TIOCGWINSZ
-          if (!stream.tty) return -59;
-          return 0;
-        }
-        default: return -28; // not supported
-      }
-    } catch (e) {
-    if (typeof FS == 'undefined' || !(e instanceof FS.ErrnoError)) throw e;
-    return -e.errno;
-  }
-  }
-
-  function ___syscall_openat(dirfd, path, flags, varargs) {
-  SYSCALLS.varargs = varargs;
-  try {
-  
-      path = SYSCALLS.getStr(path);
-      path = SYSCALLS.calculateAt(dirfd, path);
-      var mode = varargs ? SYSCALLS.get() : 0;
-      return FS.open(path, flags, mode).fd;
-    } catch (e) {
-    if (typeof FS == 'undefined' || !(e instanceof FS.ErrnoError)) throw e;
-    return -e.errno;
-  }
-  }
-
-  function __emscripten_date_now() {
-      return Date.now();
-    }
-
-  var nowIsMonotonic = true;;
-  function __emscripten_get_now_is_monotonic() {
-      return nowIsMonotonic;
-    }
-
-  function _abort() {
-      abort('native code called abort()');
-    }
-
   function _emscripten_set_main_loop_timing(mode, value) {
       Browser.mainLoop.timingMode = mode;
       Browser.mainLoop.timingValue = value;
@@ -4132,6 +3628,69 @@ var ASM_CONSTS = {
   } else _emscripten_get_now = () => performance.now();
   ;
   
+  var SYSCALLS = {DEFAULT_POLLMASK:5,calculateAt:function(dirfd, path, allowEmpty) {
+        if (PATH.isAbs(path)) {
+          return path;
+        }
+        // relative path
+        var dir;
+        if (dirfd === -100) {
+          dir = FS.cwd();
+        } else {
+          var dirstream = SYSCALLS.getStreamFromFD(dirfd);
+          dir = dirstream.path;
+        }
+        if (path.length == 0) {
+          if (!allowEmpty) {
+            throw new FS.ErrnoError(44);;
+          }
+          return dir;
+        }
+        return PATH.join2(dir, path);
+      },doStat:function(func, path, buf) {
+        try {
+          var stat = func(path);
+        } catch (e) {
+          if (e && e.node && PATH.normalize(path) !== PATH.normalize(FS.getPath(e.node))) {
+            // an error occurred while trying to look up the path; we should just report ENOTDIR
+            return -54;
+          }
+          throw e;
+        }
+        HEAP32[((buf)>>2)] = stat.dev;
+        HEAP32[(((buf)+(8))>>2)] = stat.ino;
+        HEAP32[(((buf)+(12))>>2)] = stat.mode;
+        HEAPU32[(((buf)+(16))>>2)] = stat.nlink;
+        HEAP32[(((buf)+(20))>>2)] = stat.uid;
+        HEAP32[(((buf)+(24))>>2)] = stat.gid;
+        HEAP32[(((buf)+(28))>>2)] = stat.rdev;
+        (tempI64 = [stat.size>>>0,(tempDouble=stat.size,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((buf)+(40))>>2)] = tempI64[0],HEAP32[(((buf)+(44))>>2)] = tempI64[1]);
+        HEAP32[(((buf)+(48))>>2)] = 4096;
+        HEAP32[(((buf)+(52))>>2)] = stat.blocks;
+        (tempI64 = [Math.floor(stat.atime.getTime() / 1000)>>>0,(tempDouble=Math.floor(stat.atime.getTime() / 1000),(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((buf)+(56))>>2)] = tempI64[0],HEAP32[(((buf)+(60))>>2)] = tempI64[1]);
+        HEAPU32[(((buf)+(64))>>2)] = 0;
+        (tempI64 = [Math.floor(stat.mtime.getTime() / 1000)>>>0,(tempDouble=Math.floor(stat.mtime.getTime() / 1000),(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((buf)+(72))>>2)] = tempI64[0],HEAP32[(((buf)+(76))>>2)] = tempI64[1]);
+        HEAPU32[(((buf)+(80))>>2)] = 0;
+        (tempI64 = [Math.floor(stat.ctime.getTime() / 1000)>>>0,(tempDouble=Math.floor(stat.ctime.getTime() / 1000),(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((buf)+(88))>>2)] = tempI64[0],HEAP32[(((buf)+(92))>>2)] = tempI64[1]);
+        HEAPU32[(((buf)+(96))>>2)] = 0;
+        (tempI64 = [stat.ino>>>0,(tempDouble=stat.ino,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((buf)+(104))>>2)] = tempI64[0],HEAP32[(((buf)+(108))>>2)] = tempI64[1]);
+        return 0;
+      },doMsync:function(addr, stream, len, flags, offset) {
+        var buffer = HEAPU8.slice(addr, addr + len);
+        FS.msync(stream, buffer, offset, len, flags);
+      },varargs:undefined,get:function() {
+        assert(SYSCALLS.varargs != undefined);
+        SYSCALLS.varargs += 4;
+        var ret = HEAP32[(((SYSCALLS.varargs)-(4))>>2)];
+        return ret;
+      },getStr:function(ptr) {
+        var ret = UTF8ToString(ptr);
+        return ret;
+      },getStreamFromFD:function(fd) {
+        var stream = FS.getStream(fd);
+        if (!stream) throw new FS.ErrnoError(8);
+        return stream;
+      }};
   function _proc_exit(code) {
       EXITSTATUS = code;
       if (!keepRuntimeAlive()) {
@@ -4871,6 +4430,1494 @@ var ASM_CONSTS = {
           }
         }
       }};
+  
+  function _SDL_GetTicks() {
+      return (Date.now() - SDL.startTime)|0;
+    }
+  
+  function _SDL_LockSurface(surf) {
+      var surfData = SDL.surfaces[surf];
+  
+      surfData.locked++;
+      if (surfData.locked > 1) return 0;
+  
+      if (!surfData.buffer) {
+        surfData.buffer = _malloc(surfData.width * surfData.height * 4);
+        HEAPU32[(((surf)+(20))>>2)] = surfData.buffer;
+      }
+  
+      // Mark in C/C++-accessible SDL structure
+      // SDL_Surface has the following fields: Uint32 flags, SDL_PixelFormat *format; int w, h; Uint16 pitch; void *pixels; ...
+      // So we have fields all of the same size, and 5 of them before us.
+      // TODO: Use macros like in library.js
+      HEAPU32[(((surf)+(20))>>2)] = surfData.buffer;
+  
+      if (surf == SDL.screen && Module.screenIsReadOnly && surfData.image) return 0;
+  
+      if (SDL.defaults.discardOnLock) {
+        if (!surfData.image) {
+          surfData.image = surfData.ctx.createImageData(surfData.width, surfData.height);
+        }
+        if (!SDL.defaults.opaqueFrontBuffer) return;
+      } else {
+        surfData.image = surfData.ctx.getImageData(0, 0, surfData.width, surfData.height);
+      }
+  
+      // Emulate desktop behavior and kill alpha values on the locked surface. (very costly!) Set SDL.defaults.opaqueFrontBuffer = false
+      // if you don't want this.
+      if (surf == SDL.screen && SDL.defaults.opaqueFrontBuffer) {
+        var data = surfData.image.data;
+        var num = data.length;
+        for (var i = 0; i < num/4; i++) {
+          data[i*4+3] = 255; // opacity, as canvases blend alpha
+        }
+      }
+  
+      if (SDL.defaults.copyOnLock && !SDL.defaults.discardOnLock) {
+        // Copy pixel data to somewhere accessible to 'C/C++'
+        if (surfData.isFlagSet(0x00200000 /* SDL_HWPALETTE */)) {
+          // If this is neaded then
+          // we should compact the data from 32bpp to 8bpp index.
+          // I think best way to implement this is use
+          // additional colorMap hash (color->index).
+          // Something like this:
+          //
+          // var size = surfData.width * surfData.height;
+          // var data = '';
+          // for (var i = 0; i<size; i++) {
+          //   var color = SDL.translateRGBAToColor(
+          //     surfData.image.data[i*4   ],
+          //     surfData.image.data[i*4 +1],
+          //     surfData.image.data[i*4 +2],
+          //     255);
+          //   var index = surfData.colorMap[color];
+          //   HEAP8[(((surfData.buffer)+(i))>>0)] = index;
+          // }
+          throw 'CopyOnLock is not supported for SDL_LockSurface with SDL_HWPALETTE flag set' + new Error().stack;
+        } else {
+          HEAPU8.set(surfData.image.data, surfData.buffer);
+        }
+      }
+  
+      return 0;
+    }
+  
+  /** @suppress{missingProperties} */
+  function SDL_unicode() { return SDL.unicode; }
+  
+  /** @suppress{missingProperties} */
+  function SDL_ttfContext() { return SDL.ttfContext; }
+  
+  /** @suppress{missingProperties} */
+  function SDL_audio() { return SDL.audio; }
+  var SDL = {defaults:{width:320,height:200,copyOnLock:true,discardOnLock:false,opaqueFrontBuffer:true},version:null,surfaces:{},canvasPool:[],events:[],fonts:[null],audios:[null],rwops:[null],music:{audio:null,volume:1},mixerFrequency:22050,mixerFormat:32784,mixerNumChannels:2,mixerChunkSize:1024,channelMinimumNumber:0,GL:false,glAttributes:{0:3,1:3,2:2,3:0,4:0,5:1,6:16,7:0,8:0,9:0,10:0,11:0,12:0,13:0,14:0,15:1,16:0,17:0,18:0},keyboardState:null,keyboardMap:{},canRequestFullscreen:false,isRequestingFullscreen:false,textInput:false,startTime:null,initFlags:0,buttonState:0,modState:0,DOMButtons:[0,0,0],DOMEventToSDLEvent:{},TOUCH_DEFAULT_ID:0,eventHandler:null,eventHandlerContext:null,eventHandlerTemp:0,keyCodes:{16:1249,17:1248,18:1250,20:1081,33:1099,34:1102,35:1101,36:1098,37:1104,38:1106,39:1103,40:1105,44:316,45:1097,46:127,91:1251,93:1125,96:1122,97:1113,98:1114,99:1115,100:1116,101:1117,102:1118,103:1119,104:1120,105:1121,106:1109,107:1111,109:1110,110:1123,111:1108,112:1082,113:1083,114:1084,115:1085,116:1086,117:1087,118:1088,119:1089,120:1090,121:1091,122:1092,123:1093,124:1128,125:1129,126:1130,127:1131,128:1132,129:1133,130:1134,131:1135,132:1136,133:1137,134:1138,135:1139,144:1107,160:94,161:33,162:34,163:35,164:36,165:37,166:38,167:95,168:40,169:41,170:42,171:43,172:124,173:45,174:123,175:125,176:126,181:127,182:129,183:128,188:44,190:46,191:47,192:96,219:91,220:92,221:93,222:39,224:1251},scanCodes:{8:42,9:43,13:40,27:41,32:44,35:204,39:53,44:54,46:55,47:56,48:39,49:30,50:31,51:32,52:33,53:34,54:35,55:36,56:37,57:38,58:203,59:51,61:46,91:47,92:49,93:48,96:52,97:4,98:5,99:6,100:7,101:8,102:9,103:10,104:11,105:12,106:13,107:14,108:15,109:16,110:17,111:18,112:19,113:20,114:21,115:22,116:23,117:24,118:25,119:26,120:27,121:28,122:29,127:76,305:224,308:226,316:70},loadRect:function(rect) {
+        return {
+          x: HEAP32[((rect + 0)>>2)],
+          y: HEAP32[((rect + 4)>>2)],
+          w: HEAP32[((rect + 8)>>2)],
+          h: HEAP32[((rect + 12)>>2)]
+        };
+      },updateRect:function(rect, r) {
+        HEAP32[((rect)>>2)] = r.x;
+        HEAP32[(((rect)+(4))>>2)] = r.y;
+        HEAP32[(((rect)+(8))>>2)] = r.w;
+        HEAP32[(((rect)+(12))>>2)] = r.h;
+      },intersectionOfRects:function(first, second) {
+        var leftX = Math.max(first.x, second.x);
+        var leftY = Math.max(first.y, second.y);
+        var rightX = Math.min(first.x + first.w, second.x + second.w);
+        var rightY = Math.min(first.y + first.h, second.y + second.h);
+  
+        return {
+          x: leftX,
+          y: leftY,
+          w: Math.max(leftX, rightX) - leftX,
+          h: Math.max(leftY, rightY) - leftY
+        }
+      },checkPixelFormat:function(fmt) {
+        // Canvas screens are always RGBA.
+        var format = HEAP32[((fmt)>>2)];
+        if (format != -2042224636) {
+          warnOnce('Unsupported pixel format!');
+        }
+      },loadColorToCSSRGB:function(color) {
+        var rgba = HEAP32[((color)>>2)];
+        return 'rgb(' + (rgba&255) + ',' + ((rgba >> 8)&255) + ',' + ((rgba >> 16)&255) + ')';
+      },loadColorToCSSRGBA:function(color) {
+        var rgba = HEAP32[((color)>>2)];
+        return 'rgba(' + (rgba&255) + ',' + ((rgba >> 8)&255) + ',' + ((rgba >> 16)&255) + ',' + (((rgba >> 24)&255)/255) + ')';
+      },translateColorToCSSRGBA:function(rgba) {
+        return 'rgba(' + (rgba&0xff) + ',' + (rgba>>8 & 0xff) + ',' + (rgba>>16 & 0xff) + ',' + (rgba>>>24)/0xff + ')';
+      },translateRGBAToCSSRGBA:function(r, g, b, a) {
+        return 'rgba(' + (r&0xff) + ',' + (g&0xff) + ',' + (b&0xff) + ',' + (a&0xff)/255 + ')';
+      },translateRGBAToColor:function(r, g, b, a) {
+        return r | g << 8 | b << 16 | a << 24;
+      },makeSurface:function(width, height, flags, usePageCanvas, source, rmask, gmask, bmask, amask) {
+        flags = flags || 0;
+        var is_SDL_HWSURFACE = flags & 0x00000001;
+        var is_SDL_HWPALETTE = flags & 0x00200000;
+        var is_SDL_OPENGL = flags & 0x04000000;
+  
+        var surf = _malloc(60);
+        var pixelFormat = _malloc(44);
+        //surface with SDL_HWPALETTE flag is 8bpp surface (1 byte)
+        var bpp = is_SDL_HWPALETTE ? 1 : 4;
+        var buffer = 0;
+  
+        // preemptively initialize this for software surfaces,
+        // otherwise it will be lazily initialized inside of SDL_LockSurface
+        if (!is_SDL_HWSURFACE && !is_SDL_OPENGL) {
+          buffer = _malloc(width * height * 4);
+        }
+  
+        HEAP32[((surf)>>2)] = flags;
+        HEAPU32[(((surf)+(4))>>2)] = pixelFormat;
+        HEAP32[(((surf)+(8))>>2)] = width;
+        HEAP32[(((surf)+(12))>>2)] = height;
+        HEAP32[(((surf)+(16))>>2)] = width * bpp;  // assuming RGBA or indexed for now,
+                                                                                          // since that is what ImageData gives us in browsers
+        HEAPU32[(((surf)+(20))>>2)] = buffer;
+  
+        HEAP32[(((surf)+(36))>>2)] = 0;
+        HEAP32[(((surf)+(40))>>2)] = 0;
+        HEAP32[(((surf)+(44))>>2)] = Module["canvas"].width;
+        HEAP32[(((surf)+(48))>>2)] = Module["canvas"].height;
+  
+        HEAP32[(((surf)+(56))>>2)] = 1;
+  
+        HEAP32[((pixelFormat)>>2)] = -2042224636;
+        HEAP32[(((pixelFormat)+(4))>>2)] = 0;// TODO
+        HEAP8[(((pixelFormat)+(8))>>0)] = bpp * 8;
+        HEAP8[(((pixelFormat)+(9))>>0)] = bpp;
+  
+        HEAP32[(((pixelFormat)+(12))>>2)] = rmask || 0x000000ff;
+        HEAP32[(((pixelFormat)+(16))>>2)] = gmask || 0x0000ff00;
+        HEAP32[(((pixelFormat)+(20))>>2)] = bmask || 0x00ff0000;
+        HEAP32[(((pixelFormat)+(24))>>2)] = amask || 0xff000000;
+  
+        // Decide if we want to use WebGL or not
+        SDL.GL = SDL.GL || is_SDL_OPENGL;
+        var canvas;
+        if (!usePageCanvas) {
+          if (SDL.canvasPool.length > 0) {
+            canvas = SDL.canvasPool.pop();
+          } else {
+            canvas = document.createElement('canvas');
+          }
+          canvas.width = width;
+          canvas.height = height;
+        } else {
+          canvas = Module['canvas'];
+        }
+  
+        var webGLContextAttributes = {
+          antialias: ((SDL.glAttributes[13 /*SDL_GL_MULTISAMPLEBUFFERS*/] != 0) && (SDL.glAttributes[14 /*SDL_GL_MULTISAMPLESAMPLES*/] > 1)),
+          depth: (SDL.glAttributes[6 /*SDL_GL_DEPTH_SIZE*/] > 0),
+          stencil: (SDL.glAttributes[7 /*SDL_GL_STENCIL_SIZE*/] > 0),
+          alpha: (SDL.glAttributes[3 /*SDL_GL_ALPHA_SIZE*/] > 0)
+        };
+  
+        var ctx = Browser.createContext(canvas, is_SDL_OPENGL, usePageCanvas, webGLContextAttributes);
+  
+        SDL.surfaces[surf] = {
+          width: width,
+          height: height,
+          canvas: canvas,
+          ctx: ctx,
+          surf: surf,
+          buffer: buffer,
+          pixelFormat: pixelFormat,
+          alpha: 255,
+          flags: flags,
+          locked: 0,
+          usePageCanvas: usePageCanvas,
+          source: source,
+  
+          isFlagSet: function(flag) {
+            return flags & flag;
+          }
+        };
+  
+        return surf;
+      },copyIndexedColorData:function(surfData, rX, rY, rW, rH) {
+        // HWPALETTE works with palette
+        // setted by SDL_SetColors
+        if (!surfData.colors) {
+          return;
+        }
+  
+        var fullWidth  = Module['canvas'].width;
+        var fullHeight = Module['canvas'].height;
+  
+        var startX  = rX || 0;
+        var startY  = rY || 0;
+        var endX    = (rW || (fullWidth - startX)) + startX;
+        var endY    = (rH || (fullHeight - startY)) + startY;
+  
+        var buffer  = surfData.buffer;
+  
+        if (!surfData.image.data32) {
+          surfData.image.data32 = new Uint32Array(surfData.image.data.buffer);
+        }
+        var data32   = surfData.image.data32;
+  
+        var colors32 = surfData.colors32;
+  
+        for (var y = startY; y < endY; ++y) {
+          var base = y * fullWidth;
+          for (var x = startX; x < endX; ++x) {
+            data32[base + x] = colors32[HEAPU8[((buffer + base + x)>>0)]];
+          }
+        }
+      },freeSurface:function(surf) {
+        var refcountPointer = surf + 56;
+        var refcount = HEAP32[((refcountPointer)>>2)];
+        if (refcount > 1) {
+          HEAP32[((refcountPointer)>>2)] = refcount - 1;
+          return;
+        }
+  
+        var info = SDL.surfaces[surf];
+        if (!info.usePageCanvas && info.canvas) SDL.canvasPool.push(info.canvas);
+        if (info.buffer) _free(info.buffer);
+        _free(info.pixelFormat);
+        _free(surf);
+        SDL.surfaces[surf] = null;
+  
+        if (surf === SDL.screen) {
+          SDL.screen = null;
+        }
+      },blitSurface:function(src, srcrect, dst, dstrect, scale) {
+        var srcData = SDL.surfaces[src];
+        var dstData = SDL.surfaces[dst];
+        var sr, dr;
+        if (srcrect) {
+          sr = SDL.loadRect(srcrect);
+        } else {
+          sr = { x: 0, y: 0, w: srcData.width, h: srcData.height };
+        }
+        if (dstrect) {
+          dr = SDL.loadRect(dstrect);
+        } else {
+          dr = { x: 0, y: 0, w: srcData.width, h: srcData.height };
+        }
+        if (dstData.clipRect) {
+          var widthScale = (!scale || sr.w === 0) ? 1 : sr.w / dr.w;
+          var heightScale = (!scale || sr.h === 0) ? 1 : sr.h / dr.h;
+  
+          dr = SDL.intersectionOfRects(dstData.clipRect, dr);
+  
+          sr.w = dr.w * widthScale;
+          sr.h = dr.h * heightScale;
+  
+          if (dstrect) {
+            SDL.updateRect(dstrect, dr);
+          }
+        }
+        var blitw, blith;
+        if (scale) {
+          blitw = dr.w; blith = dr.h;
+        } else {
+          blitw = sr.w; blith = sr.h;
+        }
+        if (sr.w === 0 || sr.h === 0 || blitw === 0 || blith === 0) {
+          return 0;
+        }
+        var oldAlpha = dstData.ctx.globalAlpha;
+        dstData.ctx.globalAlpha = srcData.alpha/255;
+        dstData.ctx.drawImage(srcData.canvas, sr.x, sr.y, sr.w, sr.h, dr.x, dr.y, blitw, blith);
+        dstData.ctx.globalAlpha = oldAlpha;
+        if (dst != SDL.screen) {
+          // XXX As in IMG_Load, for compatibility we write out |pixels|
+          warnOnce('WARNING: copying canvas data to memory for compatibility');
+          _SDL_LockSurface(dst);
+          dstData.locked--; // The surface is not actually locked in this hack
+        }
+        return 0;
+      },downFingers:{},savedKeydown:null,receiveEvent:function(event) {
+        function unpressAllPressedKeys() {
+          // Un-press all pressed keys: TODO
+          for (var code in SDL.keyboardMap) {
+            SDL.events.push({
+              type: 'keyup',
+              keyCode: SDL.keyboardMap[code]
+            });
+          }
+        };
+        switch (event.type) {
+          case 'touchstart': case 'touchmove': {
+            event.preventDefault();
+  
+            var touches = [];
+  
+            // Clear out any touchstart events that we've already processed
+            if (event.type === 'touchstart') {
+              for (var i = 0; i < event.touches.length; i++) {
+                var touch = event.touches[i];
+                if (SDL.downFingers[touch.identifier] != true) {
+                  SDL.downFingers[touch.identifier] = true;
+                  touches.push(touch);
+                }
+              }
+            } else {
+              touches = event.touches;
+            }
+  
+            var firstTouch = touches[0];
+            if (firstTouch) {
+              if (event.type == 'touchstart') {
+                SDL.DOMButtons[0] = 1;
+              }
+              var mouseEventType;
+              switch (event.type) {
+                case 'touchstart': mouseEventType = 'mousedown'; break;
+                case 'touchmove': mouseEventType = 'mousemove'; break;
+              }
+              var mouseEvent = {
+                type: mouseEventType,
+                button: 0,
+                pageX: firstTouch.clientX,
+                pageY: firstTouch.clientY
+              };
+              SDL.events.push(mouseEvent);
+            }
+  
+            for (var i = 0; i < touches.length; i++) {
+              var touch = touches[i];
+              SDL.events.push({
+                type: event.type,
+                touch: touch
+              });
+            };
+            break;
+          }
+          case 'touchend': {
+            event.preventDefault();
+  
+            // Remove the entry in the SDL.downFingers hash
+            // because the finger is no longer down.
+            for (var i = 0; i < event.changedTouches.length; i++) {
+              var touch = event.changedTouches[i];
+              if (SDL.downFingers[touch.identifier] === true) {
+                delete SDL.downFingers[touch.identifier];
+              }
+            }
+  
+            var mouseEvent = {
+              type: 'mouseup',
+              button: 0,
+              pageX: event.changedTouches[0].clientX,
+              pageY: event.changedTouches[0].clientY
+            };
+            SDL.DOMButtons[0] = 0;
+            SDL.events.push(mouseEvent);
+  
+            for (var i = 0; i < event.changedTouches.length; i++) {
+              var touch = event.changedTouches[i];
+              SDL.events.push({
+                type: 'touchend',
+                touch: touch
+              });
+            };
+            break;
+          }
+          case 'DOMMouseScroll': case 'mousewheel': case 'wheel':
+            var delta = -Browser.getMouseWheelDelta(event); // Flip the wheel direction to translate from browser wheel direction (+:down) to SDL direction (+:up)
+            delta = (delta == 0) ? 0 : (delta > 0 ? Math.max(delta, 1) : Math.min(delta, -1)); // Quantize to integer so that minimum scroll is at least +/- 1.
+  
+            // Simulate old-style SDL events representing mouse wheel input as buttons
+            var button = delta > 0 ? 3 /*SDL_BUTTON_WHEELUP-1*/ : 4 /*SDL_BUTTON_WHEELDOWN-1*/; // Subtract one since JS->C marshalling is defined to add one back.
+            SDL.events.push({ type: 'mousedown', button: button, pageX: event.pageX, pageY: event.pageY });
+            SDL.events.push({ type: 'mouseup', button: button, pageX: event.pageX, pageY: event.pageY });
+  
+            // Pass a delta motion event.
+            SDL.events.push({ type: 'wheel', deltaX: 0, deltaY: delta });
+            event.preventDefault(); // If we don't prevent this, then 'wheel' event will be sent again by the browser as 'DOMMouseScroll' and we will receive this same event the second time.
+            break;
+          case 'mousemove':
+            if (SDL.DOMButtons[0] === 1) {
+              SDL.events.push({
+                type: 'touchmove',
+                touch: {
+                  identifier: 0,
+                  deviceID: -1,
+                  pageX: event.pageX,
+                  pageY: event.pageY
+                }
+              });
+            }
+            if (Browser.pointerLock) {
+              // workaround for firefox bug 750111
+              if ('mozMovementX' in event) {
+                event['movementX'] = event['mozMovementX'];
+                event['movementY'] = event['mozMovementY'];
+              }
+              // workaround for Firefox bug 782777
+              if (event['movementX'] == 0 && event['movementY'] == 0) {
+                // ignore a mousemove event if it doesn't contain any movement info
+                // (without pointer lock, we infer movement from pageX/pageY, so this check is unnecessary)
+                event.preventDefault();
+                return;
+              }
+            }
+            // fall through
+          case 'keydown': case 'keyup': case 'keypress': case 'mousedown': case 'mouseup':
+            // If we preventDefault on keydown events, the subsequent keypress events
+            // won't fire. However, it's fine (and in some cases necessary) to
+            // preventDefault for keys that don't generate a character. Otherwise,
+            // preventDefault is the right thing to do in general.
+            if (event.type !== 'keydown' || (!SDL_unicode() && !SDL.textInput) || (event.keyCode === 8 /* backspace */ || event.keyCode === 9 /* tab */)) {
+              event.preventDefault();
+            }
+  
+            if (event.type == 'mousedown') {
+              SDL.DOMButtons[event.button] = 1;
+              SDL.events.push({
+                type: 'touchstart',
+                touch: {
+                  identifier: 0,
+                  deviceID: -1,
+                  pageX: event.pageX,
+                  pageY: event.pageY
+                }
+              });
+            } else if (event.type == 'mouseup') {
+              // ignore extra ups, can happen if we leave the canvas while pressing down, then return,
+              // since we add a mouseup in that case
+              if (!SDL.DOMButtons[event.button]) {
+                return;
+              }
+  
+              SDL.events.push({
+                type: 'touchend',
+                touch: {
+                  identifier: 0,
+                  deviceID: -1,
+                  pageX: event.pageX,
+                  pageY: event.pageY
+                }
+              });
+              SDL.DOMButtons[event.button] = 0;
+            }
+  
+            // We can only request fullscreen as the result of user input.
+            // Due to this limitation, we toggle a boolean on keydown which
+            // SDL_WM_ToggleFullScreen will check and subsequently set another
+            // flag indicating for us to request fullscreen on the following
+            // keyup. This isn't perfect, but it enables SDL_WM_ToggleFullScreen
+            // to work as the result of a keypress (which is an extremely
+            // common use case).
+            if (event.type === 'keydown' || event.type === 'mousedown') {
+              SDL.canRequestFullscreen = true;
+            } else if (event.type === 'keyup' || event.type === 'mouseup') {
+              if (SDL.isRequestingFullscreen) {
+                Module['requestFullscreen'](/*lockPointer=*/true, /*resizeCanvas=*/true);
+                SDL.isRequestingFullscreen = false;
+              }
+              SDL.canRequestFullscreen = false;
+            }
+  
+            // SDL expects a unicode character to be passed to its keydown events.
+            // Unfortunately, the browser APIs only provide a charCode property on
+            // keypress events, so we must backfill in keydown events with their
+            // subsequent keypress event's charCode.
+            if (event.type === 'keypress' && SDL.savedKeydown) {
+              // charCode is read-only
+              SDL.savedKeydown.keypressCharCode = event.charCode;
+              SDL.savedKeydown = null;
+            } else if (event.type === 'keydown') {
+              SDL.savedKeydown = event;
+            }
+  
+            // Don't push keypress events unless SDL_StartTextInput has been called.
+            if (event.type !== 'keypress' || SDL.textInput) {
+              SDL.events.push(event);
+            }
+            break;
+          case 'mouseout':
+            // Un-press all pressed mouse buttons, because we might miss the release outside of the canvas
+            for (var i = 0; i < 3; i++) {
+              if (SDL.DOMButtons[i]) {
+                SDL.events.push({
+                  type: 'mouseup',
+                  button: i,
+                  pageX: event.pageX,
+                  pageY: event.pageY
+                });
+                SDL.DOMButtons[i] = 0;
+              }
+            }
+            event.preventDefault();
+            break;
+          case 'focus':
+            SDL.events.push(event);
+            event.preventDefault();
+            break;
+          case 'blur':
+            SDL.events.push(event);
+            unpressAllPressedKeys();
+            event.preventDefault();
+            break;
+          case 'visibilitychange':
+            SDL.events.push({
+              type: 'visibilitychange',
+              visible: !document.hidden
+            });
+            unpressAllPressedKeys();
+            event.preventDefault();
+            break;
+          case 'unload':
+            if (Browser.mainLoop.runner) {
+              SDL.events.push(event);
+              // Force-run a main event loop, since otherwise this event will never be caught!
+              Browser.mainLoop.runner();
+            }
+            return;
+          case 'resize':
+            SDL.events.push(event);
+            // manually triggered resize event doesn't have a preventDefault member
+            if (event.preventDefault) {
+              event.preventDefault();
+            }
+            break;
+        }
+        if (SDL.events.length >= 10000) {
+          err('SDL event queue full, dropping events');
+          SDL.events = SDL.events.slice(0, 10000);
+        }
+        // If we have a handler installed, this will push the events to the app
+        // instead of the app polling for them.
+        SDL.flushEventsToHandler();
+        return;
+      },lookupKeyCodeForEvent:function(event) {
+          var code = event.keyCode;
+          if (code >= 65 && code <= 90) {
+            code += 32; // make lowercase for SDL
+          } else {
+            code = SDL.keyCodes[event.keyCode] || event.keyCode;
+            // If this is one of the modifier keys (224 | 1<<10 - 227 | 1<<10), and the event specifies that it is
+            // a right key, add 4 to get the right key SDL key code.
+            if (event.location === 2 /*KeyboardEvent.DOM_KEY_LOCATION_RIGHT*/ && code >= (224 | 1<<10) && code <= (227 | 1<<10)) {
+              code += 4;
+            }
+          }
+          return code;
+      },handleEvent:function(event) {
+        if (event.handled) return;
+        event.handled = true;
+  
+        switch (event.type) {
+          case 'touchstart': case 'touchend': case 'touchmove': {
+            Browser.calculateMouseEvent(event);
+            break;
+          }
+          case 'keydown': case 'keyup': {
+            var down = event.type === 'keydown';
+            var code = SDL.lookupKeyCodeForEvent(event);
+            // Assigning a boolean to HEAP8, that's alright but Closure would like to warn about it.
+            // TODO(https://github.com/emscripten-core/emscripten/issues/16311):
+            // This is kind of ugly hack.  Perhaps we can find a better way?
+            /** @suppress{checkTypes} */
+            HEAP8[(((SDL.keyboardState)+(code))>>0)] = down;
+            // TODO: lmeta, rmeta, numlock, capslock, KMOD_MODE, KMOD_RESERVED
+            SDL.modState = (HEAP8[(((SDL.keyboardState)+(1248))>>0)] ? 0x0040 : 0) | // KMOD_LCTRL
+              (HEAP8[(((SDL.keyboardState)+(1249))>>0)] ? 0x0001 : 0) | // KMOD_LSHIFT
+              (HEAP8[(((SDL.keyboardState)+(1250))>>0)] ? 0x0100 : 0) | // KMOD_LALT
+              (HEAP8[(((SDL.keyboardState)+(1252))>>0)] ? 0x0080 : 0) | // KMOD_RCTRL
+              (HEAP8[(((SDL.keyboardState)+(1253))>>0)] ? 0x0002 : 0) | // KMOD_RSHIFT
+              (HEAP8[(((SDL.keyboardState)+(1254))>>0)] ? 0x0200 : 0); //  KMOD_RALT
+            if (down) {
+              SDL.keyboardMap[code] = event.keyCode; // save the DOM input, which we can use to unpress it during blur
+            } else {
+              delete SDL.keyboardMap[code];
+            }
+  
+            break;
+          }
+          case 'mousedown': case 'mouseup':
+            if (event.type == 'mousedown') {
+              // SDL_BUTTON(x) is defined as (1 << ((x)-1)).  SDL buttons are 1-3,
+              // and DOM buttons are 0-2, so this means that the below formula is
+              // correct.
+              SDL.buttonState |= 1 << event.button;
+            } else if (event.type == 'mouseup') {
+              SDL.buttonState &= ~(1 << event.button);
+            }
+            // fall through
+          case 'mousemove': {
+            Browser.calculateMouseEvent(event);
+            break;
+          }
+        }
+      },flushEventsToHandler:function() {
+        if (!SDL.eventHandler) return;
+  
+        while (SDL.pollEvent(SDL.eventHandlerTemp)) {
+          getWasmTableEntry(SDL.eventHandler)(SDL.eventHandlerContext, SDL.eventHandlerTemp);
+        }
+      },pollEvent:function(ptr) {
+        if (SDL.initFlags & 0x200 && SDL.joystickEventState) {
+          // If SDL_INIT_JOYSTICK was supplied AND the joystick system is configured
+          // to automatically query for events, query for joystick events.
+          SDL.queryJoysticks();
+        }
+        if (ptr) {
+          while (SDL.events.length > 0) {
+            if (SDL.makeCEvent(SDL.events.shift(), ptr) !== false) return 1;
+          }
+          return 0;
+        }
+        // XXX: somewhat risky in that we do not check if the event is real or not (makeCEvent returns false) if no pointer supplied
+        return SDL.events.length > 0;
+      },makeCEvent:function(event, ptr) {
+        if (typeof event == 'number') {
+          // This is a pointer to a copy of a native C event that was SDL_PushEvent'ed
+          _memcpy(ptr, event, 28);
+          _free(event); // the copy is no longer needed
+          return;
+        }
+  
+        SDL.handleEvent(event);
+  
+        switch (event.type) {
+          case 'keydown': case 'keyup': {
+            var down = event.type === 'keydown';
+            //out('Received key event: ' + event.keyCode);
+            var key = SDL.lookupKeyCodeForEvent(event);
+            var scan;
+            if (key >= 1024) {
+              scan = key - 1024;
+            } else {
+              scan = SDL.scanCodes[key] || key;
+            }
+  
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            HEAP8[(((ptr)+(8))>>0)] = down ? 1 : 0;
+            HEAP8[(((ptr)+(9))>>0)] = 0; // TODO
+            HEAP32[(((ptr)+(12))>>2)] = scan;
+            HEAP32[(((ptr)+(16))>>2)] = key;
+            HEAP16[(((ptr)+(20))>>1)] = SDL.modState;
+            // some non-character keys (e.g. backspace and tab) won't have keypressCharCode set, fill in with the keyCode.
+            HEAP32[(((ptr)+(24))>>2)] = event.keypressCharCode || key;
+  
+            break;
+          }
+          case 'keypress': {
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            // Not filling in windowID for now
+            var cStr = intArrayFromString(String.fromCharCode(event.charCode));
+            for (var i = 0; i < cStr.length; ++i) {
+              HEAP8[(((ptr)+(8 + i))>>0)] = cStr[i];
+            }
+            break;
+          }
+          case 'mousedown': case 'mouseup': case 'mousemove': {
+            if (event.type != 'mousemove') {
+              var down = event.type === 'mousedown';
+              HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+              HEAP32[(((ptr)+(4))>>2)] = 0;
+              HEAP32[(((ptr)+(8))>>2)] = 0;
+              HEAP32[(((ptr)+(12))>>2)] = 0;
+              HEAP8[(((ptr)+(16))>>0)] = event.button+1; // DOM buttons are 0-2, SDL 1-3
+              HEAP8[(((ptr)+(17))>>0)] = down ? 1 : 0;
+              HEAP32[(((ptr)+(20))>>2)] = Browser.mouseX;
+              HEAP32[(((ptr)+(24))>>2)] = Browser.mouseY;
+            } else {
+              HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+              HEAP32[(((ptr)+(4))>>2)] = 0;
+              HEAP32[(((ptr)+(8))>>2)] = 0;
+              HEAP32[(((ptr)+(12))>>2)] = 0;
+              HEAP32[(((ptr)+(16))>>2)] = SDL.buttonState;
+              HEAP32[(((ptr)+(20))>>2)] = Browser.mouseX;
+              HEAP32[(((ptr)+(24))>>2)] = Browser.mouseY;
+              HEAP32[(((ptr)+(28))>>2)] = Browser.mouseMovementX;
+              HEAP32[(((ptr)+(32))>>2)] = Browser.mouseMovementY;
+            }
+            break;
+          }
+          case 'wheel': {
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            HEAP32[(((ptr)+(16))>>2)] = event.deltaX;
+            HEAP32[(((ptr)+(20))>>2)] = event.deltaY;
+            break;
+          }
+          case 'touchstart': case 'touchend': case 'touchmove': {
+            var touch = event.touch;
+            if (!Browser.touches[touch.identifier]) break;
+            var w = Module['canvas'].width;
+            var h = Module['canvas'].height;
+            var x = Browser.touches[touch.identifier].x / w;
+            var y = Browser.touches[touch.identifier].y / h;
+            var lx = Browser.lastTouches[touch.identifier].x / w;
+            var ly = Browser.lastTouches[touch.identifier].y / h;
+            var dx = x - lx;
+            var dy = y - ly;
+            if (touch['deviceID'] === undefined) touch.deviceID = SDL.TOUCH_DEFAULT_ID;
+            if (dx === 0 && dy === 0 && event.type === 'touchmove') return false; // don't send these if nothing happened
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            HEAP32[(((ptr)+(4))>>2)] = _SDL_GetTicks();
+            (tempI64 = [touch.deviceID>>>0,(tempDouble=touch.deviceID,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((ptr)+(8))>>2)] = tempI64[0],HEAP32[(((ptr)+(12))>>2)] = tempI64[1]);
+            (tempI64 = [touch.identifier>>>0,(tempDouble=touch.identifier,(+(Math.abs(tempDouble))) >= 1.0 ? (tempDouble > 0.0 ? ((Math.min((+(Math.floor((tempDouble)/4294967296.0))), 4294967295.0))|0)>>>0 : (~~((+(Math.ceil((tempDouble - +(((~~(tempDouble)))>>>0))/4294967296.0)))))>>>0) : 0)],HEAP32[(((ptr)+(16))>>2)] = tempI64[0],HEAP32[(((ptr)+(20))>>2)] = tempI64[1]);
+            HEAPF32[(((ptr)+(24))>>2)] = x;
+            HEAPF32[(((ptr)+(28))>>2)] = y;
+            HEAPF32[(((ptr)+(32))>>2)] = dx;
+            HEAPF32[(((ptr)+(36))>>2)] = dy;
+            if (touch.force !== undefined) {
+              HEAPF32[(((ptr)+(40))>>2)] = touch.force;
+            } else { // No pressure data, send a digital 0/1 pressure.
+              HEAPF32[(((ptr)+(40))>>2)] = event.type == "touchend" ? 0 : 1;
+            }
+            break;
+          }
+          case 'unload': {
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            break;
+          }
+          case 'resize': {
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            HEAP32[(((ptr)+(4))>>2)] = event.w;
+            HEAP32[(((ptr)+(8))>>2)] = event.h;
+            break;
+          }
+          case 'joystick_button_up': case 'joystick_button_down': {
+            var state = event.type === 'joystick_button_up' ? 0 : 1;
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            HEAP8[(((ptr)+(4))>>0)] = event.index;
+            HEAP8[(((ptr)+(5))>>0)] = event.button;
+            HEAP8[(((ptr)+(6))>>0)] = state;
+            break;
+          }
+          case 'joystick_axis_motion': {
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            HEAP8[(((ptr)+(4))>>0)] = event.index;
+            HEAP8[(((ptr)+(5))>>0)] = event.axis;
+            HEAP32[(((ptr)+(8))>>2)] = SDL.joystickAxisValueConversion(event.value);
+            break;
+          }
+          case 'focus': {
+            var SDL_WINDOWEVENT_FOCUS_GAINED = 12 /* SDL_WINDOWEVENT_FOCUS_GAINED */;
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            HEAP32[(((ptr)+(4))>>2)] = 0;
+            HEAP8[(((ptr)+(8))>>0)] = SDL_WINDOWEVENT_FOCUS_GAINED;
+            break;
+          }
+          case 'blur': {
+            var SDL_WINDOWEVENT_FOCUS_LOST = 13 /* SDL_WINDOWEVENT_FOCUS_LOST */;
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            HEAP32[(((ptr)+(4))>>2)] = 0;
+            HEAP8[(((ptr)+(8))>>0)] = SDL_WINDOWEVENT_FOCUS_LOST;
+            break;
+          }
+          case 'visibilitychange': {
+            var SDL_WINDOWEVENT_SHOWN  = 1 /* SDL_WINDOWEVENT_SHOWN */;
+            var SDL_WINDOWEVENT_HIDDEN = 2 /* SDL_WINDOWEVENT_HIDDEN */;
+            var visibilityEventID = event.visible ? SDL_WINDOWEVENT_SHOWN : SDL_WINDOWEVENT_HIDDEN;
+            HEAP32[((ptr)>>2)] = SDL.DOMEventToSDLEvent[event.type];
+            HEAP32[(((ptr)+(4))>>2)] = 0;
+            HEAP8[(((ptr)+(8))>>0)] = visibilityEventID;
+            break;
+          }
+          default: throw 'Unhandled SDL event: ' + event.type;
+        }
+      },makeFontString:function(height, fontName) {
+        if (fontName.charAt(0) != "'" && fontName.charAt(0) != '"') {
+          // https://developer.mozilla.org/ru/docs/Web/CSS/font-family
+          // Font family names containing whitespace should be quoted.
+          // BTW, quote all font names is easier than searching spaces
+          fontName = '"' + fontName + '"';
+        }
+        return height + 'px ' + fontName + ', serif';
+      },estimateTextWidth:function(fontData, text) {
+        var h = fontData.size;
+        var fontString = SDL.makeFontString(h, fontData.name);
+        var tempCtx = SDL_ttfContext();
+        assert(tempCtx, 'TTF_Init must have been called');
+        tempCtx.font = fontString;
+        var ret = tempCtx.measureText(text).width | 0;
+        return ret;
+      },allocateChannels:function(num) { // called from Mix_AllocateChannels and init
+        if (SDL.numChannels && SDL.numChannels >= num && num != 0) return;
+        SDL.numChannels = num;
+        SDL.channels = [];
+        for (var i = 0; i < num; i++) {
+          SDL.channels[i] = {
+            audio: null,
+            volume: 1.0
+          };
+        }
+      },setGetVolume:function(info, volume) {
+        if (!info) return 0;
+        var ret = info.volume * 128; // MIX_MAX_VOLUME
+        if (volume != -1) {
+          info.volume = Math.min(Math.max(volume, 0), 128) / 128;
+          if (info.audio) {
+            try {
+              info.audio.volume = info.volume; // For <audio> element
+              if (info.audio.webAudioGainNode) info.audio.webAudioGainNode['gain']['value'] = info.volume; // For WebAudio playback
+            } catch(e) {
+              err('setGetVolume failed to set audio volume: ' + e);
+            }
+          }
+        }
+        return ret;
+      },setPannerPosition:function(info, x, y, z) {
+        if (!info) return;
+        if (info.audio) {
+          if (info.audio.webAudioPannerNode) {
+            info.audio.webAudioPannerNode['setPosition'](x, y, z);
+          }
+        }
+      },playWebAudio:function(audio) {
+        if (!audio) return;
+        if (audio.webAudioNode) return; // This instance is already playing, don't start again.
+        if (!SDL.webAudioAvailable()) return;
+        try {
+          var webAudio = audio.resource.webAudio;
+          audio.paused = false;
+          if (!webAudio.decodedBuffer) {
+            if (webAudio.onDecodeComplete === undefined) abort("Cannot play back audio object that was not loaded");
+            webAudio.onDecodeComplete.push(function() { if (!audio.paused) SDL.playWebAudio(audio); });
+            return;
+          }
+          audio.webAudioNode = SDL.audioContext['createBufferSource']();
+          audio.webAudioNode['buffer'] = webAudio.decodedBuffer;
+          audio.webAudioNode['loop'] = audio.loop;
+          audio.webAudioNode['onended'] = function() { audio['onended'](); } // For <media> element compatibility, route the onended signal to the instance.
+  
+          audio.webAudioPannerNode = SDL.audioContext['createPanner']();
+          // avoid Chrome bug
+          // If posz = 0, the sound will come from only the right.
+          // By posz = -0.5 (slightly ahead), the sound will come from right and left correctly.
+          audio.webAudioPannerNode["setPosition"](0, 0, -.5);
+          audio.webAudioPannerNode['panningModel'] = 'equalpower';
+  
+          // Add an intermediate gain node to control volume.
+          audio.webAudioGainNode = SDL.audioContext['createGain']();
+          audio.webAudioGainNode['gain']['value'] = audio.volume;
+  
+          audio.webAudioNode['connect'](audio.webAudioPannerNode);
+          audio.webAudioPannerNode['connect'](audio.webAudioGainNode);
+          audio.webAudioGainNode['connect'](SDL.audioContext['destination']);
+  
+          audio.webAudioNode['start'](0, audio.currentPosition);
+          audio.startTime = SDL.audioContext['currentTime'] - audio.currentPosition;
+        } catch(e) {
+          err('playWebAudio failed: ' + e);
+        }
+      },pauseWebAudio:function(audio) {
+        if (!audio) return;
+        if (audio.webAudioNode) {
+          try {
+            // Remember where we left off, so that if/when we resume, we can restart the playback at a proper place.
+            audio.currentPosition = (SDL.audioContext['currentTime'] - audio.startTime) % audio.resource.webAudio.decodedBuffer.duration;
+            // Important: When we reach here, the audio playback is stopped by the user. But when calling .stop() below, the Web Audio
+            // graph will send the onended signal, but we don't want to process that, since pausing should not clear/destroy the audio
+            // channel.
+            audio.webAudioNode['onended'] = undefined;
+            audio.webAudioNode.stop(0); // 0 is a default parameter, but WebKit is confused by it #3861
+            audio.webAudioNode = undefined;
+          } catch(e) {
+            err('pauseWebAudio failed: ' + e);
+          }
+        }
+        audio.paused = true;
+      },openAudioContext:function() {
+        // Initialize Web Audio API if we haven't done so yet. Note: Only initialize Web Audio context ever once on the web page,
+        // since initializing multiple times fails on Chrome saying 'audio resources have been exhausted'.
+        if (!SDL.audioContext) {
+          if (typeof AudioContext != 'undefined') SDL.audioContext = new AudioContext();
+          else if (typeof webkitAudioContext != 'undefined') SDL.audioContext = new webkitAudioContext();
+        }
+      },webAudioAvailable:function() { return !!SDL.audioContext; },fillWebAudioBufferFromHeap:function(heapPtr, sizeSamplesPerChannel, dstAudioBuffer) {
+        // The input audio data is interleaved across the channels, i.e. [L, R, L, R, L, R, ...] and is either 8-bit, 16-bit or float as
+        // supported by the SDL API. The output audio wave data for Web Audio API must be in planar buffers of [-1,1]-normalized Float32 data,
+        // so perform a buffer conversion for the data.
+        var audio = SDL_audio();
+        var numChannels = audio.channels;
+        for (var c = 0; c < numChannels; ++c) {
+          var channelData = dstAudioBuffer['getChannelData'](c);
+          if (channelData.length != sizeSamplesPerChannel) {
+            throw 'Web Audio output buffer length mismatch! Destination size: ' + channelData.length + ' samples vs expected ' + sizeSamplesPerChannel + ' samples!';
+          }
+          if (audio.format == 32784) {
+            for (var j = 0; j < sizeSamplesPerChannel; ++j) {
+              channelData[j] = (HEAP16[(((heapPtr)+((j*numChannels + c)*2))>>1)]) / 0x8000;
+            }
+          } else if (audio.format == 8) {
+            for (var j = 0; j < sizeSamplesPerChannel; ++j) {
+              var v = (HEAP8[(((heapPtr)+(j*numChannels + c))>>0)]);
+              channelData[j] = ((v >= 0) ? v-128 : v+128) /128;
+            }
+          } else if (audio.format == 33056) {
+            for (var j = 0; j < sizeSamplesPerChannel; ++j) {
+              channelData[j] = (HEAPF32[(((heapPtr)+((j*numChannels + c)*4))>>2)]);
+            }
+          } else {
+            throw 'Invalid SDL audio format ' + audio.format + '!';
+          }
+        }
+      },debugSurface:function(surfData) {
+        out('dumping surface ' + [surfData.surf, surfData.source, surfData.width, surfData.height]);
+        var image = surfData.ctx.getImageData(0, 0, surfData.width, surfData.height);
+        var data = image.data;
+        var num = Math.min(surfData.width, surfData.height);
+        for (var i = 0; i < num; i++) {
+          out('   diagonal ' + i + ':' + [data[i*surfData.width*4 + i*4 + 0], data[i*surfData.width*4 + i*4 + 1], data[i*surfData.width*4 + i*4 + 2], data[i*surfData.width*4 + i*4 + 3]]);
+        }
+      },joystickEventState:1,lastJoystickState:{},joystickNamePool:{},recordJoystickState:function(joystick, state) {
+        // Standardize button state.
+        var buttons = new Array(state.buttons.length);
+        for (var i = 0; i < state.buttons.length; i++) {
+          buttons[i] = SDL.getJoystickButtonState(state.buttons[i]);
+        }
+  
+        SDL.lastJoystickState[joystick] = {
+          buttons: buttons,
+          axes: state.axes.slice(0),
+          timestamp: state.timestamp,
+          index: state.index,
+          id: state.id
+        };
+      },getJoystickButtonState:function(button) {
+        if (typeof button == 'object') {
+          // Current gamepad API editor's draft (Firefox Nightly)
+          // https://dvcs.w3.org/hg/gamepad/raw-file/default/gamepad.html#idl-def-GamepadButton
+          return button['pressed'];
+        }
+        // Current gamepad API working draft (Firefox / Chrome Stable)
+        // http://www.w3.org/TR/2012/WD-gamepad-20120529/#gamepad-interface
+        return button > 0;
+      },queryJoysticks:function() {
+        for (var joystick in SDL.lastJoystickState) {
+          var state = SDL.getGamepad(joystick - 1);
+          var prevState = SDL.lastJoystickState[joystick];
+          // If joystick was removed, state returns null.
+          if (typeof state == 'undefined') return;
+          if (state === null) return;
+          // Check only if the timestamp has differed.
+          // NOTE: Timestamp is not available in Firefox.
+          // NOTE: Timestamp is currently not properly set for the GearVR controller
+          //       on Samsung Internet: it is always zero.
+          if (typeof state.timestamp != 'number' || state.timestamp != prevState.timestamp || !state.timestamp) {
+            var i;
+            for (i = 0; i < state.buttons.length; i++) {
+              var buttonState = SDL.getJoystickButtonState(state.buttons[i]);
+              // NOTE: The previous state already has a boolean representation of
+              //       its button, so no need to standardize its button state here.
+              if (buttonState !== prevState.buttons[i]) {
+                // Insert button-press event.
+                SDL.events.push({
+                  type: buttonState ? 'joystick_button_down' : 'joystick_button_up',
+                  joystick: joystick,
+                  index: joystick - 1,
+                  button: i
+                });
+              }
+            }
+            for (i = 0; i < state.axes.length; i++) {
+              if (state.axes[i] !== prevState.axes[i]) {
+                // Insert axes-change event.
+                SDL.events.push({
+                  type: 'joystick_axis_motion',
+                  joystick: joystick,
+                  index: joystick - 1,
+                  axis: i,
+                  value: state.axes[i]
+                });
+              }
+            }
+  
+            SDL.recordJoystickState(joystick, state);
+          }
+        }
+      },joystickAxisValueConversion:function(value) {
+        // Make sure value is properly clamped
+        value = Math.min(1, Math.max(value, -1));
+        // Ensures that 0 is 0, 1 is 32767, and -1 is 32768.
+        return Math.ceil(((value+1) * 32767.5) - 32768);
+      },getGamepads:function() {
+        var fcn = navigator.getGamepads || navigator.webkitGamepads || navigator.mozGamepads || navigator.gamepads || navigator.webkitGetGamepads;
+        if (fcn !== undefined) {
+          // The function must be applied on the navigator object.
+          return fcn.apply(navigator);
+        }
+        return [];
+      },getGamepad:function(deviceIndex) {
+        var gamepads = SDL.getGamepads();
+        if (gamepads.length > deviceIndex && deviceIndex >= 0) {
+          return gamepads[deviceIndex];
+        }
+        return null;
+      }};
+  
+  function _Mix_FreeChunk(id) {
+      SDL.audios[id] = null;
+    }
+  var _Mix_FreeMusic = _Mix_FreeChunk;
+
+  function _Mix_HaltMusic() {
+      var audio = /** @type {HTMLMediaElement} */ (SDL.music.audio);
+      if (audio) {
+        audio.src = audio.src; // rewind <media> element
+        audio.currentPosition = 0; // rewind Web Audio graph playback.
+        audio.pause();
+      }
+      SDL.music.audio = null;
+      if (SDL.hookMusicFinished) {
+        getWasmTableEntry(SDL.hookMusicFinished)();
+      }
+      return 0;
+    }
+
+  /** @param {number|boolean=} freesrc */
+  function _Mix_LoadWAV_RW(rwopsID, freesrc) {
+      var rwops = SDL.rwops[rwopsID];
+  
+      if (rwops === undefined) {
+        var type = HEAP32[((rwopsID + 20)>>2)];
+  
+        if (type === 2/*SDL_RWOPS_STDFILE*/) {
+          var fp = HEAP32[((rwopsID + 28)>>2)];
+          var fd = Module['_fileno'](fp);
+          var stream = FS.getStream(fd);
+          if (stream) {
+            rwops = { filename: stream.path };
+          }
+        }
+        else if (type === 4/*SDL_RWOPS_MEMORY*/ || type === 5/*SDL_RWOPS_MEMORY_RO*/) {
+          var base = HEAP32[((rwopsID + 24)>>2)];
+          var stop = HEAP32[((rwopsID + 32)>>2)];
+  
+          rwops = { bytes: base, count: stop - base };
+        }
+      }
+  
+      if (rwops === undefined)
+        return 0;
+  
+      var filename = '';
+      var audio;
+      var webAudio;
+      var bytes;
+  
+      if (rwops.filename !== undefined) {
+        filename = PATH_FS.resolve(rwops.filename);
+        var raw = preloadedAudios[filename];
+        if (!raw) {
+          if (raw === null) err('Trying to reuse preloaded audio, but freePreloadedMediaOnUse is set!');
+          if (!Module.noAudioDecoding) warnOnce('Cannot find preloaded audio ' + filename);
+  
+          // see if we can read the file-contents from the in-memory FS
+          try {
+            bytes = FS.readFile(filename);
+          } catch (e) {
+            err('Couldn\'t find file for: ' + filename);
+            return 0;
+          }
+        }
+        if (Module['freePreloadedMediaOnUse']) {
+          preloadedAudios[filename] = null;
+        }
+        audio = raw;
+      }
+      else if (rwops.bytes !== undefined) {
+        // For Web Audio context buffer decoding, we must make a clone of the audio data, but for <media> element,
+        // a view to existing data is sufficient.
+        if (SDL.webAudioAvailable()) bytes = HEAPU8.buffer.slice(rwops.bytes, rwops.bytes + rwops.count);
+        else bytes = HEAPU8.subarray(rwops.bytes, rwops.bytes + rwops.count);
+      }
+      else {
+        return 0;
+      }
+  
+      var arrayBuffer = bytes ? bytes.buffer || bytes : bytes;
+  
+      // To allow user code to work around browser bugs with audio playback on <audio> elements an Web Audio, enable
+      // the user code to hook in a callback to decide on a file basis whether each file should use Web Audio or <audio> for decoding and playback.
+      // In particular, see https://bugzilla.mozilla.org/show_bug.cgi?id=654787 and ?id=1012801 for tradeoffs.
+      var canPlayWithWebAudio = Module['SDL_canPlayWithWebAudio'] === undefined || Module['SDL_canPlayWithWebAudio'](filename, arrayBuffer);
+  
+      if (bytes !== undefined && SDL.webAudioAvailable() && canPlayWithWebAudio) {
+        audio = undefined;
+        webAudio = {};
+        // The audio decoding process is asynchronous, which gives trouble if user code plays the audio data back immediately
+        // after loading. Therefore prepare an array of callback handlers to run when this audio decoding is complete, which
+        // will then start the playback (with some delay).
+        webAudio.onDecodeComplete = []; // While this member array exists, decoding hasn't finished yet.
+        var onDecodeComplete = function(data) {
+          webAudio.decodedBuffer = data;
+          // Call all handlers that were waiting for this decode to finish, and clear the handler list.
+          webAudio.onDecodeComplete.forEach(function(e) { e(); });
+          webAudio.onDecodeComplete = undefined; // Don't allow more callback handlers since audio has finished decoding.
+        };
+        SDL.audioContext['decodeAudioData'](arrayBuffer, onDecodeComplete);
+      } else if (audio === undefined && bytes) {
+        // Here, we didn't find a preloaded audio but we either were passed a filepath for
+        // which we loaded bytes, or we were passed some bytes
+        var blob = new Blob([bytes], {type: rwops.mimetype});
+        var url = URL.createObjectURL(blob);
+        audio = new Audio();
+        audio.src = url;
+        audio.mozAudioChannelType = 'content'; // bugzilla 910340
+      }
+  
+      var id = SDL.audios.length;
+      // Keep the loaded audio in the audio arrays, ready for playback
+      SDL.audios.push({
+        source: filename,
+        audio: audio, // Points to the <audio> element, if loaded
+        webAudio: webAudio // Points to a Web Audio -specific resource object, if loaded
+      });
+      return id;
+    }
+  /** @param {number|boolean=} a1 */
+  var _Mix_LoadMUS_RW = _Mix_LoadWAV_RW;
+
+
+  function _Mix_OpenAudio(frequency, format, channels, chunksize) {
+      SDL.openAudioContext();
+      autoResumeAudioContext(SDL.audioContext);
+      SDL.allocateChannels(32);
+      // Just record the values for a later call to Mix_QuickLoad_RAW
+      SDL.mixerFrequency = frequency;
+      SDL.mixerFormat = format;
+      SDL.mixerNumChannels = channels;
+      SDL.mixerChunkSize = chunksize;
+      return 0;
+    }
+
+  function _Mix_PlayChannel(channel, id, loops) {
+      // TODO: handle fixed amount of N loops. Currently loops either 0 or infinite times.
+  
+      // Get the audio element associated with the ID
+      var info = SDL.audios[id];
+      if (!info) return -1;
+      if (!info.audio && !info.webAudio) return -1;
+  
+      // If the user asks us to allocate a channel automatically, get the first
+      // free one.
+      if (channel == -1) {
+        for (var i = SDL.channelMinimumNumber; i < SDL.numChannels; i++) {
+          if (!SDL.channels[i].audio) {
+            channel = i;
+            break;
+          }
+        }
+        if (channel == -1) {
+          err('All ' + SDL.numChannels + ' channels in use!');
+          return -1;
+        }
+      }
+      var channelInfo = SDL.channels[channel];
+      var audio;
+      if (info.webAudio) {
+        // Create an instance of the WebAudio object.
+        audio = {};
+        audio.resource = info; // This new object is an instance that refers to this existing resource.
+        audio.paused = false;
+        audio.currentPosition = 0;
+        // Make our instance look similar to the instance of a <media> to make api simple.
+        audio.play = function() { SDL.playWebAudio(this); }
+        audio.pause = function() { SDL.pauseWebAudio(this); }
+      } else {
+        // We clone the audio node to utilize the preloaded audio buffer, since
+        // the browser has already preloaded the audio file.
+        audio = info.audio.cloneNode(true);
+        audio.numChannels = info.audio.numChannels;
+        audio.frequency = info.audio.frequency;
+      }
+      audio['onended'] = function SDL_audio_onended() { // TODO: cache these
+        if (channelInfo.audio == this) { channelInfo.audio.paused = true; channelInfo.audio = null; }
+        if (SDL.channelFinished)  getWasmTableEntry(SDL.channelFinished)(channel);
+      }
+      channelInfo.audio = audio;
+      // TODO: handle N loops. Behavior matches Mix_PlayMusic
+      audio.loop = loops != 0;
+      audio.volume = channelInfo.volume;
+      audio.play();
+      return channel;
+    }
+  var _Mix_PlayChannelTimed = _Mix_PlayChannel;
+
+  function _Mix_PlayMusic(id, loops) {
+      // Pause old music if it exists.
+      if (SDL.music.audio) {
+        if (!SDL.music.audio.paused) err('Music is already playing. ' + SDL.music.source);
+        SDL.music.audio.pause();
+      }
+      var info = SDL.audios[id];
+      var audio;
+      if (info.webAudio) { // Play via Web Audio API
+        // Create an instance of the WebAudio object.
+        audio = {};
+        audio.resource = info; // This new webAudio object is an instance that refers to this existing resource.
+        audio.paused = false;
+        audio.currentPosition = 0;
+        audio.play = function() { SDL.playWebAudio(this); }
+        audio.pause = function() { SDL.pauseWebAudio(this); }
+      } else if (info.audio) { // Play via the <audio> element
+        audio = info.audio;
+      }
+      audio['onended'] = function() { if (SDL.music.audio == this) _Mix_HaltMusic(); } // will send callback
+      audio.loop = loops != 0 && loops != 1; // TODO: handle N loops for finite N
+      audio.volume = SDL.music.volume;
+      SDL.music.audio = audio;
+      audio.play();
+      return 0;
+    }
+
+  function ___cxa_allocate_exception(size) {
+      // Thrown object is prepended by exception metadata block
+      return _malloc(size + 24) + 24;
+    }
+
+  /** @constructor */
+  function ExceptionInfo(excPtr) {
+      this.excPtr = excPtr;
+      this.ptr = excPtr - 24;
+  
+      this.set_type = function(type) {
+        HEAPU32[(((this.ptr)+(4))>>2)] = type;
+      };
+  
+      this.get_type = function() {
+        return HEAPU32[(((this.ptr)+(4))>>2)];
+      };
+  
+      this.set_destructor = function(destructor) {
+        HEAPU32[(((this.ptr)+(8))>>2)] = destructor;
+      };
+  
+      this.get_destructor = function() {
+        return HEAPU32[(((this.ptr)+(8))>>2)];
+      };
+  
+      this.set_refcount = function(refcount) {
+        HEAP32[((this.ptr)>>2)] = refcount;
+      };
+  
+      this.set_caught = function (caught) {
+        caught = caught ? 1 : 0;
+        HEAP8[(((this.ptr)+(12))>>0)] = caught;
+      };
+  
+      this.get_caught = function () {
+        return HEAP8[(((this.ptr)+(12))>>0)] != 0;
+      };
+  
+      this.set_rethrown = function (rethrown) {
+        rethrown = rethrown ? 1 : 0;
+        HEAP8[(((this.ptr)+(13))>>0)] = rethrown;
+      };
+  
+      this.get_rethrown = function () {
+        return HEAP8[(((this.ptr)+(13))>>0)] != 0;
+      };
+  
+      // Initialize native structure fields. Should be called once after allocated.
+      this.init = function(type, destructor) {
+        this.set_adjusted_ptr(0);
+        this.set_type(type);
+        this.set_destructor(destructor);
+        this.set_refcount(0);
+        this.set_caught(false);
+        this.set_rethrown(false);
+      }
+  
+      this.add_ref = function() {
+        var value = HEAP32[((this.ptr)>>2)];
+        HEAP32[((this.ptr)>>2)] = value + 1;
+      };
+  
+      // Returns true if last reference released.
+      this.release_ref = function() {
+        var prev = HEAP32[((this.ptr)>>2)];
+        HEAP32[((this.ptr)>>2)] = prev - 1;
+        assert(prev > 0);
+        return prev === 1;
+      };
+  
+      this.set_adjusted_ptr = function(adjustedPtr) {
+        HEAPU32[(((this.ptr)+(16))>>2)] = adjustedPtr;
+      };
+  
+      this.get_adjusted_ptr = function() {
+        return HEAPU32[(((this.ptr)+(16))>>2)];
+      };
+  
+      // Get pointer which is expected to be received by catch clause in C++ code. It may be adjusted
+      // when the pointer is casted to some of the exception object base classes (e.g. when virtual
+      // inheritance is used). When a pointer is thrown this method should return the thrown pointer
+      // itself.
+      this.get_exception_ptr = function() {
+        // Work around a fastcomp bug, this code is still included for some reason in a build without
+        // exceptions support.
+        var isPointer = ___cxa_is_pointer_type(this.get_type());
+        if (isPointer) {
+          return HEAPU32[((this.excPtr)>>2)];
+        }
+        var adjusted = this.get_adjusted_ptr();
+        if (adjusted !== 0) return adjusted;
+        return this.excPtr;
+      };
+    }
+  
+  var exceptionLast = 0;
+  
+  var uncaughtExceptionCount = 0;
+  function ___cxa_throw(ptr, type, destructor) {
+      var info = new ExceptionInfo(ptr);
+      // Initialize ExceptionInfo content after it was allocated in __cxa_allocate_exception.
+      info.init(type, destructor);
+      exceptionLast = ptr;
+      uncaughtExceptionCount++;
+      throw ptr + " - Exception catching is disabled, this exception cannot be caught. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.";
+    }
+
+  function setErrNo(value) {
+      HEAP32[((___errno_location())>>2)] = value;
+      return value;
+    }
+  function ___syscall_fcntl64(fd, cmd, varargs) {
+  SYSCALLS.varargs = varargs;
+  try {
+  
+      var stream = SYSCALLS.getStreamFromFD(fd);
+      switch (cmd) {
+        case 0: {
+          var arg = SYSCALLS.get();
+          if (arg < 0) {
+            return -28;
+          }
+          var newStream;
+          newStream = FS.createStream(stream, arg);
+          return newStream.fd;
+        }
+        case 1:
+        case 2:
+          return 0;  // FD_CLOEXEC makes no sense for a single process.
+        case 3:
+          return stream.flags;
+        case 4: {
+          var arg = SYSCALLS.get();
+          stream.flags |= arg;
+          return 0;
+        }
+        case 5:
+        /* case 5: Currently in musl F_GETLK64 has same value as F_GETLK, so omitted to avoid duplicate case blocks. If that changes, uncomment this */ {
+          
+          var arg = SYSCALLS.get();
+          var offset = 0;
+          // We're always unlocked.
+          HEAP16[(((arg)+(offset))>>1)] = 2;
+          return 0;
+        }
+        case 6:
+        case 7:
+        /* case 6: Currently in musl F_SETLK64 has same value as F_SETLK, so omitted to avoid duplicate case blocks. If that changes, uncomment this */
+        /* case 7: Currently in musl F_SETLKW64 has same value as F_SETLKW, so omitted to avoid duplicate case blocks. If that changes, uncomment this */
+          
+          
+          return 0; // Pretend that the locking is successful.
+        case 16:
+        case 8:
+          return -28; // These are for sockets. We don't have them fully implemented yet.
+        case 9:
+          // musl trusts getown return values, due to a bug where they must be, as they overlap with errors. just return -1 here, so fcntl() returns that, and we set errno ourselves.
+          setErrNo(28);
+          return -1;
+        default: {
+          return -28;
+        }
+      }
+    } catch (e) {
+    if (typeof FS == 'undefined' || !(e instanceof FS.ErrnoError)) throw e;
+    return -e.errno;
+  }
+  }
+
+  function ___syscall_ioctl(fd, op, varargs) {
+  SYSCALLS.varargs = varargs;
+  try {
+  
+      var stream = SYSCALLS.getStreamFromFD(fd);
+      switch (op) {
+        case 21509:
+        case 21505: {
+          if (!stream.tty) return -59;
+          return 0;
+        }
+        case 21510:
+        case 21511:
+        case 21512:
+        case 21506:
+        case 21507:
+        case 21508: {
+          if (!stream.tty) return -59;
+          return 0; // no-op, not actually adjusting terminal settings
+        }
+        case 21519: {
+          if (!stream.tty) return -59;
+          var argp = SYSCALLS.get();
+          HEAP32[((argp)>>2)] = 0;
+          return 0;
+        }
+        case 21520: {
+          if (!stream.tty) return -59;
+          return -28; // not supported
+        }
+        case 21531: {
+          var argp = SYSCALLS.get();
+          return FS.ioctl(stream, op, argp);
+        }
+        case 21523: {
+          // TODO: in theory we should write to the winsize struct that gets
+          // passed in, but for now musl doesn't read anything on it
+          if (!stream.tty) return -59;
+          return 0;
+        }
+        case 21524: {
+          // TODO: technically, this ioctl call should change the window size.
+          // but, since emscripten doesn't have any concept of a terminal window
+          // yet, we'll just silently throw it away as we do TIOCGWINSZ
+          if (!stream.tty) return -59;
+          return 0;
+        }
+        default: return -28; // not supported
+      }
+    } catch (e) {
+    if (typeof FS == 'undefined' || !(e instanceof FS.ErrnoError)) throw e;
+    return -e.errno;
+  }
+  }
+
+  function ___syscall_openat(dirfd, path, flags, varargs) {
+  SYSCALLS.varargs = varargs;
+  try {
+  
+      path = SYSCALLS.getStr(path);
+      path = SYSCALLS.calculateAt(dirfd, path);
+      var mode = varargs ? SYSCALLS.get() : 0;
+      return FS.open(path, flags, mode).fd;
+    } catch (e) {
+    if (typeof FS == 'undefined' || !(e instanceof FS.ErrnoError)) throw e;
+    return -e.errno;
+  }
+  }
+
+  function __emscripten_date_now() {
+      return Date.now();
+    }
+
+  var nowIsMonotonic = true;;
+  function __emscripten_get_now_is_monotonic() {
+      return nowIsMonotonic;
+    }
+
+  function _abort() {
+      abort('native code called abort()');
+    }
+
   var EGL = {errorCode:12288,defaultDisplayInitialized:false,currentContext:0,currentReadSurface:0,currentDrawSurface:0,contextAttributes:{alpha:false,depth:false,stencil:false,antialias:false},stringCache:{},setErrorCode:function(code) {
         EGL.errorCode = code;
       },chooseConfig:function(display, attribList, config, config_size, numConfigs) {
@@ -8203,7 +9250,6 @@ var ASM_CONSTS = {
       return 0;
     }
 
-
   function _fd_close(fd) {
   try {
   
@@ -9075,7 +10121,6 @@ var ASM_CONSTS = {
     }
 
 
-
   var FSNode = /** @constructor */ function(parent, name, mode, rdev) {
     if (!parent) {
       parent = this;  // root node sets parent to itself
@@ -9121,7 +10166,7 @@ var ASM_CONSTS = {
    }
   });
   FS.FSNode = FSNode;
-  FS.staticInit();Module["FS_createPath"] = FS.createPath;Module["FS_createDataFile"] = FS.createDataFile;Module["FS_createPreloadedFile"] = FS.createPreloadedFile;Module["FS_unlink"] = FS.unlink;Module["FS_createLazyFile"] = FS.createLazyFile;Module["FS_createDevice"] = FS.createDevice;;
+  FS.staticInit();;
 ERRNO_CODES = {
       'EPERM': 63,
       'ENOENT': 44,
@@ -9271,82 +10316,17 @@ var __miniTempWebGLIntBuffersStorage = new Int32Array(288);
   ;
 var ASSERTIONS = true;
 
-// Copied from https://github.com/strophe/strophejs/blob/e06d027/src/polyfills.js#L149
-
-// This code was written by Tyler Akins and has been placed in the
-// public domain.  It would be nice if you left this header intact.
-// Base64 code from Tyler Akins -- http://rumkin.com
-
-/**
- * Decodes a base64 string.
- * @param {string} input The string to decode.
- */
-var decodeBase64 = typeof atob == 'function' ? atob : function (input) {
-  var keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-
-  var output = '';
-  var chr1, chr2, chr3;
-  var enc1, enc2, enc3, enc4;
-  var i = 0;
-  // remove all characters that are not A-Z, a-z, 0-9, +, /, or =
-  input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
-  do {
-    enc1 = keyStr.indexOf(input.charAt(i++));
-    enc2 = keyStr.indexOf(input.charAt(i++));
-    enc3 = keyStr.indexOf(input.charAt(i++));
-    enc4 = keyStr.indexOf(input.charAt(i++));
-
-    chr1 = (enc1 << 2) | (enc2 >> 4);
-    chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-    chr3 = ((enc3 & 3) << 6) | enc4;
-
-    output = output + String.fromCharCode(chr1);
-
-    if (enc3 !== 64) {
-      output = output + String.fromCharCode(chr2);
-    }
-    if (enc4 !== 64) {
-      output = output + String.fromCharCode(chr3);
-    }
-  } while (i < input.length);
-  return output;
-};
-
-// Converts a string of base64 into a byte array.
-// Throws error on invalid input.
-function intArrayFromBase64(s) {
-  if (typeof ENVIRONMENT_IS_NODE == 'boolean' && ENVIRONMENT_IS_NODE) {
-    var buf = Buffer.from(s, 'base64');
-    return new Uint8Array(buf['buffer'], buf['byteOffset'], buf['byteLength']);
-  }
-
-  try {
-    var decoded = decodeBase64(s);
-    var bytes = new Uint8Array(decoded.length);
-    for (var i = 0 ; i < decoded.length ; ++i) {
-      bytes[i] = decoded.charCodeAt(i);
-    }
-    return bytes;
-  } catch (_) {
-    throw new Error('Converting base64 string to bytes failed.');
-  }
-}
-
-// If filename is a base64 data URI, parses and returns data (Buffer on node,
-// Uint8Array otherwise). If filename is not a base64 data URI, returns undefined.
-function tryParseAsDataURI(filename) {
-  if (!isDataURI(filename)) {
-    return;
-  }
-
-  return intArrayFromBase64(filename.slice(dataURIPrefix.length));
-}
-
-
 function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var asmLibraryArg = {
+  "Mix_FreeMusic": _Mix_FreeMusic,
+  "Mix_HaltMusic": _Mix_HaltMusic,
+  "Mix_LoadMUS_RW": _Mix_LoadMUS_RW,
+  "Mix_LoadWAV_RW": _Mix_LoadWAV_RW,
+  "Mix_OpenAudio": _Mix_OpenAudio,
+  "Mix_PlayChannelTimed": _Mix_PlayChannelTimed,
+  "Mix_PlayMusic": _Mix_PlayMusic,
   "__cxa_allocate_exception": ___cxa_allocate_exception,
   "__cxa_throw": ___cxa_throw,
   "__syscall_fcntl64": ___syscall_fcntl64,
@@ -9579,7 +10559,6 @@ var asmLibraryArg = {
   "emscripten_sleep": _emscripten_sleep,
   "environ_get": _environ_get,
   "environ_sizes_get": _environ_sizes_get,
-  "exit": _exit,
   "fd_close": _fd_close,
   "fd_read": _fd_read,
   "fd_seek": _fd_seek,
@@ -9610,6 +10589,9 @@ var ___dl_seterr = Module["___dl_seterr"] = createExportWrapper("__dl_seterr");
 
 /** @type {function(...*):?} */
 var _fflush = Module["_fflush"] = createExportWrapper("fflush");
+
+/** @type {function(...*):?} */
+var _fileno = Module["_fileno"] = createExportWrapper("fileno");
 
 /** @type {function(...*):?} */
 var _emscripten_stack_init = Module["_emscripten_stack_init"] = function() {
@@ -9644,16 +10626,10 @@ var stackAlloc = Module["stackAlloc"] = createExportWrapper("stackAlloc");
 var ___cxa_is_pointer_type = Module["___cxa_is_pointer_type"] = createExportWrapper("__cxa_is_pointer_type");
 
 /** @type {function(...*):?} */
-var dynCall_iiji = Module["dynCall_iiji"] = createExportWrapper("dynCall_iiji");
-
-/** @type {function(...*):?} */
 var dynCall_jiji = Module["dynCall_jiji"] = createExportWrapper("dynCall_jiji");
 
 /** @type {function(...*):?} */
 var dynCall_ji = Module["dynCall_ji"] = createExportWrapper("dynCall_ji");
-
-/** @type {function(...*):?} */
-var dynCall_viijii = Module["dynCall_viijii"] = createExportWrapper("dynCall_viijii");
 
 /** @type {function(...*):?} */
 var dynCall_iiiiij = Module["dynCall_iiiiij"] = createExportWrapper("dynCall_iiiiij");
@@ -9670,14 +10646,7 @@ var dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = createExportWrapper("dynCall
 
 // === Auto-generated postamble setup entry stuff ===
 
-Module["addRunDependency"] = addRunDependency;
-Module["removeRunDependency"] = removeRunDependency;
-Module["FS_createPath"] = FS.createPath;
-Module["FS_createDataFile"] = FS.createDataFile;
-Module["FS_createPreloadedFile"] = FS.createPreloadedFile;
-Module["FS_createLazyFile"] = FS.createLazyFile;
-Module["FS_createDevice"] = FS.createDevice;
-Module["FS_unlink"] = FS.unlink;
+
 var unexportedRuntimeSymbols = [
   'run',
   'UTF8ArrayToString',
@@ -9690,8 +10659,16 @@ var unexportedRuntimeSymbols = [
   'addOnPreMain',
   'addOnExit',
   'addOnPostRun',
+  'addRunDependency',
+  'removeRunDependency',
   'FS_createFolder',
+  'FS_createPath',
+  'FS_createDataFile',
+  'FS_createPreloadedFile',
+  'FS_createLazyFile',
   'FS_createLink',
+  'FS_createDevice',
+  'FS_unlink',
   'getLEB',
   'getFunctionTables',
   'alignFunctionTables',
@@ -9964,9 +10941,6 @@ var missingLibrarySymbols = [
   'exception_decRef',
   '_setNetworkCallback',
   'writeGLArray',
-  'SDL_unicode',
-  'SDL_ttfContext',
-  'SDL_audio',
   'GLFW_Window',
   'runAndAbortIfError',
 ];
