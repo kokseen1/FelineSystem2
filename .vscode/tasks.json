@@ -18,7 +18,7 @@
 				"-w",
 				"-o",
 				"index.html",
-				"-sUSE_SDL_MIXER=2",
+				"-sUSE_SDL_MIXER=1",
 				"-sUSE_SDL=2",
 				"-sALLOW_MEMORY_GROWTH",
 				"-fdeclspec",
