@@ -37,7 +37,7 @@ namespace Utils
                 // Call callback function
                 (obj->*cb)(static_cast<byte *>(buf), sz);
 
-                delete a;
+                delete arg;
             },
             [](void *)
             {
