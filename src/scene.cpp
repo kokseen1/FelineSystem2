@@ -20,7 +20,7 @@ SceneManager::SceneManager()
 }
 
 // Decode a HG buffer and display the first frame
-void SceneManager::displayFrame(byte *buf)
+void SceneManager::displayFrame(byte *buf, size_t sz)
 {
     HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
     FrameHeader *frameHeader = reinterpret_cast<FrameHeader *>(hgHeader + 1);
@@ -58,30 +58,7 @@ void SceneManager::displayFrame(byte *buf)
     }
 }
 
-void SceneManager::onLoad(void *arg, void *buf, int sz)
+void SceneManager::setScene(char *fpath)
 {
-    SceneManager *sceneManager = reinterpret_cast<SceneManager *>(arg);
-    sceneManager->displayFrame(static_cast<byte *>(buf));
-}
-
-void SceneManager::onError(void *arg)
-{
-    printf("SceneManager onError\n");
-}
-
-void SceneManager::setScene(char *fpath, int local)
-{
-#ifdef __EMSCRIPTEN__
-    if (local)
-    {
-#endif
-        auto buf = Utils::readFile(fpath);
-        displayFrame(buf.data());
-#ifdef __EMSCRIPTEN__
-    }
-    else
-    {
-        Utils::readFile(fpath, this, onLoad, onError);
-    }
-#endif
+    Utils::processFile(fpath, this, &SceneManager::displayFrame);
 }

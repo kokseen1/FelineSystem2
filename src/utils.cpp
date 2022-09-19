@@ -50,4 +50,5 @@ namespace Utils
         emscripten_async_wget_data(fpath, arg, onLoad, onError);
     }
 #endif
+
 }

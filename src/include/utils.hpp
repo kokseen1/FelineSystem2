@@ -28,4 +28,42 @@ namespace Utils
         return events[eventType];
     }
 #endif
+
+    template <typename T, typename C>
+    // typedef void (C::*ProcessFileCallback)(byte *, size_t);
+    void processFile(char *fpath, T obj, C cb)
+    {
+#ifdef __EMSCRIPTEN__
+        // Struct to store object and callback
+        typedef struct
+        {
+            T obj;
+            C cb;
+        } Arg;
+
+        auto *a = new Arg{obj, cb};
+
+        emscripten_async_wget_data(
+            fpath, a,
+            [](void *arg, void *buf, int sz)
+            {
+                // Retrieve arguments
+                auto *a = reinterpret_cast<Arg *>(arg);
+                auto *obj = a->obj;
+                auto cb = a->cb;
+
+                // Call callback function
+                (obj->*cb)(static_cast<byte *>(buf), sz);
+
+                delete[] a;
+            },
+            [](void *)
+            {
+                printf("emscripten_async_wget_data Error\n");
+            });
+#else
+        auto buf = readFile(fpath);
+        (obj->*cb)(buf.data(), buf.size());
+#endif
+    }
 }

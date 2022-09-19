@@ -13,9 +13,9 @@ class SceneManager
 public:
     SceneManager();
 
-    void setScene(char *, int);
+    void setScene(char *);
 
-    void displayFrame(byte *);
+    void displayFrame(byte *, size_t);
 
     SDL_Window *window = NULL;
 

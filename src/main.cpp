@@ -24,7 +24,7 @@ void nextScene()
 {
     char fpath[255] = {0};
     sprintf(fpath, FMT_SCENE, scene_id);
-    sceneManager->setScene(fpath, 0);
+    sceneManager->setScene(fpath);
 
     scene_id = scene_id == 11 ? 1 : scene_id + 1;
 

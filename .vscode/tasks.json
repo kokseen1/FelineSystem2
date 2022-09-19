@@ -22,7 +22,7 @@
 				"-sUSE_SDL=2",
 				"-sALLOW_MEMORY_GROWTH",
 				"-fdeclspec",
-				"-sUSE_ZLIB=1",
+				"-sUSE_ZLIB=1"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
