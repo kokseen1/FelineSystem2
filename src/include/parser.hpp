@@ -15,18 +15,13 @@ private:
     size_t stringEntryCount;
     size_t currStringEntry;
 
-    void loadFromFile(char *);
-
-    void loadFromBuf(byte *);
+    void loadFromBuf(byte *, size_t);
 
     void handleCommand(std::string);
 
-    static void onLoad(void *, void *, int);
-    static void onError(void *);
-
 public:
-    ScriptParser(MusicPlayer*);
+    ScriptParser(MusicPlayer *);
 
     void parseNext();
-    void setScript(char *);
+    void setScript(const char *);
 };

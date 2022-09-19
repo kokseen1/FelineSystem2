@@ -35,41 +35,20 @@ void MusicPlayer::playPcm(std::string pcm)
 void MusicPlayer::setSound(const char *fpath)
 {
     printf("Playing pcm %s\n", fpath);
-#ifdef __EMSCRIPTEN__
-    Utils::readFile(fpath, this, onLoadSound, onError);
-#else
-    auto buf = Utils::readFile(fpath);
-    playSoundFromMem(buf.data(), buf.size());
-#endif
+    Utils::processFile(fpath, this, &MusicPlayer::playSoundFromMem);
 }
 
 void MusicPlayer::setMusic(const char *fpath)
 {
 #ifdef __EMSCRIPTEN__
-    Utils::readFile(fpath, this, onLoad, onError);
+    // Crashes if called too quickly on local
+    Utils::processFile(fpath, this, &MusicPlayer::playFromMem);
 #else
     playFromFile(fpath);
 #endif
 }
 
-void MusicPlayer::onLoad(void *arg, void *buf, int sz)
-{
-    MusicPlayer *musicPlayer = (MusicPlayer *)arg;
-    musicPlayer->playFromMem(static_cast<byte *>(buf), sz);
-}
-
-void MusicPlayer::onLoadSound(void *arg, void *buf, int sz)
-{
-    MusicPlayer *musicPlayer = (MusicPlayer *)arg;
-    musicPlayer->playSoundFromMem(static_cast<byte *>(buf), sz);
-}
-
-void MusicPlayer::onError(void *arg)
-{
-    printf("MusicPlayer onError\n");
-}
-
-void MusicPlayer::playSoundFromMem(byte *buf, int sz)
+void MusicPlayer::playSoundFromMem(byte *buf, size_t sz)
 {
     auto soundOps = SDL_RWFromMem(buf, sz);
     Mix_Chunk *chunk = Mix_LoadWAV_RW(soundOps, 0);
@@ -78,7 +57,7 @@ void MusicPlayer::playSoundFromMem(byte *buf, int sz)
     // Mix_FreeChunk(chunk);
 }
 
-void MusicPlayer::playFromMem(byte *buf, int sz)
+void MusicPlayer::playFromMem(byte *buf, size_t sz)
 {
     freeBuf();
     musicBuf = new char[sz];

@@ -7,41 +7,13 @@
 
 ScriptParser::ScriptParser(MusicPlayer *mp) : musicPlayer(mp){};
 
-void ScriptParser::onLoad(void *arg, void *buf, int sz)
+void ScriptParser::setScript(const char *fpath)
 {
-    ScriptParser *scriptParser = (ScriptParser *)arg;
-    scriptParser->loadFromBuf(static_cast<byte *>(buf));
-}
-
-void ScriptParser::onError(void *arg)
-{
-    printf("ScriptParser onError\n");
-}
-
-void ScriptParser::setScript(char *fpath)
-{
-#ifdef __EMSCRIPTEN__
-    Utils::readFile(fpath, this, onLoad, onError);
-#else
-    loadFromFile(fpath);
-#endif
-}
-
-// Read a script from a file
-void ScriptParser::loadFromFile(char *fpath)
-{
-    auto scriptBuf = Utils::readFile(fpath);
-    if (scriptBuf.empty())
-    {
-        printf("Load script from file failed\n");
-        return;
-    }
-
-    loadFromBuf(&scriptBuf[0]);
+    Utils::processFile(fpath, this, &ScriptParser::loadFromBuf);
 }
 
 // Read a script from a memory buffer
-void ScriptParser::loadFromBuf(byte *buf)
+void ScriptParser::loadFromBuf(byte *buf, size_t sz)
 {
     CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
 

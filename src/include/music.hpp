@@ -15,13 +15,8 @@ public:
     MusicPlayer();
 
     void setMusic(const char *);
+
     void setSound(const char *);
-
-    void playSoundFromMem(byte *, int);
-
-    void playFromMem(byte *, int);
-
-    void playFromFile(const char *);
 
     void playPcm(std::string);
 
@@ -38,7 +33,9 @@ private:
 
     void playMusic();
 
-    static void onLoadSound(void *, void *, int);
-    static void onLoad(void *, void *, int);
-    static void onError(void *);
+    void playSoundFromMem(byte *, size_t);
+
+    void playFromMem(byte *, size_t);
+
+    void playFromFile(const char *);
 };
