@@ -27,7 +27,7 @@ void nextScene()
 {
     char fpath[255] = {0};
     sprintf(fpath, FMT_SCENE, scene_id);
-    sceneManager.setScene(fpath);
+    // sceneManager.setScene(fpath);
 
     scene_id = scene_id == 11 ? 1 : scene_id + 1;
 
@@ -53,11 +53,6 @@ EM_BOOL wheel_callback(int eventType, const EmscriptenWheelEvent *e, void *userD
 
 EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userData)
 {
-    // printf("%s, screen: (%ld,%ld), client: (%ld,%ld),%s%s%s%s button: %hu, buttons: %hu, movement: (%ld,%ld), target: (%ld, %ld)\n",
-    //        emscripten_event_type_to_string(eventType), e->screenX, e->screenY, e->clientX, e->clientY,
-    //        e->ctrlKey ? " CTRL" : "", e->shiftKey ? " SHIFT" : "", e->altKey ? " ALT" : "", e->metaKey ? " META" : "",
-    //        e->button, e->buttons, e->movementX, e->movementY, e->targetX, e->targetY);
-
     if (e->screenX != 0 && e->screenY != 0 && e->clientX != 0 && e->clientY != 0 && e->targetX != 0 && e->targetY != 0)
     {
         if (eventType == EMSCRIPTEN_EVENT_CLICK)
@@ -79,7 +74,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    scriptParser.setScript(ASSETS "/sac_022.cst");
+    scriptParser.setScript(ASSETS "/image/op.cst");
 
 #ifdef __EMSCRIPTEN__
     EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);

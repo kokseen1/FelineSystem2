@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#define FMT_TRACK ASSETS "/bgm%02d.ogg"
+#define FMT_TRACK ASSETS "/bgm/bgm%02d.ogg"
 #define TEM_PCM ASSETS "/pcm_"
 #define EXT_PCM ".ogg"
 

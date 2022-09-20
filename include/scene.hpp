@@ -5,7 +5,7 @@
 #include <string>
 #include <map>
 
-#define FMT_SCENE ASSETS "/bg%02d.hg3"
+#define FMT_SCENE ASSETS "/image/bg%02d.hg3"
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 576
 

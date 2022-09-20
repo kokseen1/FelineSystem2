@@ -129,8 +129,16 @@ void ScriptParser::handleCommand(std::string cmdString)
         else if (matches.size() == 3)
         {
             // TODO: Handle case
-            std::string fpath = ASSETS + matches[2].str() + ".hg3";
+            std::string fpath = ASSETS "/image/" + matches[2].str() + ".hg3";
             sceneManager->setScene(fpath.c_str());
+        }
+    }
+    else if (std::regex_match(cmdString, matches, std::regex("^next (\\S+)")))
+    {
+        if (matches.size() == 2)
+        {
+            auto fpath = ASSETS "/scene/" + matches[1].str() + ".cst";
+            setScript(fpath.c_str());
         }
     }
 }
