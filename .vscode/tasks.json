@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build local",
             "type": "shell",
-            "command": "make",
+            "command": "make local",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -18,7 +18,21 @@
                 "reveal": "silent",
                 "revealProblems": "onProblem"
             },
-            "problemMatcher": [],
+            "problemMatcher": []
+        },
+        {
+            "label": "build wasm",
+            "type": "shell",
+            "command": "make wasm",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "silent",
+                "revealProblems": "onProblem"
+            },
+            "problemMatcher": []
         }
     ]
 }
