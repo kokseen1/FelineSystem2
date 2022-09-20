@@ -40,12 +40,7 @@ void MusicPlayer::setSound(const char *fpath)
 
 void MusicPlayer::setMusic(const char *fpath)
 {
-#ifdef __EMSCRIPTEN__
-    // Crashes if called too quickly on local
     Utils::processFile(fpath, this, &MusicPlayer::playFromMem);
-#else
-    playFromFile(fpath);
-#endif
 }
 
 void MusicPlayer::playSoundFromMem(byte *buf, size_t sz)
@@ -59,15 +54,13 @@ void MusicPlayer::playSoundFromMem(byte *buf, size_t sz)
 
 void MusicPlayer::playFromMem(byte *buf, size_t sz)
 {
-    freeBuf();
-    musicBuf = new char[sz];
-    SDL_memcpy(musicBuf, buf, sz);
+    musicBuf.clear();
+    musicBuf.insert(musicBuf.end(), buf, buf + sz);
 
     freeOps();
-    rw = SDL_RWFromMem(musicBuf, sz);
+    rw = SDL_RWFromConstMem(musicBuf.data(), sz);
 
     freeMusic();
-    // Setting freesrc will free rw upon return
     mus = Mix_LoadMUS_RW(rw, 0);
     // mus = Mix_LoadMUSType_RW(rw, MUS_NONE, 1);
 
@@ -87,7 +80,7 @@ void MusicPlayer::playFromFile(const char *fpath)
     playMusic();
 }
 
-// Free any existing music
+// Stop and free any existing music
 void MusicPlayer::freeMusic()
 {
     if (mus != NULL)
@@ -101,20 +94,10 @@ void MusicPlayer::freeOps()
 {
     if (rw != NULL)
     {
-        // Will break if next SDL_RWops allocation is at 0xa1;
         if (SDL_RWclose(rw) < 0)
         {
             printf("Error SDL_RWclose\n");
         }
-    }
-}
-
-// Free any existing buffer
-void MusicPlayer::freeBuf()
-{
-    if (musicBuf != NULL)
-    {
-        delete[] musicBuf;
     }
 }
 

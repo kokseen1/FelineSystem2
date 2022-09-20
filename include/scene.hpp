@@ -3,7 +3,7 @@
 #include <SDL2/SDL.h>
 #include <asmodean.h>
 
-#define FMT_SCENE "assets/bg%02d.hg3"
+#define FMT_SCENE "/assets/bg%02d.hg3"
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 576
 
