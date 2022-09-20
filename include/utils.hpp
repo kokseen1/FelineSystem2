@@ -67,7 +67,7 @@ namespace Utils
             printf("Could not read file %s\n", fpath);
             return;
         }
-        (obj->*cb)(buf.data(), buf.size());
+        (obj->*cb)(buf.data(), buf.size(), fpath);
 #endif
     }
 
