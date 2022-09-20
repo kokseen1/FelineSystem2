@@ -2,8 +2,12 @@
 #include <emscripten.h>
 #endif
 
+#include <string>
+#include <map>
 #include <vector>
 #include <asmodean.h>
+
+// extern std::map<std::string, std::vector<byte>> fileCache;
 
 namespace Utils
 {
@@ -16,14 +20,22 @@ namespace Utils
     void processFile(const char *fpath, T obj, C cb)
     {
 #ifdef __EMSCRIPTEN__
+        // Retrieve buffer from cache
+        // if (fileCache.find(fpath) != fileCache.end())
+        // {
+            // (obj->*cb)(fileCache[fpath].data(), fileCache[fpath].size());
+            // return;
+        // }
+
         // Struct to store object and callback
         typedef struct
         {
             T obj;
             C cb;
+            std::string fpath_str;
         } Arg;
 
-        auto *a = new Arg{obj, cb};
+        auto *a = new Arg{obj, cb, fpath};
 
         emscripten_async_wget_data(
             fpath, a,
@@ -33,6 +45,10 @@ namespace Utils
                 auto *a = reinterpret_cast<Arg *>(arg);
                 auto *obj = a->obj;
                 auto cb = a->cb;
+
+                // Cache buffer as a vector
+                // std::vector<byte> buf_vec((static_cast<byte *>(buf)), (static_cast<byte *>(buf) + sz));
+                // fileCache.insert({a->fpath_str, buf_vec});
 
                 // Call callback function
                 (obj->*cb)(static_cast<byte *>(buf), sz);

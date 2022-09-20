@@ -3,6 +3,8 @@
 
 #include <fstream>
 #include <vector>
+#include <string>
+#include <map>
 
 #include <music.hpp>
 #include <scene.hpp>
@@ -16,6 +18,8 @@
 static MusicPlayer musicPlayer;
 static SceneManager sceneManager;
 static ScriptParser scriptParser(&musicPlayer, &sceneManager);
+
+// std::map<std::string, std::vector<byte>> fileCache;
 
 int track_id = 1;
 int scene_id = 1;
