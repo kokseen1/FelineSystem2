@@ -18,6 +18,7 @@ namespace Utils
     // typedef void (C::*ProcessFileCallback)(byte *, size_t);
     void processFile(const char *fpath, T obj, C cb)
     {
+        printf("Processing %s\n", fpath);
 #ifdef __EMSCRIPTEN__
         // Retrieve buffer from cache
         // if (fileCache.find(fpath) != fileCache.end())

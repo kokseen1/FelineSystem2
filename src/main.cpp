@@ -74,7 +74,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    scriptParser.setScript(ASSETS "/image/op.cst");
+    scriptParser.setScript(ASSETS "/scene/op.cst");
 
 #ifdef __EMSCRIPTEN__
     EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);
