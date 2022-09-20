@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#define FMT_TRACK "/assets/bgm%02d.ogg"
-#define TEM_PCM "/assets/pcm_"
+#define FMT_TRACK ASSETS "/bgm%02d.ogg"
+#define TEM_PCM ASSETS "/pcm_"
 #define EXT_PCM ".ogg"
 
 class MusicPlayer

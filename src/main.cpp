@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     sceneManager = new SceneManager();
     scriptParser = new ScriptParser(musicPlayer);
 
-    scriptParser->setScript("/assets/sac_022.cst");
+    scriptParser->setScript(ASSETS "/sac_022.cst");
 
 #ifdef __EMSCRIPTEN__
     EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);

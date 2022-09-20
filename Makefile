@@ -1,6 +1,8 @@
 EMXX     := em++
 CXX      := g++
-EMXXFLAGS := -sUSE_SDL=2 -sALLOW_MEMORY_GROWTH -sUSE_ZLIB=1 -sUSE_SDL_MIXER=1 -fdeclspec
+EMPPFLAGS := -DASSETS=\"assets/\"
+CPPFLAGS := -DASSETS=\"build/apps/assets/\"
+EMXXFLAGS := -sUSE_SDL=2 -sALLOW_MEMORY_GROWTH -sUSE_ZLIB=1 -sUSE_SDL_MIXER=1 -fdeclspec 
 CXXFLAGS := -w
 LDFLAGS  := -LC:/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lz
 BUILD    := ./build
@@ -32,11 +34,11 @@ local: $(APP_DIR)/$(TARGET_LOCAL)
 
 $(OBJ_DIR_LOCAL)/%.o: %.cpp
 	@$(MKDIR)
-	$(CXX) -o $@ -c $< $(CXXFLAGS) $(INCLUDE) -MMD -MF $(DEP)
+	$(CXX) -o $@ -c $< $(CXXFLAGS) $(INCLUDE) -MMD -MF $(DEP) $(CPPFLAGS)
 
 $(OBJ_DIR_WASM)/%.o: %.cpp
 	@$(MKDIR)
-	$(EMXX) -o $@ -c $< $(EMXXFLAGS) $(CXXFLAGS) $(INCLUDE) -MMD -MF $(DEP)
+	$(EMXX) -o $@ -c $< $(EMXXFLAGS) $(CXXFLAGS) $(INCLUDE) -MMD -MF $(DEP) $(EMPPFLAGS)
 
 $(APP_DIR)/$(TARGET_LOCAL): $(OBJECTS_LOCAL)
 	@$(MKDIR)
