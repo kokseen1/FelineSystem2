@@ -34,7 +34,6 @@ void MusicPlayer::playPcm(std::string pcm)
 
 void MusicPlayer::setSound(const char *fpath)
 {
-    printf("Playing pcm %s\n", fpath);
     Utils::processFile(fpath, this, &MusicPlayer::playSoundFromMem);
 }
 

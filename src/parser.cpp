@@ -107,11 +107,19 @@ void ScriptParser::parseNext()
 void ScriptParser::handleCommand(std::string cmdString)
 {
     std::smatch matches;
-    if (std::regex_match(cmdString, matches, std::regex("^pcm (.+)")))
+    if (std::regex_match(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
         if (matches.size() == 2)
         {
             musicPlayer->playPcm(matches[1].str());
+        }
+    }
+    else if (std::regex_match(cmdString, matches, std::regex("^bgm (\\d+) (\\S+).*")))
+    {
+        if (matches.size() == 3)
+        {
+            std::string fpath = ASSETS "/bgm/" + matches[2].str() + ".ogg";
+            musicPlayer->setMusic(fpath.c_str());
         }
     }
     else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+) (\\S+).*")))

@@ -38,7 +38,7 @@ void nextTrack()
 {
     char fpath[255] = {0};
     sprintf(fpath, FMT_TRACK, track_id);
-    musicPlayer.setMusic(fpath);
+    // musicPlayer.setMusic(fpath);
 
     track_id = track_id == 9 ? 1 : track_id + 1;
 }
