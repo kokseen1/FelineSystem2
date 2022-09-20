@@ -226,5 +226,3 @@ void Blowfish::Decrypt(byte* pInput, uint32 lSize) {
 	Decode(pInput, pInput, lSize);
 }
 
-
-
