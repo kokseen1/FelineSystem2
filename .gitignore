@@ -3,5 +3,5 @@
 *.exe
 *.dll
 test.cpp
-assets/pcm*
+build/apps/assets/pcm*
 build/objects/
