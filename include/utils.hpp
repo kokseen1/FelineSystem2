@@ -56,9 +56,10 @@ namespace Utils
 
                 delete arg;
             },
-            [](void *)
+            [](void *arg)
             {
-                printf("emscripten_async_wget_data Error\n");
+                auto *a = reinterpret_cast<Arg *>(arg);
+                printf("Could not fetch %s\n", a->fpath_str.c_str());
             });
 #else
         auto buf = readFile(fpath);

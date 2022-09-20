@@ -3,5 +3,8 @@
 *.exe
 *.dll
 test.cpp
-build/apps/assets/pcm*
 build/objects/
+build/apps/assets/pcm*
+build/apps/assets/image/
+build/apps/assets/scene/
+build/apps/assets/bgm/
