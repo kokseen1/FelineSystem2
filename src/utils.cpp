@@ -27,8 +27,6 @@ namespace Utils
         FILE *fp = fopen(fpath, "rb");
         if (fp == NULL)
         {
-            printf("Could not read file %s\n", fpath);
-            // Return empty vector
             return {};
         }
 

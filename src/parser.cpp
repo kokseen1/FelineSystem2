@@ -59,6 +59,12 @@ void ScriptParser::loadFromBuf(byte *buf, size_t sz)
 
 void ScriptParser::parseNext()
 {
+    if (currScriptData.empty())
+    {
+        printf("Script not loaded!\n");
+        return;
+    }
+
     if (currStringEntry < stringEntryCount)
     {
         auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);

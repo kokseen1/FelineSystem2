@@ -45,6 +45,11 @@ namespace Utils
             });
 #else
         auto buf = readFile(fpath);
+        if (buf.empty())
+        {
+            printf("Could not read file %s\n", fpath);
+            return;
+        }
         (obj->*cb)(buf.data(), buf.size());
 #endif
     }

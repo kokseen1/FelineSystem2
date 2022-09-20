@@ -78,8 +78,12 @@ void MusicPlayer::playFromMem(byte *buf, size_t sz)
 void MusicPlayer::playFromFile(const char *fpath)
 {
     freeMusic();
-
     mus = Mix_LoadMUS(fpath);
+    if (mus == NULL)
+    {
+        printf("Could not play %s\n", fpath);
+        return;
+    }
     playMusic();
 }
 
@@ -116,5 +120,8 @@ void MusicPlayer::freeBuf()
 
 void MusicPlayer::playMusic()
 {
-    Mix_PlayMusic(mus, -1);
+    if (mus != NULL)
+    {
+        Mix_PlayMusic(mus, -1);
+    }
 }
