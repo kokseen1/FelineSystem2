@@ -20,7 +20,7 @@ SceneManager::SceneManager()
 }
 
 // Decode a HG buffer and display the first frame
-void SceneManager::displayFrame(byte *buf, size_t sz)
+void SceneManager::displayFrame(byte *buf, size_t sz, std::string fpath)
 {
     HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
     FrameHeader *frameHeader = reinterpret_cast<FrameHeader *>(hgHeader + 1);
@@ -45,7 +45,8 @@ void SceneManager::displayFrame(byte *buf, size_t sz)
         SDL_RenderCopy(renderer, texture, NULL, &DestR);
         SDL_RenderPresent(renderer);
 
-        SDL_DestroyTexture(texture);
+        textureCache.insert({fpath, texture});
+        // SDL_DestroyTexture(texture);
 #else
         SDL_Surface *screen = SDL_GetWindowSurface(window);
         SDL_BlitSurface(surface, NULL, screen, NULL);
@@ -60,5 +61,11 @@ void SceneManager::displayFrame(byte *buf, size_t sz)
 
 void SceneManager::setScene(const char *fpath)
 {
+    if (textureCache.find(fpath) != textureCache.end())
+    {
+        SDL_RenderCopy(renderer, textureCache[fpath], NULL, NULL);
+        SDL_RenderPresent(renderer);
+        return;
+    }
     Utils::processFile(fpath, this, &SceneManager::displayFrame);
 }

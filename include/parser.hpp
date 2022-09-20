@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+
 #include <cstformat.h>
 
 #include <music.hpp>
@@ -17,7 +18,7 @@ private:
     size_t stringEntryCount;
     size_t currStringEntry;
 
-    void loadFromBuf(byte *, size_t);
+    void loadFromBuf(byte *, size_t, std::string);
 
     void handleCommand(std::string);
 

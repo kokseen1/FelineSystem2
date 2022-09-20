@@ -13,7 +13,7 @@ void ScriptParser::setScript(const char *fpath)
 }
 
 // Read a script from a memory buffer
-void ScriptParser::loadFromBuf(byte *buf, size_t sz)
+void ScriptParser::loadFromBuf(byte *buf, size_t sz, std::string fpath)
 {
     CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
 
@@ -128,6 +128,7 @@ void ScriptParser::handleCommand(std::string cmdString)
         }
         else if (matches.size() == 3)
         {
+            // TODO: Handle case
             std::string fpath = ASSETS + matches[2].str() + ".hg3";
             sceneManager->setScene(fpath.c_str());
         }

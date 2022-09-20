@@ -34,9 +34,9 @@ private:
 
     void playMusic();
 
-    void playSoundFromMem(byte *, size_t);
+    void playSoundFromMem(byte *, size_t, std::string);
 
-    void playFromMem(byte *, size_t);
+    void playFromMem(byte *, size_t, std::string);
 
     void playFromFile(const char *);
 };

@@ -3,7 +3,6 @@
 #endif
 
 #include <string>
-#include <map>
 #include <vector>
 #include <asmodean.h>
 
@@ -45,13 +44,14 @@ namespace Utils
                 auto *a = reinterpret_cast<Arg *>(arg);
                 auto *obj = a->obj;
                 auto cb = a->cb;
+                auto fpath = a->fpath_str;
 
                 // Cache buffer as a vector
                 // std::vector<byte> buf_vec((static_cast<byte *>(buf)), (static_cast<byte *>(buf) + sz));
                 // fileCache.insert({a->fpath_str, buf_vec});
 
                 // Call callback function
-                (obj->*cb)(static_cast<byte *>(buf), sz);
+                (obj->*cb)(static_cast<byte *>(buf), sz, fpath);
 
                 delete arg;
             },
