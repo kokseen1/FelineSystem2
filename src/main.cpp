@@ -13,9 +13,9 @@
 #include <emscripten/html5.h>
 #endif
 
-MusicPlayer *musicPlayer = NULL;
-SceneManager *sceneManager = NULL;
-ScriptParser *scriptParser = NULL;
+static MusicPlayer musicPlayer;
+static SceneManager sceneManager;
+static ScriptParser scriptParser(&musicPlayer, &sceneManager);
 
 int track_id = 1;
 int scene_id = 1;
@@ -24,18 +24,18 @@ void nextScene()
 {
     char fpath[255] = {0};
     sprintf(fpath, FMT_SCENE, scene_id);
-    sceneManager->setScene(fpath);
+    sceneManager.setScene(fpath);
 
     scene_id = scene_id == 11 ? 1 : scene_id + 1;
 
-    scriptParser->parseNext();
+    scriptParser.parseNext();
 }
 
 void nextTrack()
 {
     char fpath[255] = {0};
     sprintf(fpath, FMT_TRACK, track_id);
-    musicPlayer->setMusic(fpath);
+    musicPlayer.setMusic(fpath);
 
     track_id = track_id == 9 ? 1 : track_id + 1;
 }
@@ -76,12 +76,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // Must dynamically allocate as variables in main are freed
-    musicPlayer = new MusicPlayer();
-    sceneManager = new SceneManager();
-    scriptParser = new ScriptParser(musicPlayer, sceneManager);
-
-    scriptParser->setScript(ASSETS "/sac_022.cst");
+    scriptParser.setScript(ASSETS "/sac_022.cst");
 
 #ifdef __EMSCRIPTEN__
     EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);
