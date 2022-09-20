@@ -6,8 +6,8 @@
                 "${workspaceFolder}/**",
                 // "../emsdk/upstream/emscripten/system/include",
                 "../emsdk/upstream/emscripten/cache/sysroot/include",
-                "src/include",
-                "src/asmodean/include"
+                "include",
+                "include/asmodean"
             ],
             "defines": [
                 "_DEBUG",

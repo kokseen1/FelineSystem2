@@ -42,13 +42,4 @@ namespace Utils
 
         return buf;
     }
-
-#ifdef __EMSCRIPTEN__
-    // Asynchronously fetch a file via url and pass the buffer to a callback
-    void readFile(const char *fpath, void *arg, em_async_wget_onload_func onLoad, em_arg_callback_func onError)
-    {
-        emscripten_async_wget_data(fpath, arg, onLoad, onError);
-    }
-#endif
-
 }
