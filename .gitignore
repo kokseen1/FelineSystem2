@@ -4,4 +4,4 @@
 *.dll
 test.cpp
 assets/pcm*
-build/
+build/objects/

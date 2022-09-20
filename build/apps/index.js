@@ -5637,7 +5637,6 @@ var ASM_CONSTS = {
       audio.play();
       return channel;
     }
-  var _Mix_PlayChannelTimed = _Mix_PlayChannel;
 
   function _Mix_PlayMusic(id, loops) {
       // Pause old music if it exists.
@@ -10325,7 +10324,7 @@ var asmLibraryArg = {
   "Mix_LoadMUS_RW": _Mix_LoadMUS_RW,
   "Mix_LoadWAV_RW": _Mix_LoadWAV_RW,
   "Mix_OpenAudio": _Mix_OpenAudio,
-  "Mix_PlayChannelTimed": _Mix_PlayChannelTimed,
+  "Mix_PlayChannel": _Mix_PlayChannel,
   "Mix_PlayMusic": _Mix_PlayMusic,
   "__cxa_allocate_exception": ___cxa_allocate_exception,
   "__cxa_throw": ___cxa_throw,
@@ -10570,10 +10569,10 @@ var asm = createWasm();
 var ___wasm_call_ctors = Module["___wasm_call_ctors"] = createExportWrapper("__wasm_call_ctors");
 
 /** @type {function(...*):?} */
-var _main = Module["_main"] = createExportWrapper("__main_argc_argv");
+var _memcpy = Module["_memcpy"] = createExportWrapper("memcpy");
 
 /** @type {function(...*):?} */
-var _memcpy = Module["_memcpy"] = createExportWrapper("memcpy");
+var _main = Module["_main"] = createExportWrapper("__main_argc_argv");
 
 /** @type {function(...*):?} */
 var _free = Module["_free"] = createExportWrapper("free");
