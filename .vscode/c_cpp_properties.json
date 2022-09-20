@@ -13,7 +13,7 @@
                 "UNICODE",
                 "_UNICODE",
                 "__EMSCRIPTEN__",
-                "ASSETS=\"build/apps/assets\""
+                "ASSETS=\"build/apps/assets/\""
             ],
             "windowsSdkVersion": "10.0.19041.0",
             "compilerPath": "C:/MinGW/bin/g++.exe",

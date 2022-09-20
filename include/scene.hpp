@@ -13,7 +13,7 @@ class SceneManager
 public:
     SceneManager();
 
-    void setScene(char *);
+    void setScene(const char *);
 
     void displayFrame(byte *, size_t);
 

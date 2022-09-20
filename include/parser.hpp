@@ -3,11 +3,13 @@
 #include <cstformat.h>
 
 #include <music.hpp>
+#include <scene.hpp>
 
 class ScriptParser
 {
 private:
     MusicPlayer *musicPlayer;
+    SceneManager *sceneManager;
 
     std::vector<byte> currScriptData;
     StringOffsetTable *stringOffsetTable;
@@ -20,7 +22,7 @@ private:
     void handleCommand(std::string);
 
 public:
-    ScriptParser(MusicPlayer *);
+    ScriptParser(MusicPlayer *, SceneManager *);
 
     void parseNext();
     void setScript(const char *);

@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     // Must dynamically allocate as variables in main are freed
     musicPlayer = new MusicPlayer();
     sceneManager = new SceneManager();
-    scriptParser = new ScriptParser(musicPlayer);
+    scriptParser = new ScriptParser(musicPlayer, sceneManager);
 
     scriptParser->setScript(ASSETS "/sac_022.cst");
 

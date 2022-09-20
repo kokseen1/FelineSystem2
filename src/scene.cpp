@@ -58,7 +58,7 @@ void SceneManager::displayFrame(byte *buf, size_t sz)
     }
 }
 
-void SceneManager::setScene(char *fpath)
+void SceneManager::setScene(const char *fpath)
 {
     Utils::processFile(fpath, this, &SceneManager::displayFrame);
 }

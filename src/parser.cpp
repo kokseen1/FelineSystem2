@@ -5,7 +5,7 @@
 #include <utils.hpp>
 #include <parser.hpp>
 
-ScriptParser::ScriptParser(MusicPlayer *mp) : musicPlayer(mp){};
+ScriptParser::ScriptParser(MusicPlayer *mp, SceneManager *sm) : musicPlayer{mp}, sceneManager{sm} {};
 
 void ScriptParser::setScript(const char *fpath)
 {
@@ -112,6 +112,24 @@ void ScriptParser::handleCommand(std::string cmdString)
         if (matches.size() == 2)
         {
             musicPlayer->playPcm(matches[1].str());
+        }
+    }
+    else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+) (\\S+).*")))
+    {
+        printf("%d\n", matches.size());
+        printf("%s\n", matches[0].str().c_str());
+        if (matches.size() == 1)
+        {
+            // Reset bg
+        }
+        else if (matches.size() == 2)
+        {
+            // matches[1].str().c_str()
+        }
+        else if (matches.size() == 3)
+        {
+            std::string fpath = ASSETS + matches[2].str() + ".hg3";
+            sceneManager->setScene(fpath.c_str());
         }
     }
 }
