@@ -25,16 +25,10 @@ public:
         Img *Img;
     } Frame;
 
-    static SDL_Surface *getSurfaceFromFrame(Frame);
-
     static std::vector<Frame> getFrames(FrameHeader *);
-
-private:
-    static Frame getFrame(FrameTag *);
 
     static std::vector<byte> getPixelsFromFrame(Frame);
 
-    static SDL_Surface *getSurfaceFromPixels(std::vector<byte>, Frame);
-
-    static SDL_Surface *flip_vertical(SDL_Surface *);
+private:
+    static Frame getFrame(FrameTag *);
 };

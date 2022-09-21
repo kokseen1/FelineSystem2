@@ -5,28 +5,6 @@
 
 #include <utils.hpp>
 
-// Allocates and returns a flipped surface
-// Frees the original surface
-// Caller is responsible for freeing the returned surface
-SDL_Surface *HGDecoder::flip_vertical(SDL_Surface *sfc)
-{
-    SDL_Surface *result = SDL_CreateRGBSurface(sfc->flags, sfc->w, sfc->h,
-                                               sfc->format->BytesPerPixel * 8, sfc->format->Rmask, sfc->format->Gmask,
-                                               sfc->format->Bmask, sfc->format->Amask);
-    const auto pitch = sfc->pitch;
-    const auto pxlength = pitch * (sfc->h - 1);
-    auto pixels = static_cast<unsigned char *>(sfc->pixels) + pxlength;
-    auto rpixels = static_cast<unsigned char *>(result->pixels);
-    for (auto line = 0; line < sfc->h; ++line)
-    {
-        memcpy(rpixels, pixels, pitch);
-        pixels -= pitch;
-        rpixels += pitch;
-    }
-    SDL_FreeSurface(sfc);
-    return result;
-}
-
 // Decodes a frame and returns a vector of pixels rgbaBuffer
 std::vector<byte> HGDecoder::getPixelsFromFrame(Frame frame)
 {
@@ -98,30 +76,6 @@ HGDecoder::Frame HGDecoder::getFrame(FrameTag *frameTag)
     }
 
     return frame;
-}
-
-// Helper function to directly get surface from frame
-// Caller is responsible for freeing the surface
-SDL_Surface *HGDecoder::getSurfaceFromFrame(Frame frame)
-{
-    auto rgbaBuffer = getPixelsFromFrame(frame);
-    SDL_Surface *surface = getSurfaceFromPixels(rgbaBuffer, frame);
-
-    return surface;
-}
-
-// Returns an image surface in proper orientation from a rgbaBuffer vector
-// Caller is responsible for freeing the surface
-SDL_Surface *HGDecoder::getSurfaceFromPixels(std::vector<byte> rgbaBuffer, Frame frame)
-{
-    SDL_Surface *result = NULL;
-    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(rgbaBuffer.data(), frame.Stdinfo->Width, frame.Stdinfo->Height, frame.Stdinfo->BitDepth, PITCH(frame.Stdinfo->Width, frame.Stdinfo->BitDepth), RMASK, GMASK, BMASK, AMASK);
-    if (surface != NULL)
-    {
-        result = flip_vertical(surface);
-    }
-
-    return result;
 }
 
 // Get a vector of Frame structures that contain pointers to frame data

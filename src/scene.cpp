@@ -25,21 +25,17 @@ void SceneManager::displayFrame(byte *buf, size_t sz, std::string fpath)
 
     for (auto frame : frames)
     {
-        SDL_Surface *surface = HGDecoder::getSurfaceFromFrame(frame);
+        auto rgbaBuffer = HGDecoder::getPixelsFromFrame(frame);
+        SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(rgbaBuffer.data(), frame.Stdinfo->Width, frame.Stdinfo->Height, frame.Stdinfo->BitDepth, PITCH(frame.Stdinfo->Width, frame.Stdinfo->BitDepth), RMASK, GMASK, BMASK, AMASK);
 
         SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
         SDL_Rect DestR = {0, 0, static_cast<int>(frame.Stdinfo->Width), static_cast<int>(frame.Stdinfo->Height)};
-        SDL_RenderCopy(renderer, texture, NULL, &DestR);
+        SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
         SDL_RenderPresent(renderer);
 
         // Cache texture
         textureCache.insert({fpath, texture});
         // SDL_DestroyTexture(texture);
-
-        // CPU rendering
-        // SDL_Surface *screen = SDL_GetWindowSurface(window);
-        // SDL_BlitSurface(surface, NULL, screen, NULL);
-        // SDL_UpdateWindowSurface(window);
 
         SDL_FreeSurface(surface);
 
@@ -52,7 +48,7 @@ void SceneManager::setScene(const char *fpath)
 {
     if (textureCache.find(fpath) != textureCache.end())
     {
-        SDL_RenderCopy(renderer, textureCache[fpath], NULL, NULL);
+        SDL_RenderCopyEx(renderer, textureCache[fpath], NULL, NULL, 0, 0, SDL_FLIP_VERTICAL);
         SDL_RenderPresent(renderer);
         return;
     }
