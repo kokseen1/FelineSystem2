@@ -4,16 +4,25 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "build all",
+            "dependsOn": [
+                "build local",
+                "build wasm"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "build local",
             "type": "shell",
             "command": "make local",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "group": "build",
             "presentation": {
                 "reveal": "silent",
                 "revealProblems": "onProblem"
