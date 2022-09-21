@@ -8,8 +8,6 @@
 
 #define FFAP_CALLBACK(x) void (T::*x)(byte *, size_t, const std::string &)
 
-// extern std::map<std::string, std::vector<byte>> fileCache;
-
 namespace Utils
 {
     std::vector<byte> zlibUncompress(uint32, byte *, uint32);
@@ -23,13 +21,6 @@ namespace Utils
         typedef FFAP_CALLBACK(CbT);
         printf("Processing %s\n", fpath);
 #ifdef __EMSCRIPTEN__
-        // Retrieve buffer from cache
-        // if (fileCache.find(fpath) != fileCache.end())
-        // {
-        // (obj->*cb)(fileCache[fpath].data(), fileCache[fpath].size());
-        // return;
-        // }
-
         // Struct to store object and callback
         typedef struct
         {
@@ -49,10 +40,6 @@ namespace Utils
                 auto *obj = a->obj;
                 auto cb = a->cb;
                 auto fpath = a->fpath_str;
-
-                // Cache buffer as a vector
-                // std::vector<byte> buf_vec((static_cast<byte *>(buf)), (static_cast<byte *>(buf) + sz));
-                // fileCache.insert({a->fpath_str, buf_vec});
 
                 // Call callback function
                 (obj->*cb)(static_cast<byte *>(buf), sz, fpath);

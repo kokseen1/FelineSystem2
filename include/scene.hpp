@@ -21,7 +21,7 @@ public:
 
     void displayTexture(SDL_Texture *);
 
-    SDL_Texture* getTextureFromFrame(HGDecoder::Frame);
+    SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
 
     void displayImage(byte *, size_t, const std::string &);
 

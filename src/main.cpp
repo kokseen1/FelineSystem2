@@ -20,8 +20,6 @@ static MusicPlayer musicPlayer;
 static SceneManager sceneManager;
 static ScriptParser scriptParser(&musicPlayer, &sceneManager);
 
-// std::map<std::string, std::vector<byte>> fileCache;
-
 void nextScene()
 {
     static int scene_id = 1;
