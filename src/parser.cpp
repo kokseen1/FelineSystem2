@@ -122,6 +122,14 @@ void ScriptParser::handleCommand(std::string cmdString)
             musicPlayer->setMusic(fpath);
         }
     }
+    else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+) ([\\w\\d]+),(\\d),\\d,(\\w),\\w.*")))
+    {
+        if (matches.size() == 5)
+        {
+            const std::string fpath = ASSETS "/image/" + matches[2].str() + "_" + matches[3].str() + ".hg3";
+            sceneManager->setScene(fpath);
+        }
+    }
     else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+) (\\S+).*")))
     {
         if (matches.size() == 1)
