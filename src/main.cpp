@@ -80,6 +80,7 @@ int main(int argc, char **argv)
     ret = emscripten_set_wheel_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, wheel_callback);
 
     // emscripten_set_main_loop(nextTrack, 0, 1);
+
 #else
     bool done = false;
     SDL_Event event;
@@ -91,7 +92,7 @@ int main(int argc, char **argv)
         case SDL_USEREVENT:
             break;
 
-        case SDL_KEYDOWN:
+        case SDL_MOUSEWHEEL:
             nextScene();
             break;
 
