@@ -13,7 +13,7 @@ void ScriptParser::setScript(const std::string fpath)
 }
 
 // Read a script from a memory buffer
-void ScriptParser::loadFromBuf(byte *buf, size_t sz, const std::string& fpath)
+void ScriptParser::loadFromBuf(byte *buf, size_t sz, const std::string &fpath)
 {
     CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
 
@@ -118,14 +118,12 @@ void ScriptParser::handleCommand(std::string cmdString)
     {
         if (matches.size() == 3)
         {
-            std::string fpath = ASSETS "/bgm/" + matches[2].str() + ".ogg";
-            musicPlayer->setMusic(fpath.c_str());
+            const std::string fpath = ASSETS "/bgm/" + matches[2].str() + ".ogg";
+            musicPlayer->setMusic(fpath);
         }
     }
     else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+) (\\S+).*")))
     {
-        printf("%d\n", matches.size());
-        printf("%s\n", matches[0].str().c_str());
         if (matches.size() == 1)
         {
             // Reset bg
@@ -137,16 +135,16 @@ void ScriptParser::handleCommand(std::string cmdString)
         else if (matches.size() == 3)
         {
             // TODO: Handle case
-            std::string fpath = ASSETS "/image/" + matches[2].str() + ".hg3";
-            sceneManager->setScene(fpath.c_str());
+            const std::string fpath = ASSETS "/image/" + matches[2].str() + ".hg3";
+            sceneManager->setScene(fpath);
         }
     }
     else if (std::regex_match(cmdString, matches, std::regex("^next (\\S+)")))
     {
         if (matches.size() == 2)
         {
-            auto fpath = ASSETS "/scene/" + matches[1].str() + ".cst";
-            setScript(fpath.c_str());
+            const std::string fpath = ASSETS "/scene/" + matches[1].str() + ".cst";
+            setScript(fpath);
         }
     }
 }

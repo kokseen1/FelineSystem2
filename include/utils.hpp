@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#define FFAP_CALLBACK(x) void (T::*x)(byte *, size_t, const std::string &)
+#define FFAP_CALLBACK(X) void (T::*X)(byte *, size_t, const std::string &)
 
 namespace Utils
 {
@@ -23,6 +23,7 @@ namespace Utils
     void fetchFileAndProcess(const std::string fpath, T *obj, FFAP_CALLBACK(cb))
     {
         typedef FFAP_CALLBACK(CbT);
+        std::cout << "Fetching file " << fpath << std::endl;
 #ifdef __EMSCRIPTEN__
         // Struct to store object and callback
         typedef struct
@@ -58,7 +59,7 @@ namespace Utils
         auto buf = readFile(fpath);
         if (buf.empty())
         {
-            printf("Could not read file %s\n", fpath);
+            std::cout << "Could not read file " << fpath << std::endl;
             return;
         }
         (obj->*cb)(buf.data(), buf.size(), fpath);

@@ -1,6 +1,10 @@
 #include <music.hpp>
 #include <utils.hpp>
 
+#include <map>
+
+#define EXT_PCM ".ogg"
+
 // Initialize the audio player
 MusicPlayer::MusicPlayer()
 {
@@ -11,26 +15,21 @@ MusicPlayer::MusicPlayer()
     std::cout << "MusicPlayer initialized" << std::endl;
 }
 
+// Play a pcm file via its name
 void MusicPlayer::playPcm(std::string pcm)
 {
-    std::string fpath;
-    if (pcm.rfind("YUM", 0) == 0)
+    for (auto const &x : pcmMap)
     {
-        fpath = TEM_PCM "a/" + pcm;
+        if (pcm.rfind(x.first) == 0)
+        {
+            std::string fpath = ASSETS + x.second + pcm + EXT_PCM;
+            setSound(fpath);
+            return;
+        }
     }
-    else if (pcm.rfind("AMA", 0) == 0)
-    {
-        fpath = TEM_PCM "b/" + pcm;
-    }
-    else
-    {
-        return;
-    }
-
-    fpath += EXT_PCM;
-    setSound(fpath.c_str());
 }
 
+// Set the current sound file
 void MusicPlayer::setSound(const std::string fpath)
 {
     Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playSoundFromMem);
@@ -45,18 +44,22 @@ void MusicPlayer::setMusic(const std::string fpath)
 // Play a file buffer as sound
 void MusicPlayer::playSoundFromMem(byte *buf, size_t sz, const std::string &fpath)
 {
-    SDL_RWops *soundOps = SDL_RWFromConstMem(buf, sz);
-    Mix_Chunk *chunk = Mix_LoadWAV_RW(soundOps, 0);
-    int channel = Mix_PlayChannel(-1, chunk, 0);
-    // Cannot be called here for local SDL
-    // Mix_FreeChunk(chunk);
+    if (soundChunk != NULL)
+    {
+        Mix_FreeChunk(soundChunk);
+    }
+    freeOps(soundOps);
+
+    soundOps = SDL_RWFromConstMem(buf, sz);
+    soundChunk = Mix_LoadWAV_RW(soundOps, 0);
+    int channel = Mix_PlayChannel(-1, soundChunk, 0);
 }
 
 // Play a file buffer as music
 void MusicPlayer::playMusicFromMem(byte *buf, size_t sz, const std::string &fpath)
 {
     stopAndFreeMusic();
-    freeMusicOps();
+    freeOps(musicOps);
     musicVec.clear();
 
     musicVec.insert(musicVec.end(), buf, buf + sz);
@@ -91,13 +94,13 @@ void MusicPlayer::stopAndFreeMusic()
 }
 
 // Free any existing music SDL_RWops
-void MusicPlayer::freeMusicOps()
+void MusicPlayer::freeOps(SDL_RWops *ops)
 {
-    if (musicOps != NULL)
+    if (ops != NULL)
     {
-        if (SDL_RWclose(musicOps) < 0)
+        if (SDL_RWclose(ops) < 0)
         {
-            printf("Error SDL_RWclose\n");
+            std::cout << "Could not free RWops" << std::endl;
         }
     }
 }

@@ -22,22 +22,22 @@ static ScriptParser scriptParser(&musicPlayer, &sceneManager);
 
 void nextScene()
 {
-    static int scene_id = 1;
-    std::stringstream ss;
-    ss << ASSETS "/image/bg" << std::setfill('0') << std::setw(2) << std::to_string(scene_id) << ".hg3";
-    sceneManager.setScene(ss.str().c_str());
-    scene_id = scene_id == 11 ? 1 : scene_id + 1;
+    // static int scene_id = 1;
+    // std::stringstream ss;
+    // ss << ASSETS "/image/bg" << std::setfill('0') << std::setw(2) << std::to_string(scene_id) << ".hg3";
+    // sceneManager.setScene(ss.str());
+    // scene_id = scene_id == 11 ? 1 : scene_id + 1;
 
-    // scriptParser.parseNext();
+    scriptParser.parseNext();
 }
 
 void nextTrack()
 {
-    static int track_id = 1;
-    std::stringstream ss;
-    ss << ASSETS "/bgm/bgm" << std::setfill('0') << std::setw(2) << std::to_string(track_id) << ".ogg";
-    musicPlayer.setMusic(ss.str().c_str());
-    track_id = track_id == 9 ? 1 : track_id + 1;
+    // static int track_id = 1;
+    // std::stringstream ss;
+    // ss << ASSETS "/bgm/bgm" << std::setfill('0') << std::setw(2) << std::to_string(track_id) << ".ogg";
+    // musicPlayer.setMusic(ss.str());
+    // track_id = track_id == 9 ? 1 : track_id + 1;
 }
 
 #ifdef __EMSCRIPTEN__
