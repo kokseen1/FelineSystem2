@@ -13,7 +13,7 @@ void ScriptParser::setScript(const char *fpath)
 }
 
 // Read a script from a memory buffer
-void ScriptParser::loadFromBuf(byte *buf, size_t sz, std::string fpath)
+void ScriptParser::loadFromBuf(byte *buf, size_t sz, const std::string& fpath)
 {
     CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
 

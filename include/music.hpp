@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-#define FMT_TRACK ASSETS "/bgm/bgm%02d.ogg"
 #define TEM_PCM ASSETS "/pcm_"
 #define EXT_PCM ".ogg"
 
@@ -34,9 +33,9 @@ private:
 
     void playMusic();
 
-    void playSoundFromMem(byte *, size_t, std::string);
+    void playSoundFromMem(byte *, size_t, const std::string &);
 
-    void playFromMem(byte *, size_t, std::string);
+    void playFromMem(byte *, size_t, const std::string &);
 
     void playFromFile(const char *);
 };

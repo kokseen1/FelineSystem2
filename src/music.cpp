@@ -42,7 +42,7 @@ void MusicPlayer::setMusic(const char *fpath)
     Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playFromMem);
 }
 
-void MusicPlayer::playSoundFromMem(byte *buf, size_t sz, std::string fpath)
+void MusicPlayer::playSoundFromMem(byte *buf, size_t sz, const std::string &fpath)
 {
     auto soundOps = SDL_RWFromMem(buf, sz);
     Mix_Chunk *chunk = Mix_LoadWAV_RW(soundOps, 0);
@@ -51,7 +51,7 @@ void MusicPlayer::playSoundFromMem(byte *buf, size_t sz, std::string fpath)
     // Mix_FreeChunk(chunk);
 }
 
-void MusicPlayer::playFromMem(byte *buf, size_t sz, std::string fpath)
+void MusicPlayer::playFromMem(byte *buf, size_t sz, const std::string &fpath)
 {
     musicBuf.clear();
     musicBuf.insert(musicBuf.end(), buf, buf + sz);

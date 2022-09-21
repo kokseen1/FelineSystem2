@@ -33,11 +33,11 @@ SDL_Texture *SceneManager::getTextureFromFrame(HGDecoder::Frame frame)
 
     // Pixel buffer must remain alive when using surface
     SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(rgbaVector.data(), frame.Stdinfo->Width, frame.Stdinfo->Height, frame.Stdinfo->BitDepth, PITCH(frame.Stdinfo->Width, frame.Stdinfo->BitDepth), RMASK, GMASK, BMASK, AMASK);
-    
+
     SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
 
     SDL_FreeSurface(surface);
-    
+
     return texture;
 }
 
@@ -54,14 +54,14 @@ void SceneManager::displayImage(byte *buf, size_t sz, const std::string &fpath)
     }
 
     // Just handle the first frame for now
-    SDL_Texture* texture = getTextureFromFrame(frames[0]);
+    SDL_Texture *texture = getTextureFromFrame(frames[0]);
 
     // Store texture in cache
     textureCache.insert({fpath, texture});
 
     // Do not free as it is in cache
     // SDL_DestroyTexture(texture);
-    
+
     displayTexture(texture);
 }
 
