@@ -4,6 +4,8 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <iomanip>
 
 #include <music.hpp>
 #include <scene.hpp>
@@ -20,26 +22,23 @@ static ScriptParser scriptParser(&musicPlayer, &sceneManager);
 
 // std::map<std::string, std::vector<byte>> fileCache;
 
-int track_id = 1;
-int scene_id = 1;
-
 void nextScene()
 {
-    char fpath[255] = {0};
-    sprintf(fpath, FMT_SCENE, scene_id);
-    // sceneManager.setScene(fpath);
-
+    static int scene_id = 1;
+    std::stringstream ss;
+    ss << ASSETS "/image/bg" << std::setfill('0') << std::setw(2) << std::to_string(scene_id) << ".hg3";
+    sceneManager.setScene(ss.str().c_str());
     scene_id = scene_id == 11 ? 1 : scene_id + 1;
 
-    scriptParser.parseNext();
+    // scriptParser.parseNext();
 }
 
 void nextTrack()
 {
-    char fpath[255] = {0};
-    sprintf(fpath, FMT_TRACK, track_id);
-    // musicPlayer.setMusic(fpath);
-
+    static int track_id = 1;
+    std::stringstream ss;
+    ss << ASSETS "/bgm/bgm" << std::setfill('0') << std::setw(2) << std::to_string(track_id) << ".ogg";
+    musicPlayer.setMusic(ss.str().c_str());
     track_id = track_id == 9 ? 1 : track_id + 1;
 }
 
