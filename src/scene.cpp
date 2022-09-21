@@ -28,9 +28,7 @@ void SceneManager::displayFrame(byte *buf, size_t sz, std::string fpath)
         SDL_Surface *surface = HGDecoder::getSurfaceFromFrame(frame);
 
         SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-
         SDL_Rect DestR = {0, 0, static_cast<int>(frame.Stdinfo->Width), static_cast<int>(frame.Stdinfo->Height)};
-
         SDL_RenderCopy(renderer, texture, NULL, &DestR);
         SDL_RenderPresent(renderer);
 
