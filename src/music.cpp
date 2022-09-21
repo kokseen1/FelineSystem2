@@ -32,12 +32,12 @@ void MusicPlayer::playPcm(std::string pcm)
     setSound(fpath.c_str());
 }
 
-void MusicPlayer::setSound(const char *fpath)
+void MusicPlayer::setSound(const std::string fpath)
 {
     Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playSoundFromMem);
 }
 
-void MusicPlayer::setMusic(const char *fpath)
+void MusicPlayer::setMusic(const std::string fpath)
 {
     Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playFromMem);
 }

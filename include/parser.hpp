@@ -26,5 +26,6 @@ public:
     ScriptParser(MusicPlayer *, SceneManager *);
 
     void parseNext();
-    void setScript(const char *);
+
+    void setScript(const std::string);
 };

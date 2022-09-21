@@ -10,36 +10,35 @@
 
 namespace Utils
 {
-    std::vector<byte> zlibUncompress(uint32, byte *, uint32);
+    std::vector<byte> zlibUncompress(uint32, byte *, uint32 &);
 
-    std::vector<byte> readFile(const char *);
+    std::vector<byte> readFile(const std::string );
 
     // Asynchronously fetch a file and pass the buffer to a callback
     template <typename T>
-    void fetchFileAndProcess(const char *fpath, T *obj, FFAP_CALLBACK(cb))
+    void fetchFileAndProcess(const std::string fpath, T *obj, FFAP_CALLBACK(cb))
     {
         typedef FFAP_CALLBACK(CbT);
-        printf("Processing %s\n", fpath);
 #ifdef __EMSCRIPTEN__
         // Struct to store object and callback
         typedef struct
         {
             T *obj;
             CbT cb;
-            std::string fpath_str;
+            std::string fpath;
         } Arg;
 
         auto *a = new Arg{obj, cb, fpath};
 
         emscripten_async_wget_data(
-            fpath, a,
+            fpath.c_str(), a,
             [](void *arg, void *buf, int sz)
             {
                 // Retrieve arguments
                 auto *a = reinterpret_cast<Arg *>(arg);
                 auto *obj = a->obj;
                 auto cb = a->cb;
-                auto fpath = a->fpath_str;
+                auto fpath = a->fpath;
 
                 // Call callback function
                 (obj->*cb)(static_cast<byte *>(buf), sz, fpath);
@@ -49,7 +48,7 @@ namespace Utils
             [](void *arg)
             {
                 auto *a = reinterpret_cast<Arg *>(arg);
-                printf("Could not fetch %s\n", a->fpath_str.c_str());
+                printf("Could not fetch %s\n", a->fpath.c_str());
             });
 #else
         auto buf = readFile(fpath);

@@ -7,13 +7,12 @@
 namespace Utils
 {
     // Uncompress a buffer and return it as a vector
-    std::vector<byte> zlibUncompress(uint32 destLen, byte *source, uint32 sourceLen)
+    std::vector<byte> zlibUncompress(uint32 destLen, byte *source, uint32 &sourceLen)
     {
         std::vector<byte> dest(destLen);
-        auto res = uncompress(&dest[0], &destLen, source, sourceLen);
+        auto res = uncompress(dest.data(), &destLen, source, sourceLen);
         if (res != Z_OK)
         {
-            printf("zlibUncompress error\n");
             return {};
         }
 
@@ -21,10 +20,10 @@ namespace Utils
     }
 
     // Read a local file and return its contents as a vector
-    std::vector<byte> readFile(const char *fpath)
+    std::vector<byte> readFile(const std::string fpath)
     {
         // Use C-style for compatibility
-        FILE *fp = fopen(fpath, "rb");
+        FILE *fp = fopen(fpath.c_str(), "rb");
         if (fp == NULL)
         {
             return {};

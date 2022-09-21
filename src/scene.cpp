@@ -65,7 +65,7 @@ void SceneManager::displayImage(byte *buf, size_t sz, const std::string &fpath)
     displayTexture(texture);
 }
 
-void SceneManager::setScene(const char *fpath)
+void SceneManager::setScene(const std::string fpath)
 {
     if (textureCache.find(fpath) != textureCache.end())
     {

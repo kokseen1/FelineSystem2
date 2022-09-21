@@ -17,7 +17,7 @@ class SceneManager
 public:
     SceneManager();
 
-    void setScene(const char *);
+    void setScene(const std::string);
 
     void displayTexture(SDL_Texture *);
 

@@ -14,9 +14,9 @@ class MusicPlayer
 public:
     MusicPlayer();
 
-    void setMusic(const char *);
+    void setMusic(const std::string);
 
-    void setSound(const char *);
+    void setSound(const std::string);
 
     void playPcm(std::string);
 

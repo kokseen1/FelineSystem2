@@ -7,7 +7,7 @@
 
 ScriptParser::ScriptParser(MusicPlayer *mp, SceneManager *sm) : musicPlayer{mp}, sceneManager{sm} {};
 
-void ScriptParser::setScript(const char *fpath)
+void ScriptParser::setScript(const std::string fpath)
 {
     Utils::fetchFileAndProcess(fpath, this, &ScriptParser::loadFromBuf);
 }
