@@ -2,9 +2,12 @@
 #include <emscripten.h>
 #endif
 
+#include <stdio.h>
+#include <asmodean.h>
+
+#include <iostream>
 #include <string>
 #include <vector>
-#include <asmodean.h>
 
 #define FFAP_CALLBACK(x) void (T::*x)(byte *, size_t, const std::string &)
 
@@ -12,9 +15,10 @@ namespace Utils
 {
     std::vector<byte> zlibUncompress(uint32, byte *, uint32 &);
 
-    std::vector<byte> readFile(const std::string );
+    std::vector<byte> readFile(const std::string);
 
     // Asynchronously fetch a file and pass the buffer to a callback
+    // Local: read a local file and pass the buffer to a callback
     template <typename T>
     void fetchFileAndProcess(const std::string fpath, T *obj, FFAP_CALLBACK(cb))
     {

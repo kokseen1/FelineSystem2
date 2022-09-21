@@ -29,10 +29,10 @@ void SceneManager::displayTexture(SDL_Texture *texture)
 // Caller is responsible for freeing the texture
 SDL_Texture *SceneManager::getTextureFromFrame(HGDecoder::Frame frame)
 {
-    auto rgbaVector = HGDecoder::getPixelsFromFrame(frame);
+    auto rgbaVec = HGDecoder::getPixelsFromFrame(frame);
 
     // Pixel buffer must remain alive when using surface
-    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(rgbaVector.data(), frame.Stdinfo->Width, frame.Stdinfo->Height, frame.Stdinfo->BitDepth, PITCH(frame.Stdinfo->Width, frame.Stdinfo->BitDepth), RMASK, GMASK, BMASK, AMASK);
+    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(rgbaVec.data(), frame.Stdinfo->Width, frame.Stdinfo->Height, frame.Stdinfo->BitDepth, PITCH(frame.Stdinfo->Width, frame.Stdinfo->BitDepth), RMASK, GMASK, BMASK, AMASK);
 
     SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
 

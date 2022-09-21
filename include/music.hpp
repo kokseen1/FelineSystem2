@@ -21,21 +21,19 @@ public:
     void playPcm(std::string);
 
 private:
-    Mix_Music *mus = NULL;
-    SDL_RWops *rw = NULL;
-    std::vector<byte> musicBuf;
+    Mix_Music *music = NULL;
+    SDL_RWops *musicOps = NULL;
+    std::vector<byte> musicVec;
 
-    void freeMusic();
+    void stopAndFreeMusic();
 
-    void freeOps();
+    void freeMusicOps();
 
     void freeBuf();
 
-    void playMusic();
-
     void playSoundFromMem(byte *, size_t, const std::string &);
 
-    void playFromMem(byte *, size_t, const std::string &);
+    void playMusicFromMem(byte *, size_t, const std::string &);
 
-    void playFromFile(const char *);
+    void playMusicFromFile(const std::string);
 };
