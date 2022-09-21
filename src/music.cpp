@@ -4,6 +4,7 @@
 #include <map>
 
 #define EXT_PCM ".ogg"
+#define CHANNEL_SOUND 0
 
 // Initialize the audio player
 MusicPlayer::MusicPlayer()
@@ -46,13 +47,14 @@ void MusicPlayer::playSoundFromMem(byte *buf, size_t sz, const std::string &fpat
 {
     if (soundChunk != NULL)
     {
+        Mix_HaltChannel(CHANNEL_SOUND);
         Mix_FreeChunk(soundChunk);
     }
     freeOps(soundOps);
 
     soundOps = SDL_RWFromConstMem(buf, sz);
     soundChunk = Mix_LoadWAV_RW(soundOps, 0);
-    int channel = Mix_PlayChannel(-1, soundChunk, 0);
+    Mix_PlayChannel(CHANNEL_SOUND, soundChunk, 0);
 }
 
 // Play a file buffer as music

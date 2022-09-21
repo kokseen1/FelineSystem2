@@ -5455,6 +5455,25 @@ var ASM_CONSTS = {
 
   var _Mix_FreeMusic = _Mix_FreeChunk;
 
+  function _Mix_HaltChannel(channel) {
+      function halt(channel) {
+        var info = /** @type {{ audio: HTMLMediaElement }} */ (SDL.channels[channel]);
+        if (info.audio) {
+          info.audio.pause();
+          info.audio = null;
+        }
+        if (SDL.channelFinished) {
+          getWasmTableEntry(SDL.channelFinished)(channel);
+        }
+      }
+      if (channel != -1) {
+        halt(channel);
+      } else {
+        for (var i = 0; i < SDL.channels.length; ++i) halt(i);
+      }
+      return 0;
+    }
+
   function _Mix_HaltMusic() {
       var audio = /** @type {HTMLMediaElement} */ (SDL.music.audio);
       if (audio) {
@@ -10321,6 +10340,7 @@ function checkIncomingModuleAPI() {
 var asmLibraryArg = {
   "Mix_FreeChunk": _Mix_FreeChunk,
   "Mix_FreeMusic": _Mix_FreeMusic,
+  "Mix_HaltChannel": _Mix_HaltChannel,
   "Mix_HaltMusic": _Mix_HaltMusic,
   "Mix_LoadMUS_RW": _Mix_LoadMUS_RW,
   "Mix_LoadWAV_RW": _Mix_LoadWAV_RW,
@@ -10576,10 +10596,10 @@ var _memcpy = Module["_memcpy"] = createExportWrapper("memcpy");
 var _main = Module["_main"] = createExportWrapper("__main_argc_argv");
 
 /** @type {function(...*):?} */
-var _malloc = Module["_malloc"] = createExportWrapper("malloc");
+var _free = Module["_free"] = createExportWrapper("free");
 
 /** @type {function(...*):?} */
-var _free = Module["_free"] = createExportWrapper("free");
+var _malloc = Module["_malloc"] = createExportWrapper("malloc");
 
 /** @type {function(...*):?} */
 var ___errno_location = Module["___errno_location"] = createExportWrapper("__errno_location");
