@@ -73,5 +73,5 @@ void SceneManager::setScene(const char *fpath)
         return;
     }
 
-    Utils::processFile(fpath, this, &SceneManager::displayImage);
+    Utils::fetchFileAndProcess(fpath, this, &SceneManager::displayImage);
 }

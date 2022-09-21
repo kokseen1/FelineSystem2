@@ -9,7 +9,7 @@ ScriptParser::ScriptParser(MusicPlayer *mp, SceneManager *sm) : musicPlayer{mp},
 
 void ScriptParser::setScript(const char *fpath)
 {
-    Utils::processFile(fpath, this, &ScriptParser::loadFromBuf);
+    Utils::fetchFileAndProcess(fpath, this, &ScriptParser::loadFromBuf);
 }
 
 // Read a script from a memory buffer

@@ -14,24 +14,24 @@ namespace Utils
 
     std::vector<byte> readFile(const char *);
 
-    template <typename T, typename C>
-    // typedef void (C::*ProcessFileCallback)(byte *, size_t);
-    void processFile(const char *fpath, T obj, C cb)
+    // Asynchronously fetch a file and pass the buffer to a callback
+    template <typename T, typename CbT>
+    void fetchFileAndProcess(const char *fpath, T obj, CbT cb)
     {
         printf("Processing %s\n", fpath);
 #ifdef __EMSCRIPTEN__
         // Retrieve buffer from cache
         // if (fileCache.find(fpath) != fileCache.end())
         // {
-            // (obj->*cb)(fileCache[fpath].data(), fileCache[fpath].size());
-            // return;
+        // (obj->*cb)(fileCache[fpath].data(), fileCache[fpath].size());
+        // return;
         // }
 
         // Struct to store object and callback
         typedef struct
         {
             T obj;
-            C cb;
+            CbT cb;
             std::string fpath_str;
         } Arg;
 
