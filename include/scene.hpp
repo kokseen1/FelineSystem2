@@ -5,6 +5,8 @@
 #include <string>
 #include <map>
 
+#include <hgdecoder.hpp>
+
 #define FMT_SCENE ASSETS "/image/bg%02d.hg3"
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 576
@@ -17,7 +19,11 @@ public:
 
     void setScene(const char *);
 
-    void displayFrame(byte *, size_t, std::string);
+    void displayTexture(SDL_Texture *);
+
+    SDL_Texture* getTextureFromFrame(HGDecoder::Frame);
+
+    void displayImage(byte *, size_t, const std::string &);
 
     SDL_Window *window = NULL;
 

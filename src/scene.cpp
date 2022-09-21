@@ -4,6 +4,7 @@
 
 #include <utils.hpp>
 
+// Create SDL window and renderer
 SceneManager::SceneManager()
 {
     window = SDL_CreateWindow("FelineSystem2",
@@ -15,42 +16,62 @@ SceneManager::SceneManager()
     printf("SceneManager initialized\n");
 }
 
-// Decode a HG buffer and display the first frame
-void SceneManager::displayFrame(byte *buf, size_t sz, std::string fpath)
+void SceneManager::displayTexture(SDL_Texture *texture)
+{
+    int w, h;
+    SDL_QueryTexture(texture, NULL, NULL, &w, &h);
+    SDL_Rect DestR = {0, 0, w, h};
+    SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
+    SDL_RenderPresent(renderer);
+}
+
+// Returns a pointer to a texture from a given frame
+// Caller is responsible for freeing the texture
+SDL_Texture *SceneManager::getTextureFromFrame(HGDecoder::Frame frame)
+{
+    auto rgbaVector = HGDecoder::getPixelsFromFrame(frame);
+
+    // Pixel buffer must remain alive when using surface
+    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(rgbaVector.data(), frame.Stdinfo->Width, frame.Stdinfo->Height, frame.Stdinfo->BitDepth, PITCH(frame.Stdinfo->Width, frame.Stdinfo->BitDepth), RMASK, GMASK, BMASK, AMASK);
+    
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+    SDL_FreeSurface(surface);
+    
+    return texture;
+}
+
+// Decode a raw HG buffer and display the first frame
+void SceneManager::displayImage(byte *buf, size_t sz, const std::string &fpath)
 {
     HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
     FrameHeader *frameHeader = reinterpret_cast<FrameHeader *>(hgHeader + 1);
-
     std::vector<HGDecoder::Frame> frames = HGDecoder::getFrames(frameHeader);
-
-    for (auto frame : frames)
+    if (frames.empty())
     {
-        auto rgbaBuffer = HGDecoder::getPixelsFromFrame(frame);
-        SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(rgbaBuffer.data(), frame.Stdinfo->Width, frame.Stdinfo->Height, frame.Stdinfo->BitDepth, PITCH(frame.Stdinfo->Width, frame.Stdinfo->BitDepth), RMASK, GMASK, BMASK, AMASK);
-
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-        SDL_Rect DestR = {0, 0, static_cast<int>(frame.Stdinfo->Width), static_cast<int>(frame.Stdinfo->Height)};
-        SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
-        SDL_RenderPresent(renderer);
-
-        // Cache texture
-        textureCache.insert({fpath, texture});
-        // SDL_DestroyTexture(texture);
-
-        SDL_FreeSurface(surface);
-
-        // Just handle the first frame for now
-        break;
+        printf("No frames found\n");
+        return;
     }
+
+    // Just handle the first frame for now
+    SDL_Texture* texture = getTextureFromFrame(frames[0]);
+
+    // Store texture in cache
+    textureCache.insert({fpath, texture});
+
+    // Do not free as it is in cache
+    // SDL_DestroyTexture(texture);
+    
+    displayTexture(texture);
 }
 
 void SceneManager::setScene(const char *fpath)
 {
     if (textureCache.find(fpath) != textureCache.end())
     {
-        SDL_RenderCopyEx(renderer, textureCache[fpath], NULL, NULL, 0, 0, SDL_FLIP_VERTICAL);
-        SDL_RenderPresent(renderer);
+        displayTexture(textureCache[fpath]);
         return;
     }
-    Utils::processFile(fpath, this, &SceneManager::displayFrame);
+
+    Utils::processFile(fpath, this, &SceneManager::displayImage);
 }
