@@ -22,17 +22,17 @@ static ScriptParser scriptParser(&musicPlayer, &sceneManager);
 
 void nextScene()
 {
+    scriptParser.parseNext();
     // static int scene_id = 1;
     // std::stringstream ss;
     // ss << ASSETS "/image/bg" << std::setfill('0') << std::setw(2) << std::to_string(scene_id) << ".hg3";
     // sceneManager.setScene(ss.str());
     // scene_id = scene_id == 11 ? 1 : scene_id + 1;
-
-    scriptParser.parseNext();
 }
 
 void nextTrack()
 {
+    scriptParser.parseNext();
     // static int track_id = 1;
     // std::stringstream ss;
     // ss << ASSETS "/bgm/bgm" << std::setfill('0') << std::setw(2) << std::to_string(track_id) << ".ogg";
