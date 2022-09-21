@@ -6,16 +6,12 @@
 
 SceneManager::SceneManager()
 {
-
-#ifdef __EMSCRIPTEN__
-    SDL_CreateWindowAndRenderer(WINDOW_WIDTH, WINDOW_HEIGHT, 0, &window, &renderer);
-#else
     window = SDL_CreateWindow("FelineSystem2",
                               SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                               WINDOW_WIDTH,
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
-#endif
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     printf("SceneManager initialized\n");
 }
 
@@ -31,27 +27,22 @@ void SceneManager::displayFrame(byte *buf, size_t sz, std::string fpath)
     {
         SDL_Surface *surface = HGDecoder::getSurfaceFromFrame(frame);
 
-#ifdef __EMSCRIPTEN__
         SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
 
-        SDL_RenderClear(renderer);
-
-        SDL_Rect DestR;
-        DestR.x = 0;
-        DestR.y = 0;
-        DestR.w = frame.Stdinfo->Width;
-        DestR.h = frame.Stdinfo->Height;
+        SDL_Rect DestR = {0, 0, static_cast<int>(frame.Stdinfo->Width), static_cast<int>(frame.Stdinfo->Height)};
 
         SDL_RenderCopy(renderer, texture, NULL, &DestR);
         SDL_RenderPresent(renderer);
 
+        // Cache texture
         textureCache.insert({fpath, texture});
         // SDL_DestroyTexture(texture);
-#else
-        SDL_Surface *screen = SDL_GetWindowSurface(window);
-        SDL_BlitSurface(surface, NULL, screen, NULL);
-        SDL_UpdateWindowSurface(window);
-#endif
+
+        // CPU rendering
+        // SDL_Surface *screen = SDL_GetWindowSurface(window);
+        // SDL_BlitSurface(surface, NULL, screen, NULL);
+        // SDL_UpdateWindowSurface(window);
+
         SDL_FreeSurface(surface);
 
         // Just handle the first frame for now
