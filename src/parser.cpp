@@ -1,9 +1,13 @@
 #include <parser.hpp>
 
-ScriptParser::ScriptParser(MusicPlayer *mp, ImageManager *sm) : musicPlayer{mp}, imageManager{sm} {};
-
-void ScriptParser::setScript(const std::string fpath)
+ScriptParser::ScriptParser(MusicPlayer *mp, ImageManager *sm) : musicPlayer{mp}, imageManager{sm}
 {
+    setScript(SCRIPT_START);
+};
+
+void ScriptParser::setScript(const std::string name)
+{
+    auto fpath = ASSETS SCRIPT_PATH + name + SCRIPT_EXT;
     Utils::fetchFileAndProcess(fpath, this, &ScriptParser::loadFromBuf, NULL);
 }
 
@@ -54,6 +58,7 @@ void ScriptParser::parseNext()
     }
 }
 
+// Return matched command arguments as string vector
 std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
 {
     std::vector<std::string> args;
@@ -83,7 +88,7 @@ void ScriptParser::handleCommand(std::string cmdString)
             musicPlayer->setMusic(fpath);
         }
     }
-    else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+) ([\\w\\d]+),(\\d),\\d,(\\w),\\w.*")))
+    else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+) ([\\w\\d]+),(\\d),(\\d),(\\w),(\\w).*")))
     {
         ImageData imageData = {
             getArgsFromMatch(matches),
@@ -104,8 +109,7 @@ void ScriptParser::handleCommand(std::string cmdString)
     {
         if (matches.size() == 2)
         {
-            const std::string fpath = ASSETS "/scene/" + matches[1].str() + ".cst";
-            setScript(fpath);
+            setScript(matches[1].str());
         }
     }
 }

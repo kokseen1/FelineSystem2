@@ -27,6 +27,7 @@ enum ARG
 {
     ARG_BG_NAME = 2,
     ARG_CG_NAME = 2,
+    ARG_CG_ID = 3
 };
 
 typedef struct

@@ -10,6 +10,11 @@
 #include <music.hpp>
 #include <scene.hpp>
 
+#define SCRIPT_PATH "scene/"
+#define SCRIPT_EXT ".cst"
+#define SCRIPT_SIGNATURE "CatScene"
+#define SCRIPT_START "op"
+
 class ScriptParser
 {
 private:
@@ -33,7 +38,7 @@ private:
         CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
 
         // Verify signature
-        if (strncmp(scriptHeader->FileSignature, "CatScene", sizeof(scriptHeader->FileSignature)) != 0)
+        if (strncmp(scriptHeader->FileSignature, SCRIPT_SIGNATURE, sizeof(scriptHeader->FileSignature)) != 0)
         {
             printf("Invalid CST file signature!\n");
             return;

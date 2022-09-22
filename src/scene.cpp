@@ -57,22 +57,24 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
 
 void ImageManager::setImage(ImageData imageData)
 {
+    auto &fpath = imageData.fpath;
     switch (imageData.type)
     {
     case IMAGE_TYPE::IMAGE_BG:
-        imageData.fpath = ASSETS IMAGE_PATH + imageData.args[ARG_BG_NAME] + IMAGE_EXT;
+        fpath = imageData.args[ARG_BG_NAME];
         break;
     case IMAGE_TYPE::IMAGE_CG:
-        imageData.fpath = ASSETS IMAGE_PATH + imageData.args[ARG_CG_NAME] + IMAGE_EXT;
+        fpath = imageData.args[ARG_CG_NAME] + "_" + imageData.args[ARG_CG_ID];
         break;
     }
-    if (textureCache.find(imageData.fpath) != textureCache.end())
+    fpath = ASSETS IMAGE_PATH + fpath + IMAGE_EXT;
+    if (textureCache.find(fpath) != textureCache.end())
     {
-        displayTexture(textureCache[imageData.fpath], imageData);
+        displayTexture(textureCache[fpath], imageData);
         return;
     }
 
-    Utils::fetchFileAndProcess(imageData.fpath, this, &ImageManager::processImage, imageData);
+    Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
 }
 
 // Decode a raw HG buffer and display the first frame
