@@ -1,7 +1,7 @@
 #include <stdio.h>
+
 #include <scene.hpp>
 #include <hgdecoder.hpp>
-
 #include <utils.hpp>
 
 // Create SDL window and renderer
@@ -16,12 +16,26 @@ ImageManager::ImageManager()
     printf("ImageManager initialized\n");
 }
 
-void ImageManager::displayTexture(SDL_Texture *texture)
+void ImageManager::displayTexture(SDL_Texture *texture, ImageData userdata)
 {
-    int w, h;
-    SDL_QueryTexture(texture, NULL, NULL, &w, &h);
-    SDL_Rect DestR = {0, 0, w, h};
+    SDL_Rect DestR = {0, 0};
+
+    if (userdata.type == IMAGE_TYPE::IMAGE_BG)
+    {
+        currentBg = texture;
+    }
+    else
+    {
+        SDL_QueryTexture(currentBg, NULL, NULL, &DestR.w, &DestR.h);
+        SDL_RenderCopyEx(renderer, currentBg, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
+    }
+
+    SDL_QueryTexture(texture, NULL, NULL, &DestR.w, &DestR.h);
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
+
+    // Do not free as it is in cache
+    // SDL_DestroyTexture(texture);
+
     SDL_RenderPresent(renderer);
 }
 
@@ -43,12 +57,50 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
 
 void ImageManager::setImage(ImageData imageData)
 {
-    auto &fpath = imageData.fpath = ASSETS IMAGE_PATH + imageData.name + IMAGE_EXT;
-    if (textureCache.find(fpath) != textureCache.end())
+    switch (imageData.type)
     {
-        displayTexture(textureCache[fpath]);
+    case IMAGE_TYPE::IMAGE_BG:
+        imageData.fpath = ASSETS IMAGE_PATH + imageData.args[ARG_BG_NAME] + IMAGE_EXT;
+        break;
+    case IMAGE_TYPE::IMAGE_CG:
+        imageData.fpath = ASSETS IMAGE_PATH + imageData.args[ARG_CG_NAME] + IMAGE_EXT;
+        break;
+    }
+    if (textureCache.find(imageData.fpath) != textureCache.end())
+    {
+        displayTexture(textureCache[imageData.fpath], imageData);
         return;
     }
 
-    Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
+    Utils::fetchFileAndProcess(imageData.fpath, this, &ImageManager::processImage, imageData);
+}
+
+// Decode a raw HG buffer and display the first frame
+void ImageManager::processImage(byte *buf, size_t sz, ImageData imageData)
+{
+    HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
+
+    // Verify signature
+    if (strncmp(hgHeader->FileSignature, IMAGE_SIGNATURE, sizeof(hgHeader->FileSignature)) != 0)
+    {
+        std::cout << "Invalid image file signature!" << std::endl;
+        return;
+    }
+
+    // Retrieve frames
+    FrameHeader *frameHeader = reinterpret_cast<FrameHeader *>(hgHeader + 1);
+    std::vector<HGDecoder::Frame> frames = HGDecoder::getFrames(frameHeader);
+    if (frames.empty())
+    {
+        std::cout << "No frames found" << std::endl;
+        return;
+    }
+
+    // Just handle the first frame for now
+    SDL_Texture *texture = getTextureFromFrame(frames[0]);
+
+    // Store texture in cache
+    textureCache.insert({imageData.fpath, texture});
+
+    displayTexture(texture, imageData);
 }

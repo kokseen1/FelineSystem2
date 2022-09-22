@@ -4,6 +4,7 @@
 #include <cstring>
 #include <string>
 #include <iostream>
+#include <regex>
 
 #include <utils.hpp>
 #include <music.hpp>
@@ -22,6 +23,8 @@ private:
     size_t currStringEntry;
 
     void handleCommand(std::string);
+
+    std::vector<std::string> getArgsFromMatch(std::smatch);
 
     // Read a script from a memory buffer
     template <typename T>

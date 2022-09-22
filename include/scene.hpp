@@ -23,9 +23,15 @@ enum class IMAGE_TYPE
     IMAGE_CG,
 };
 
+enum ARG
+{
+    ARG_BG_NAME = 2,
+    ARG_CG_NAME = 2,
+};
+
 typedef struct
 {
-    const std::string name;
+    const std::vector<std::string> args;
     const IMAGE_TYPE type;
     std::string fpath;
 
@@ -39,48 +45,16 @@ public:
 
     void setImage(ImageData);
 
-    void displayTexture(SDL_Texture *);
+private:
+    SDL_Window *window = NULL;
+    SDL_Renderer *renderer = NULL;
+    SDL_Texture *currentBg = NULL;
+
+    std::map<std::string, SDL_Texture *> textureCache;
 
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
 
-    SDL_Window *window = NULL;
+    void displayTexture(SDL_Texture *, ImageData);
 
-    SDL_Renderer *renderer = NULL;
-
-private:
-    std::map<std::string, SDL_Texture *> textureCache;
-
-    // Decode a raw HG buffer and display the first frame
-    template <typename T>
-    void processImage(byte *buf, size_t sz, T userdata)
-    {
-        HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
-
-        // Verify signature
-        if (strncmp(hgHeader->FileSignature, IMAGE_SIGNATURE, sizeof(hgHeader->FileSignature)) != 0)
-        {
-            std::cout << "Invalid image file signature!" << std::endl;
-            return;
-        }
-
-        // Retrieve frames
-        FrameHeader *frameHeader = reinterpret_cast<FrameHeader *>(hgHeader + 1);
-        std::vector<HGDecoder::Frame> frames = HGDecoder::getFrames(frameHeader);
-        if (frames.empty())
-        {
-            std::cout << "No frames found" << std::endl;
-            return;
-        }
-
-        // Just handle the first frame for now
-        SDL_Texture *texture = getTextureFromFrame(frames[0]);
-
-        // Store texture in cache
-        textureCache.insert({userdata.fpath, texture});
-
-        // Do not free as it is in cache
-        // SDL_DestroyTexture(texture);
-
-        displayTexture(texture);
-    }
+    void processImage(byte *, size_t, ImageData);
 };

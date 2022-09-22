@@ -1,5 +1,3 @@
-#include <regex>
-
 #include <parser.hpp>
 
 ScriptParser::ScriptParser(MusicPlayer *mp, ImageManager *sm) : musicPlayer{mp}, imageManager{sm} {};
@@ -56,6 +54,17 @@ void ScriptParser::parseNext()
     }
 }
 
+std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
+{
+    std::vector<std::string> args;
+    for (int i = 0; i < matches.size(); i++)
+    {
+        args.push_back(matches[i].str());
+    }
+
+    return args;
+}
+
 void ScriptParser::handleCommand(std::string cmdString)
 {
     std::smatch matches;
@@ -76,31 +85,20 @@ void ScriptParser::handleCommand(std::string cmdString)
     }
     else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+) ([\\w\\d]+),(\\d),\\d,(\\w),\\w.*")))
     {
-        if (matches.size() == 5)
-        {
-            // const std::string fpath = ASSETS "/image/" + matches[2].str() + "_" + matches[3].str() + ".hg3";
-            // imageManager->setImage(fpath);
-        }
+        ImageData imageData = {
+            getArgsFromMatch(matches),
+            IMAGE_TYPE::IMAGE_CG};
+
+        imageManager->setImage(imageData);
     }
     else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+) (\\S+).*")))
     {
-        if (matches.size() == 1)
-        {
-            // Reset bg
-        }
-        else if (matches.size() == 2)
-        {
-            // matches[1].str().c_str()
-        }
-        else if (matches.size() == 3)
-        {
-            // TODO: Handle case
-            ImageData imageData = {
-                matches[2].str(),
-                IMAGE_TYPE::IMAGE_BG};
+        // TODO: Handle case
+        ImageData imageData = {
+            getArgsFromMatch(matches),
+            IMAGE_TYPE::IMAGE_BG};
 
-            imageManager->setImage(imageData);
-        }
+        imageManager->setImage(imageData);
     }
     else if (std::regex_match(cmdString, matches, std::regex("^next (\\S+)")))
     {
