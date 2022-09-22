@@ -9,19 +9,17 @@
 #include <string>
 #include <vector>
 
-#define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata &)
+#define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
 
 namespace Utils
 {
-    static int userdata_void = 0;
-
     std::vector<byte> zlibUncompress(uint32, byte *, uint32 &);
 
     std::vector<byte> readFile(const std::string);
 
     // Fetch a file and pass the buffer to a callback
     template <typename TClass, typename TUserdata>
-    void fetchFileAndProcess(const std::string &fpath, TClass *classobj, FFAP_CB(cb), TUserdata &userdata)
+    void fetchFileAndProcess(const std::string &fpath, TClass *classobj, FFAP_CB(cb), TUserdata userdata)
     {
         typedef FFAP_CB(TCallback);
         std::cout << "Fetching file " << fpath << std::endl;

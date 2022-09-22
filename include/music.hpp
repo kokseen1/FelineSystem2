@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#define CHANNEL_SOUND 0
+
 class MusicPlayer
 {
     const std::map<std::string, std::string> pcmMap = {
@@ -44,9 +46,36 @@ private:
 
     void freeBuf();
 
-    void playSoundFromMem(byte *, size_t, int &);
-
-    void playMusicFromMem(byte *, size_t, int &);
-
     void playMusicFromFile(const std::string);
+
+    // Play a file buffer as music
+    template <typename T>
+    void playMusicFromMem(byte *buf, size_t sz, T userdata)
+    {
+        stopAndFreeMusic();
+        freeOps(musicOps);
+        musicVec.clear();
+
+        musicVec.insert(musicVec.end(), buf, buf + sz);
+        musicOps = SDL_RWFromConstMem(musicVec.data(), sz);
+        music = Mix_LoadMUS_RW(musicOps, 0);
+
+        Mix_PlayMusic(music, -1);
+    }
+
+    // Play a file buffer as sound
+    template <typename T>
+    void playSoundFromMem(byte *buf, size_t sz, T userdata)
+    {
+        if (soundChunk != NULL)
+        {
+            Mix_HaltChannel(CHANNEL_SOUND);
+            Mix_FreeChunk(soundChunk);
+        }
+        freeOps(soundOps);
+
+        soundOps = SDL_RWFromConstMem(buf, sz);
+        soundChunk = Mix_LoadWAV_RW(soundOps, 0);
+        Mix_PlayChannel(CHANNEL_SOUND, soundChunk, 0);
+    }
 };

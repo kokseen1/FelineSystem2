@@ -4,7 +4,6 @@
 #include <map>
 
 #define EXT_PCM ".ogg"
-#define CHANNEL_SOUND 0
 
 // Initialize the audio player
 MusicPlayer::MusicPlayer()
@@ -33,42 +32,13 @@ void MusicPlayer::playPcm(std::string pcm)
 // Set the current sound file
 void MusicPlayer::setSound(const std::string fpath)
 {
-    Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playSoundFromMem, Utils::userdata_void);
+    Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playSoundFromMem, NULL);
 }
 
 // Set the current music file
 void MusicPlayer::setMusic(const std::string fpath)
 {
-    Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playMusicFromMem, Utils::userdata_void);
-}
-
-// Play a file buffer as sound
-void MusicPlayer::playSoundFromMem(byte *buf, size_t sz, int &userdata)
-{
-    if (soundChunk != NULL)
-    {
-        Mix_HaltChannel(CHANNEL_SOUND);
-        Mix_FreeChunk(soundChunk);
-    }
-    freeOps(soundOps);
-
-    soundOps = SDL_RWFromConstMem(buf, sz);
-    soundChunk = Mix_LoadWAV_RW(soundOps, 0);
-    Mix_PlayChannel(CHANNEL_SOUND, soundChunk, 0);
-}
-
-// Play a file buffer as music
-void MusicPlayer::playMusicFromMem(byte *buf, size_t sz, int &userdata)
-{
-    stopAndFreeMusic();
-    freeOps(musicOps);
-    musicVec.clear();
-
-    musicVec.insert(musicVec.end(), buf, buf + sz);
-    musicOps = SDL_RWFromConstMem(musicVec.data(), sz);
-    music = Mix_LoadMUS_RW(musicOps, 0);
-
-    Mix_PlayMusic(music, -1);
+    Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playMusicFromMem, NULL);
 }
 
 // Play a local file via filename

@@ -35,7 +35,29 @@ private:
 
     std::map<std::string, SDL_Texture *> textureCache;
 
-    void displayImage(byte *, size_t, ImageData &);
-    static void onLoad(void *, void *, int);
-    static void onError(void *);
+    // Decode a raw HG buffer and display the first frame
+    template <typename T>
+    void displayImage(byte *buf, size_t sz, T userdata)
+    {
+        auto fpath = userdata.fpath;
+        HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
+        FrameHeader *frameHeader = reinterpret_cast<FrameHeader *>(hgHeader + 1);
+        std::vector<HGDecoder::Frame> frames = HGDecoder::getFrames(frameHeader);
+        if (frames.empty())
+        {
+            printf("No frames found\n");
+            return;
+        }
+
+        // Just handle the first frame for now
+        SDL_Texture *texture = getTextureFromFrame(frames[0]);
+
+        // Store texture in cache
+        textureCache.insert({fpath, texture});
+
+        // Do not free as it is in cache
+        // SDL_DestroyTexture(texture);
+
+        displayTexture(texture);
+    }
 };
