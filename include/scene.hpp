@@ -31,11 +31,11 @@ private:
     typedef struct
     {
         const std::string &fpath;
-    } ImageMeta;
+    } ImageData;
 
     std::map<std::string, SDL_Texture *> textureCache;
 
-    void displayImage(byte *, size_t, ImageMeta);
+    void displayImage(byte *, size_t, ImageData &);
     static void onLoad(void *, void *, int);
     static void onError(void *);
 };

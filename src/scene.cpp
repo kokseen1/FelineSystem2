@@ -4,7 +4,6 @@
 
 #include <utils.hpp>
 
-
 // Create SDL window and renderer
 SceneManager::SceneManager()
 {
@@ -43,9 +42,9 @@ SDL_Texture *SceneManager::getTextureFromFrame(HGDecoder::Frame frame)
 }
 
 // Decode a raw HG buffer and display the first frame
-void SceneManager::displayImage(byte *buf, size_t sz, ImageMeta ud)
+void SceneManager::displayImage(byte *buf, size_t sz, ImageData &userdata)
 {
-    auto fpath = ud.fpath;
+    auto fpath = userdata.fpath;
     HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
     FrameHeader *frameHeader = reinterpret_cast<FrameHeader *>(hgHeader + 1);
     std::vector<HGDecoder::Frame> frames = HGDecoder::getFrames(frameHeader);
@@ -75,7 +74,8 @@ void SceneManager::setScene(const std::string fpath)
         return;
     }
 
-    ImageMeta ud = {fpath};
+    ImageData userdata = {
+        fpath};
 
-    Utils::fetchFileAndProcess(fpath, this, &SceneManager::displayImage, ud);
+    Utils::fetchFileAndProcess(fpath, this, &SceneManager::displayImage, userdata);
 }

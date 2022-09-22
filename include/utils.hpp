@@ -9,76 +9,80 @@
 #include <string>
 #include <vector>
 
-#define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
+#define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata &)
 
 namespace Utils
 {
+    static int userdata_void = 0;
+
     std::vector<byte> zlibUncompress(uint32, byte *, uint32 &);
 
     std::vector<byte> readFile(const std::string);
 
     // Fetch a file and pass the buffer to a callback
     template <typename TClass, typename TUserdata>
-    void fetchFileAndProcess(const std::string fpath, TClass *obj, FFAP_CB(cb), TUserdata ud)
+    void fetchFileAndProcess(const std::string &fpath, TClass *classobj, FFAP_CB(cb), TUserdata &userdata)
     {
         typedef FFAP_CB(TCallback);
         std::cout << "Fetching file " << fpath << std::endl;
+
 #ifdef __EMSCRIPTEN__
-        // Struct to store object and callback
+
+        // Define struct to pass to callback as arg
         typedef struct
         {
-            TClass *obj;
-            TCallback cb;
             const std::string fpath;
-            TUserdata ud;
+            TClass *classobj;
+            TCallback cb;
+            TUserdata userdata;
         } Arg;
 
-        auto *a = new Arg{obj, cb, fpath, ud};
+        Arg *a = new Arg{
+            fpath,
+            classobj,
+            cb,
+            userdata};
 
         emscripten_async_wget_data(
-            fpath.c_str(), a,
+            fpath.c_str(),
+            a,
             [](void *arg, void *buf, int sz)
             {
+                std::vector<byte> bufVec(static_cast<byte *>(buf), static_cast<byte *>(buf) + sz);
+
                 // Retrieve arguments
-                auto *a = reinterpret_cast<Arg *>(arg);
-                auto *obj = a->obj;
-                auto cb = a->cb;
-                auto ud = a->ud;
+                Arg *a = reinterpret_cast<Arg *>(arg);
+                TClass *classobj = a->classobj;
+                TCallback cb = a->cb;
+                TUserdata userdata = a->userdata;
 
-                // Call callback function
-                (obj->*cb)(static_cast<byte *>(buf), sz, ud);
-
-                delete arg;
-            },
-            [](void *arg)
-            {
-                auto *a = reinterpret_cast<Arg *>(arg);
-                printf("Could not fetch %s\n", a->fpath.c_str());
-            });
 #else
-        auto buf = readFile(fpath);
-        if (buf.empty())
+
+        // Handle local file read
+        auto bufVec = readFile(fpath);
+        if (bufVec.empty())
         {
             std::cout << "Could not read file " << fpath << std::endl;
             return;
         }
-        (obj->*cb)(buf.data(), buf.size(), ud);
+
 #endif
-    }
+
+                // Call callback function
+                (classobj->*cb)(bufVec.data(), bufVec.size(), userdata);
 
 #ifdef __EMSCRIPTEN__
-    static inline const char *emscripten_event_type_to_string(int eventType)
-    {
-        const char *events[] = {"(invalid)", "(none)", "keypress", "keydown", "keyup", "click", "mousedown", "mouseup", "dblclick", "mousemove", "wheel", "resize",
-                                "scroll", "blur", "focus", "focusin", "focusout", "deviceorientation", "devicemotion", "orientationchange", "fullscreenchange", "pointerlockchange",
-                                "visibilitychange", "touchstart", "touchend", "touchmove", "touchcancel", "gamepadconnected", "gamepaddisconnected", "beforeunload",
-                                "batterychargingchange", "batterylevelchange", "webglcontextlost", "webglcontextrestored", "(invalid)"};
-        ++eventType;
-        if (eventType < 0)
-            eventType = 0;
-        if (eventType >= sizeof(events) / sizeof(events[0]))
-            eventType = sizeof(events) / sizeof(events[0]) - 1;
-        return events[eventType];
-    }
+
+                delete arg;
+            },
+
+            // onError callback
+            [](void *arg)
+            {
+                Arg *a = reinterpret_cast<Arg *>(arg);
+                auto fpath = a->fpath;
+                std::cout << "Could not fetch file " << fpath << std::endl;
+            });
 #endif
+    }
 }

@@ -33,17 +33,17 @@ void MusicPlayer::playPcm(std::string pcm)
 // Set the current sound file
 void MusicPlayer::setSound(const std::string fpath)
 {
-    Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playSoundFromMem, 0);
+    Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playSoundFromMem, Utils::userdata_void);
 }
 
 // Set the current music file
 void MusicPlayer::setMusic(const std::string fpath)
 {
-    Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playMusicFromMem, 0);
+    Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playMusicFromMem, Utils::userdata_void);
 }
 
 // Play a file buffer as sound
-void MusicPlayer::playSoundFromMem(byte *buf, size_t sz, int userdata)
+void MusicPlayer::playSoundFromMem(byte *buf, size_t sz, int &userdata)
 {
     if (soundChunk != NULL)
     {
@@ -58,7 +58,7 @@ void MusicPlayer::playSoundFromMem(byte *buf, size_t sz, int userdata)
 }
 
 // Play a file buffer as music
-void MusicPlayer::playMusicFromMem(byte *buf, size_t sz, int userdata)
+void MusicPlayer::playMusicFromMem(byte *buf, size_t sz, int &userdata)
 {
     stopAndFreeMusic();
     freeOps(musicOps);
