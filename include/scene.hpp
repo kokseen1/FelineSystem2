@@ -4,6 +4,8 @@
 #include <asmodean.h>
 
 #include <string>
+#include <cstring>
+#include <iostream>
 #include <map>
 
 #include <hgdecoder.hpp>
@@ -29,11 +31,11 @@ typedef struct
 
 } ImageData;
 
-class SceneManager
+class ImageManager
 {
 
 public:
-    SceneManager();
+    ImageManager();
 
     void setImage(ImageData);
 

@@ -5,7 +5,7 @@
 #include <utils.hpp>
 
 // Create SDL window and renderer
-SceneManager::SceneManager()
+ImageManager::ImageManager()
 {
     window = SDL_CreateWindow("FelineSystem2",
                               SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -13,10 +13,10 @@ SceneManager::SceneManager()
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    printf("SceneManager initialized\n");
+    printf("ImageManager initialized\n");
 }
 
-void SceneManager::displayTexture(SDL_Texture *texture)
+void ImageManager::displayTexture(SDL_Texture *texture)
 {
     int w, h;
     SDL_QueryTexture(texture, NULL, NULL, &w, &h);
@@ -27,7 +27,7 @@ void SceneManager::displayTexture(SDL_Texture *texture)
 
 // Returns a pointer to a texture from a given frame
 // Caller is responsible for freeing the texture
-SDL_Texture *SceneManager::getTextureFromFrame(HGDecoder::Frame frame)
+SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
 {
     auto rgbaVec = HGDecoder::getPixelsFromFrame(frame);
 
@@ -41,7 +41,7 @@ SDL_Texture *SceneManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
-void SceneManager::setImage(ImageData imageData)
+void ImageManager::setImage(ImageData imageData)
 {
     auto &fpath = imageData.fpath = ASSETS IMAGE_PATH + imageData.name + IMAGE_EXT;
     if (textureCache.find(fpath) != textureCache.end())
@@ -50,5 +50,5 @@ void SceneManager::setImage(ImageData imageData)
         return;
     }
 
-    Utils::fetchFileAndProcess(fpath, this, &SceneManager::processImage, imageData);
+    Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
 }

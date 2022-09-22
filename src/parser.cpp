@@ -2,7 +2,7 @@
 
 #include <parser.hpp>
 
-ScriptParser::ScriptParser(MusicPlayer *mp, SceneManager *sm) : musicPlayer{mp}, sceneManager{sm} {};
+ScriptParser::ScriptParser(MusicPlayer *mp, ImageManager *sm) : musicPlayer{mp}, imageManager{sm} {};
 
 void ScriptParser::setScript(const std::string fpath)
 {
@@ -79,7 +79,7 @@ void ScriptParser::handleCommand(std::string cmdString)
         if (matches.size() == 5)
         {
             // const std::string fpath = ASSETS "/image/" + matches[2].str() + "_" + matches[3].str() + ".hg3";
-            // sceneManager->setImage(fpath);
+            // imageManager->setImage(fpath);
         }
     }
     else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+) (\\S+).*")))
@@ -99,7 +99,7 @@ void ScriptParser::handleCommand(std::string cmdString)
                 matches[2].str(),
                 IMAGE_TYPE::IMAGE_BG};
 
-            sceneManager->setImage(imageData);
+            imageManager->setImage(imageData);
         }
     }
     else if (std::regex_match(cmdString, matches, std::regex("^next (\\S+)")))

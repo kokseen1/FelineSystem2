@@ -13,7 +13,7 @@ class ScriptParser
 {
 private:
     MusicPlayer *musicPlayer;
-    SceneManager *sceneManager;
+    ImageManager *imageManager;
 
     std::vector<byte> currScriptData;
     StringOffsetTable *stringOffsetTable;
@@ -70,7 +70,7 @@ private:
     }
 
 public:
-    ScriptParser(MusicPlayer *, SceneManager *);
+    ScriptParser(MusicPlayer *, ImageManager *);
 
     void parseNext();
 
