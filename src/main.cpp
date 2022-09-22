@@ -22,12 +22,12 @@ static ScriptParser scriptParser(&musicPlayer, &sceneManager);
 
 void nextScene()
 {
-    scriptParser.parseNext();
-    // static int scene_id = 1;
-    // std::stringstream ss;
-    // ss << ASSETS "/image/bg" << std::setfill('0') << std::setw(2) << std::to_string(scene_id) << ".hg3";
-    // sceneManager.setScene(ss.str());
-    // scene_id = scene_id == 11 ? 1 : scene_id + 1;
+    // scriptParser.parseNext();
+    static int scene_id = 1;
+    std::stringstream ss;
+    ss << "BG" << std::setfill('0') << std::setw(2) << std::to_string(scene_id);
+    sceneManager.setImage(ImageData{ss.str(), IMAGE_TYPE::IMAGE_BG});
+    scene_id = scene_id == 11 ? 1 : scene_id + 1;
 }
 
 void nextTrack()

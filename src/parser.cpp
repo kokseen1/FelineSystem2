@@ -9,8 +9,6 @@ void ScriptParser::setScript(const std::string fpath)
     Utils::fetchFileAndProcess(fpath, this, &ScriptParser::loadFromBuf, NULL);
 }
 
-
-
 void ScriptParser::parseNext()
 {
     if (currScriptData.empty())
@@ -80,8 +78,8 @@ void ScriptParser::handleCommand(std::string cmdString)
     {
         if (matches.size() == 5)
         {
-            const std::string fpath = ASSETS "/image/" + matches[2].str() + "_" + matches[3].str() + ".hg3";
-            sceneManager->setScene(fpath);
+            // const std::string fpath = ASSETS "/image/" + matches[2].str() + "_" + matches[3].str() + ".hg3";
+            // sceneManager->setImage(fpath);
         }
     }
     else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+) (\\S+).*")))
@@ -97,8 +95,11 @@ void ScriptParser::handleCommand(std::string cmdString)
         else if (matches.size() == 3)
         {
             // TODO: Handle case
-            const std::string fpath = ASSETS "/image/" + matches[2].str() + ".hg3";
-            sceneManager->setScene(fpath);
+            ImageData imageData = {
+                matches[2].str(),
+                IMAGE_TYPE::IMAGE_BG};
+
+            sceneManager->setImage(imageData);
         }
     }
     else if (std::regex_match(cmdString, matches, std::regex("^next (\\S+)")))

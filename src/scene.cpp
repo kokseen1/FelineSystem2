@@ -41,16 +41,14 @@ SDL_Texture *SceneManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
-void SceneManager::setScene(const std::string fpath)
+void SceneManager::setImage(ImageData imageData)
 {
+    auto &fpath = imageData.fpath = ASSETS IMAGE_PATH + imageData.name + IMAGE_EXT;
     if (textureCache.find(fpath) != textureCache.end())
     {
         displayTexture(textureCache[fpath]);
         return;
     }
 
-    ImageData userdata = {
-        fpath};
-
-    Utils::fetchFileAndProcess(fpath, this, &SceneManager::displayImage, userdata);
+    Utils::fetchFileAndProcess(fpath, this, &SceneManager::processImage, imageData);
 }
