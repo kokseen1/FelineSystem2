@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <asmodean.h>
+
 #include <string>
 #include <map>
 
@@ -56,7 +57,7 @@ private:
         // Verify signature
         if (strncmp(hgHeader->FileSignature, IMAGE_SIGNATURE, sizeof(hgHeader->FileSignature)) != 0)
         {
-            printf("Invalid image file signature!\n");
+            std::cout << "Invalid image file signature!" << std::endl;
             return;
         }
 
@@ -65,7 +66,7 @@ private:
         std::vector<HGDecoder::Frame> frames = HGDecoder::getFrames(frameHeader);
         if (frames.empty())
         {
-            printf("No frames found\n");
+            std::cout << "No frames found" << std::endl;
             return;
         }
 
