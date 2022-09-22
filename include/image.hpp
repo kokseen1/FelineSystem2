@@ -10,7 +10,7 @@
 
 #include <hgdecoder.hpp>
 
-#define IMAGE_PATH "/image/"
+#define IMAGE_PATH "image/"
 #define IMAGE_EXT ".hg3"
 #define IMAGE_SIGNATURE "HG-3"
 
@@ -25,6 +25,8 @@ enum class IMAGE_TYPE
 
 enum ARG
 {
+    ARG_BG_Z_INDEX = 1,
+    ARG_CG_Z_INDEX = 1,
     ARG_BG_NAME = 2,
     ARG_CG_NAME = 2,
     ARG_CG_ID = 3

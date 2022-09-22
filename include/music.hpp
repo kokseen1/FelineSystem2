@@ -8,10 +8,12 @@
 #include <vector>
 
 #define CHANNEL_SOUND 0
+#define MUSIC_PATH "bgm/"
+#define MUSIC_EXT ".ogg"
 
 class MusicPlayer
 {
-    const std::map<std::string, std::string> pcmMap = {
+    const std::map<std::string, std::string> pcmPathMap = {
         {"YUM", "pcm_a/"},
         {"AMA", "pcm_b/"},
         {"MIC", "pcm_c/"},

@@ -18,7 +18,7 @@ MusicPlayer::MusicPlayer()
 // Play a pcm file via its name
 void MusicPlayer::playPcm(std::string pcm)
 {
-    for (auto const &x : pcmMap)
+    for (auto const &x : pcmPathMap)
     {
         if (pcm.rfind(x.first) == 0)
         {
@@ -36,8 +36,9 @@ void MusicPlayer::setSound(const std::string fpath)
 }
 
 // Set the current music file
-void MusicPlayer::setMusic(const std::string fpath)
+void MusicPlayer::setMusic(const std::string name)
 {
+    auto fpath = ASSETS MUSIC_PATH + name + MUSIC_EXT;
     Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playMusicFromMem, NULL);
 }
 
