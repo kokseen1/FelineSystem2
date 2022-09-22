@@ -9,11 +9,11 @@ ScriptParser::ScriptParser(MusicPlayer *mp, SceneManager *sm) : musicPlayer{mp},
 
 void ScriptParser::setScript(const std::string fpath)
 {
-    Utils::fetchFileAndProcess(fpath, this, &ScriptParser::loadFromBuf);
+    Utils::fetchFileAndProcess(fpath, this, &ScriptParser::loadFromBuf, 0);
 }
 
 // Read a script from a memory buffer
-void ScriptParser::loadFromBuf(byte *buf, size_t sz, const std::string &fpath)
+void ScriptParser::loadFromBuf(byte *buf, size_t sz, int userdata)
 {
     CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
 

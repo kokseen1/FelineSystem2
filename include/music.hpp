@@ -44,9 +44,9 @@ private:
 
     void freeBuf();
 
-    void playSoundFromMem(byte *, size_t, const std::string &);
+    void playSoundFromMem(byte *, size_t, int);
 
-    void playMusicFromMem(byte *, size_t, const std::string &);
+    void playMusicFromMem(byte *, size_t, int);
 
     void playMusicFromFile(const std::string);
 };

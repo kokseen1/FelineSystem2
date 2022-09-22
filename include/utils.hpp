@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#define FFAP_CALLBACK(X) void (T::*X)(byte *, size_t, const std::string &)
+#define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
 
 namespace Utils
 {
@@ -17,23 +17,23 @@ namespace Utils
 
     std::vector<byte> readFile(const std::string);
 
-    // Asynchronously fetch a file and pass the buffer to a callback
-    // Local: read a local file and pass the buffer to a callback
-    template <typename T>
-    void fetchFileAndProcess(const std::string fpath, T *obj, FFAP_CALLBACK(cb))
+    // Fetch a file and pass the buffer to a callback
+    template <typename TClass, typename TUserdata>
+    void fetchFileAndProcess(const std::string fpath, TClass *obj, FFAP_CB(cb), TUserdata ud)
     {
-        typedef FFAP_CALLBACK(CbT);
+        typedef FFAP_CB(TCallback);
         std::cout << "Fetching file " << fpath << std::endl;
 #ifdef __EMSCRIPTEN__
         // Struct to store object and callback
         typedef struct
         {
-            T *obj;
-            CbT cb;
-            std::string fpath;
+            TClass *obj;
+            TCallback cb;
+            const std::string fpath;
+            TUserdata ud;
         } Arg;
 
-        auto *a = new Arg{obj, cb, fpath};
+        auto *a = new Arg{obj, cb, fpath, ud};
 
         emscripten_async_wget_data(
             fpath.c_str(), a,
@@ -43,10 +43,10 @@ namespace Utils
                 auto *a = reinterpret_cast<Arg *>(arg);
                 auto *obj = a->obj;
                 auto cb = a->cb;
-                auto fpath = a->fpath;
+                auto ud = a->ud;
 
                 // Call callback function
-                (obj->*cb)(static_cast<byte *>(buf), sz, fpath);
+                (obj->*cb)(static_cast<byte *>(buf), sz, ud);
 
                 delete arg;
             },
@@ -62,7 +62,7 @@ namespace Utils
             std::cout << "Could not read file " << fpath << std::endl;
             return;
         }
-        (obj->*cb)(buf.data(), buf.size(), fpath);
+        (obj->*cb)(buf.data(), buf.size(), ud);
 #endif
     }
 

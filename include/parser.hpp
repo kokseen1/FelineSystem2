@@ -18,7 +18,7 @@ private:
     size_t stringEntryCount;
     size_t currStringEntry;
 
-    void loadFromBuf(byte *, size_t, const std::string &);
+    void loadFromBuf(byte *, size_t, int);
 
     void handleCommand(std::string);
 

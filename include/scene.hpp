@@ -23,15 +23,19 @@ public:
 
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
 
-    void displayImage(byte *, size_t, const std::string &);
-
     SDL_Window *window = NULL;
 
     SDL_Renderer *renderer = NULL;
 
 private:
+    typedef struct
+    {
+        const std::string &fpath;
+    } ImageMeta;
+
     std::map<std::string, SDL_Texture *> textureCache;
 
+    void displayImage(byte *, size_t, ImageMeta);
     static void onLoad(void *, void *, int);
     static void onError(void *);
 };
