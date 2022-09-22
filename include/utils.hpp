@@ -13,6 +13,8 @@
 
 namespace Utils
 {
+    std::string zeroPad(std::string, size_t);
+
     std::vector<byte> zlibUncompress(uint32, byte *, uint32 &);
 
     std::vector<byte> readFile(const std::string);

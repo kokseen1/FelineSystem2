@@ -6,6 +6,11 @@
 
 namespace Utils
 {
+    std::string zeroPad(std::string str, size_t len)
+    {
+        return std::string(len - std::min(len, str.length()), '0') + str;
+    }
+
     // Uncompress a buffer and return it as a vector
     std::vector<byte> zlibUncompress(uint32 destLen, byte *source, uint32 &sourceLen)
     {

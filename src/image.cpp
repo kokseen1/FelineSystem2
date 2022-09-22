@@ -65,9 +65,11 @@ void ImageManager::setImage(ImageData imageData)
         fpath = imageData.args[ARG_BG_NAME];
         break;
     case IMAGE_TYPE::IMAGE_CG:
-        fpath = imageData.args[ARG_CG_NAME] + "_" + imageData.args[ARG_CG_ID];
+        // fpath = imageData.args[ARG_CG_NAME] + "_" + imageData.args[ARG_CG_SPRITE];
+        fpath = imageData.args[ARG_CG_NAME] + "_" + Utils::zeroPad(imageData.args[ARG_CG_FACE], 3);
         break;
     }
+
     fpath = ASSETS IMAGE_PATH + fpath + IMAGE_EXT;
     if (textureCache.find(fpath) != textureCache.end())
     {

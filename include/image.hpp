@@ -29,7 +29,8 @@ enum ARG
     ARG_CG_Z_INDEX = 1,
     ARG_BG_NAME = 2,
     ARG_CG_NAME = 2,
-    ARG_CG_ID = 3
+    ARG_CG_SPRITE = 3,
+    ARG_CG_FACE = 5
 };
 
 typedef struct

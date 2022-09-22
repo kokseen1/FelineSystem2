@@ -72,7 +72,7 @@ std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
 
 void ScriptParser::handleCommand(std::string cmdString)
 {
-    // std::cout << cmdString << std::endl;
+    std::cout << cmdString << std::endl;
     std::smatch matches;
     if (std::regex_match(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -88,7 +88,7 @@ void ScriptParser::handleCommand(std::string cmdString)
             musicPlayer->setMusic(matches[2].str());
         }
     }
-    else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+) ([\\w\\d]+),(\\d),(\\d),(\\w),(\\w).*")))
+    else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+) ([\\w\\d]+),([\\d]+),([\\d]+),([\\w\\d]),([\\w\\d]).*")))
     {
         ImageData imageData = {
             getArgsFromMatch(matches),
