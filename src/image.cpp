@@ -20,14 +20,15 @@ void ImageManager::displayTexture(SDL_Texture *texture, ImageData userdata)
 {
     SDL_Rect DestR = {0, 0};
 
-    if (userdata.type == IMAGE_TYPE::IMAGE_BG)
+    if (userdata.type != IMAGE_TYPE::IMAGE_BG)
     {
-        currentBg = texture;
+        // Display background before image
+        SDL_QueryTexture(currentBg, NULL, NULL, &DestR.w, &DestR.h);
+        SDL_RenderCopyEx(renderer, currentBg, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
     }
     else
     {
-        SDL_QueryTexture(currentBg, NULL, NULL, &DestR.w, &DestR.h);
-        SDL_RenderCopyEx(renderer, currentBg, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
+        currentBg = texture;
     }
 
     SDL_QueryTexture(texture, NULL, NULL, &DestR.w, &DestR.h);
