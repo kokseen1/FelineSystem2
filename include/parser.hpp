@@ -8,7 +8,7 @@
 
 #include <utils.hpp>
 #include <music.hpp>
-#include <scene.hpp>
+#include <image.hpp>
 
 #define SCRIPT_PATH "scene/"
 #define SCRIPT_EXT ".cst"

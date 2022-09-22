@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include <scene.hpp>
+#include <image.hpp>
 #include <hgdecoder.hpp>
 #include <utils.hpp>
 

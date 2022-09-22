@@ -8,7 +8,7 @@
 #include <iomanip>
 
 #include <music.hpp>
-#include <scene.hpp>
+#include <image.hpp>
 #include <parser.hpp>
 
 #ifdef __EMSCRIPTEN__
