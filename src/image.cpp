@@ -16,11 +16,11 @@ ImageManager::ImageManager()
     printf("ImageManager initialized\n");
 }
 
-void ImageManager::displayTexture(SDL_Texture *texture, ImageData userdata)
+void ImageManager::displayTexture(SDL_Texture *texture, ImageData imageData)
 {
     SDL_Rect DestR = {0, 0};
 
-    if (userdata.type != IMAGE_TYPE::IMAGE_BG)
+    if (imageData.type != IMAGE_TYPE::IMAGE_BG)
     {
         // Display background before image
         SDL_QueryTexture(currentBg, NULL, NULL, &DestR.w, &DestR.h);
