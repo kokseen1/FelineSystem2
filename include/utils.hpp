@@ -24,7 +24,7 @@ namespace Utils
     void fetchFileAndProcess(const std::string &fpath, TClass *classobj, FFAP_CB(cb), TUserdata userdata)
     {
         typedef FFAP_CB(TCallback);
-        std::cout << "Fetching file " << fpath << std::endl;
+        // std::cout << "Fetching file " << fpath << std::endl;
 
 #ifdef __EMSCRIPTEN__
 

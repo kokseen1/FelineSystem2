@@ -26,7 +26,8 @@ enum class IMAGE_TYPE
 enum class IMAGE_SUBTYPE
 {
     IMAGE_CG_SPRITE,
-    IMAGE_CG_FACE,
+    IMAGE_CG_EYES,
+    IMAGE_CG_MOUTH,
 };
 
 enum ARG
@@ -36,7 +37,8 @@ enum ARG
     ARG_BG_NAME = 2,
     ARG_CG_NAME = 2,
     ARG_CG_SPRITE = 3,
-    ARG_CG_FACE = 5
+    ARG_CG_EYES = 5,
+    ARG_CG_MOUTH = 6
 };
 
 typedef struct

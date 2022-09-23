@@ -37,8 +37,11 @@ void ImageManager::displayTexture(SDL_Texture *texture, ImageData imageData)
         case IMAGE_SUBTYPE::IMAGE_CG_SPRITE:
             renderTexture(texture, 200, 0);
             break;
-        case IMAGE_SUBTYPE::IMAGE_CG_FACE:
+        case IMAGE_SUBTYPE::IMAGE_CG_EYES:
             renderTexture(texture, 0, 0);
+            break;
+        case IMAGE_SUBTYPE::IMAGE_CG_MOUTH:
+            renderTexture(texture, 0, 200);
             break;
         }
         break;
@@ -107,13 +110,18 @@ void ImageManager::setImage(ImageData imageData)
         imageData.subtype = IMAGE_SUBTYPE::IMAGE_CG_SPRITE;
         queueImage(imageData);
 
-        name = imageData.args[ARG_CG_NAME] + "_" + Utils::zeroPad(imageData.args[ARG_CG_FACE], 3);
-        imageData.subtype = IMAGE_SUBTYPE::IMAGE_CG_FACE;
+        name = imageData.args[ARG_CG_NAME] + "_" + Utils::zeroPad(imageData.args[ARG_CG_EYES], 3);
+        imageData.subtype = IMAGE_SUBTYPE::IMAGE_CG_EYES;
+        queueImage(imageData);
+
+        name = imageData.args[ARG_CG_NAME] + "_" + Utils::zeroPad(imageData.args[ARG_CG_MOUTH], 4);
+        imageData.subtype = IMAGE_SUBTYPE::IMAGE_CG_MOUTH;
         queueImage(imageData);
         break;
     }
 
-    std::cout << SDL_GetTicks() << std::endl;
+    // Used for synchronization
+    // std::cout << SDL_GetTicks() << std::endl;
 }
 
 // Decode a raw HG buffer and display the first frame
