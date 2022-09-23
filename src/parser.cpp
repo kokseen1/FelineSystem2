@@ -33,17 +33,15 @@ void ScriptParser::parseNext()
             break;
 
         case 0x20: // Display a message
-                   // setMessage();
         case 0x21: // Set speaker of the message
-            // setSpeaker();
-            printf("%s\n", &stringTable->StringStart);
+            std::cout << &stringTable->StringStart << std::endl;
             goto next;
 
         case 0x30: // Perform any other command
             handleCommand(&stringTable->StringStart);
             goto next;
 
-        // Debug:
+        // Debug commands:
         case 0xF0: // Sets the name of the source script file
         case 0xF1: // Marks the current line number in the source script file (as a string)
 
@@ -59,6 +57,7 @@ void ScriptParser::parseNext()
 }
 
 // Return matched command arguments as string vector
+// Might not be necessary
 std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
 {
     std::vector<std::string> args;
@@ -70,9 +69,9 @@ std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
     return args;
 }
 
+// Parse command and dispatch to respective handlers
 void ScriptParser::handleCommand(std::string cmdString)
 {
-    std::cout << cmdString << std::endl;
     std::smatch matches;
     if (std::regex_match(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -90,20 +89,14 @@ void ScriptParser::handleCommand(std::string cmdString)
     }
     else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+) ([\\w\\d]+),([\\d]+),([\\d]+),([\\w\\d]),([\\w\\d]).*")))
     {
-        ImageData imageData = {
-            getArgsFromMatch(matches),
-            IMAGE_TYPE::IMAGE_CG};
-
-        imageManager->setImage(imageData);
+        // std::cout << cmdString << std::endl;
+        imageManager->setImage(ImageData{getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_CG});
     }
     else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+) (\\S+).*")))
     {
         // TODO: Handle case
-        ImageData imageData = {
-            getArgsFromMatch(matches),
-            IMAGE_TYPE::IMAGE_BG};
-
-        imageManager->setImage(imageData);
+        // TODO: Range validation
+        imageManager->setImage(ImageData{getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_BG});
     }
     else if (std::regex_match(cmdString, matches, std::regex("^next (\\S+)")))
     {

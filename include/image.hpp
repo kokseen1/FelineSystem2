@@ -23,6 +23,12 @@ enum class IMAGE_TYPE
     IMAGE_CG,
 };
 
+enum class IMAGE_SUBTYPE
+{
+    IMAGE_CG_SPRITE,
+    IMAGE_CG_FACE,
+};
+
 enum ARG
 {
     ARG_BG_Z_INDEX = 1,
@@ -37,8 +43,8 @@ typedef struct
 {
     const std::vector<std::string> args;
     const IMAGE_TYPE type;
-    std::string fpath;
-
+    IMAGE_SUBTYPE subtype;
+    std::string name;
 } ImageData;
 
 class ImageManager
@@ -54,9 +60,16 @@ private:
     SDL_Renderer *renderer = NULL;
     SDL_Texture *currentBg = NULL;
 
+    // Map of image_name : texture
     std::map<std::string, SDL_Texture *> textureCache;
 
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
+
+    SDL_Texture *getCachedTexture(std::string);
+
+    void queueImage(ImageData);
+
+    void renderTexture(SDL_Texture *, int, int);
 
     void displayTexture(SDL_Texture *, ImageData);
 

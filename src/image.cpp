@@ -16,25 +16,35 @@ ImageManager::ImageManager()
     printf("ImageManager initialized\n");
 }
 
-void ImageManager::displayTexture(SDL_Texture *texture, ImageData imageData)
+void ImageManager::renderTexture(SDL_Texture *texture, int xpos, int ypos)
 {
-    SDL_Rect DestR = {0, 0};
-
-    if (imageData.type != IMAGE_TYPE::IMAGE_BG)
-    {
-        // Display background before image
-        SDL_QueryTexture(currentBg, NULL, NULL, &DestR.w, &DestR.h);
-        SDL_RenderCopyEx(renderer, currentBg, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
-    }
-    else
-    {
-        currentBg = texture;
-    }
-
+    SDL_Rect DestR = {xpos, ypos};
     SDL_QueryTexture(texture, NULL, NULL, &DestR.w, &DestR.h);
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
+}
 
-    // Do not free as it is in cache
+void ImageManager::displayTexture(SDL_Texture *texture, ImageData imageData)
+{
+    switch (imageData.type)
+    {
+    case IMAGE_TYPE::IMAGE_BG:
+        renderTexture(texture, 0, 0);
+        currentBg = texture;
+        break;
+    case IMAGE_TYPE::IMAGE_CG:
+        switch (imageData.subtype)
+        {
+        case IMAGE_SUBTYPE::IMAGE_CG_SPRITE:
+            renderTexture(texture, 200, 0);
+            break;
+        case IMAGE_SUBTYPE::IMAGE_CG_FACE:
+            renderTexture(texture, 0, 0);
+            break;
+        }
+        break;
+    }
+
+    // Do not free as texture is stored in the cache
     // SDL_DestroyTexture(texture);
 
     SDL_RenderPresent(renderer);
@@ -56,28 +66,54 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
-void ImageManager::setImage(ImageData imageData)
+SDL_Texture *ImageManager::getCachedTexture(std::string name)
 {
-    auto &fpath = imageData.fpath;
-    switch (imageData.type)
+    auto got = textureCache.find(name);
+    if (got != textureCache.end())
     {
-    case IMAGE_TYPE::IMAGE_BG:
-        fpath = imageData.args[ARG_BG_NAME];
-        break;
-    case IMAGE_TYPE::IMAGE_CG:
-        // fpath = imageData.args[ARG_CG_NAME] + "_" + imageData.args[ARG_CG_SPRITE];
-        fpath = imageData.args[ARG_CG_NAME] + "_" + Utils::zeroPad(imageData.args[ARG_CG_FACE], 3);
-        break;
+        return got->second;
     }
 
-    fpath = ASSETS IMAGE_PATH + fpath + IMAGE_EXT;
-    if (textureCache.find(fpath) != textureCache.end())
+    return NULL;
+}
+
+// Attempts to retrieve image from cache first, else fetch file
+void ImageManager::queueImage(ImageData imageData)
+{
+    // Try cache first
+    SDL_Texture *texture = getCachedTexture(imageData.name);
+    if (texture != NULL)
     {
-        displayTexture(textureCache[fpath], imageData);
+        displayTexture(texture, imageData);
         return;
     }
 
+    // Fetch file if image not in cache
+    auto fpath = ASSETS IMAGE_PATH + imageData.name + IMAGE_EXT;
     Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
+}
+
+void ImageManager::setImage(ImageData imageData)
+{
+    std::string &name = imageData.name;
+    switch (imageData.type)
+    {
+    case IMAGE_TYPE::IMAGE_BG:
+        name = imageData.args[ARG_BG_NAME];
+        queueImage(imageData);
+        break;
+    case IMAGE_TYPE::IMAGE_CG:
+        name = imageData.args[ARG_CG_NAME] + "_" + imageData.args[ARG_CG_SPRITE];
+        imageData.subtype = IMAGE_SUBTYPE::IMAGE_CG_SPRITE;
+        queueImage(imageData);
+
+        name = imageData.args[ARG_CG_NAME] + "_" + Utils::zeroPad(imageData.args[ARG_CG_FACE], 3);
+        imageData.subtype = IMAGE_SUBTYPE::IMAGE_CG_FACE;
+        queueImage(imageData);
+        break;
+    }
+
+    std::cout << SDL_GetTicks() << std::endl;
 }
 
 // Decode a raw HG buffer and display the first frame
@@ -105,7 +141,7 @@ void ImageManager::processImage(byte *buf, size_t sz, ImageData imageData)
     SDL_Texture *texture = getTextureFromFrame(frames[0]);
 
     // Store texture in cache
-    textureCache.insert({imageData.fpath, texture});
+    textureCache.insert({imageData.name, texture});
 
     displayTexture(texture, imageData);
 }
