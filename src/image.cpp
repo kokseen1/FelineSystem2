@@ -60,6 +60,11 @@ void ImageManager::displayImage(ImageData imageData)
         }
     }
 
+    if (imageData.type == IMAGE_TYPE::IMAGE_BG)
+    {
+        currentBg = imageData.names[0];
+    }
+
     SDL_RenderPresent(renderer);
 }
 
@@ -79,32 +84,6 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
-// Attempts to retrieve image from cache first, else fetch file
-// void ImageManager::queueImage(ImageData imageData)
-// {
-//     bool fetching = false;
-//     for (int i = 0; i < imageData.names.size(); i++)
-//     {
-//         auto &name = imageData.names[i];
-//         imageData.nameIdx = i;
-
-//         // Fetch file if image not in cache
-//         if (textureDataCache.count(name) == 0)
-//         {
-//             auto fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
-//             Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
-//             fetching = true;
-//         }
-//     }
-
-//     // Cannot do this
-//     // Display if all textures are already cached
-//     if (!fetching)
-//     {
-//         displayImage(imageData);
-//     }
-// }
-
 // Parses image arguments into ImageData to be displayed
 // Names of assets must be inserted in ascending z-index
 void ImageManager::setImage(std::vector<std::string> args, IMAGE_TYPE type)
@@ -118,6 +97,7 @@ void ImageManager::setImage(std::vector<std::string> args, IMAGE_TYPE type)
         names.push_back(args[ARG_BG_NAME]);
         break;
     case IMAGE_TYPE::IMAGE_CG:
+        names.push_back(currentBg);
         names.push_back(args[ARG_CG_NAME] + "_" + args[ARG_CG_BODY]);
         names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_EYES], 3));
         names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_MOUTH], 4));

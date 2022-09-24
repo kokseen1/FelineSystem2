@@ -62,13 +62,11 @@ public:
 private:
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
-    SDL_Texture *currentBg = NULL;
+    std::string currentBg;
 
     std::map<std::string, TextureData> textureDataCache;
 
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
-
-    void queueImage(ImageData);
 
     void renderTexture(SDL_Texture *, int, int);
 
