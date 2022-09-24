@@ -44,9 +44,7 @@ enum ARG
 
 typedef struct
 {
-    // const std::vector<std::string> args;
     IMAGE_TYPE type;
-    // IMAGE_SUBTYPE subtype;
     std::vector<std::string> names;
     int nameIdx;
 } ImageData;
@@ -66,18 +64,13 @@ private:
     SDL_Renderer *renderer = NULL;
     SDL_Texture *currentBg = NULL;
 
-    // Map of image_name : texture
     std::map<std::string, TextureData> textureDataCache;
 
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
 
-    TextureData getCachedTexture(std::string);
-
     void queueImage(ImageData);
 
     void renderTexture(SDL_Texture *, int, int);
-
-    void displayTexture(SDL_Texture *, ImageData);
 
     void processImage(byte *, size_t, ImageData);
 

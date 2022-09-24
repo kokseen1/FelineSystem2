@@ -24,10 +24,6 @@ void ImageManager::renderTexture(SDL_Texture *texture, int xpos, int ypos)
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
 }
 
-TextureData ImageManager::getCachedTexture(std::string name)
-{
-}
-
 // Render assets specified by ImageData and display the image
 // Will first attempt to retrieve textures from cache
 // Otherwise, asset file will be fetched
@@ -65,36 +61,6 @@ void ImageManager::displayImage(ImageData imageData)
     }
 
     SDL_RenderPresent(renderer);
-}
-
-void ImageManager::displayTexture(SDL_Texture *texture, ImageData imageData)
-{
-    // switch (imageData.type)
-    // {
-    // case IMAGE_TYPE::IMAGE_BG:
-    //     renderTexture(texture, 0, 0);
-    //     currentBg = texture;
-    //     break;
-    // case IMAGE_TYPE::IMAGE_CG:
-    //     switch (imageData.subtype)
-    //     {
-    //     case IMAGE_SUBTYPE::IMAGE_CG_SPRITE:
-    //         renderTexture(texture, 200, 0);
-    //         break;
-    //     case IMAGE_SUBTYPE::IMAGE_CG_EYES:
-    //         renderTexture(texture, 0, 0);
-    //         break;
-    //     case IMAGE_SUBTYPE::IMAGE_CG_MOUTH:
-    //         renderTexture(texture, 0, 200);
-    //         break;
-    //     }
-    //     break;
-    // }
-
-    // Do not free as texture is stored in the cache
-    // SDL_DestroyTexture(texture);
-
-    // SDL_RenderPresent(renderer);
 }
 
 // Returns a pointer to a texture from a given frame
