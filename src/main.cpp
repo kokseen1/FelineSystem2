@@ -98,6 +98,7 @@ int main(int argc, char **argv)
 
         case SDL_QUIT:
             done = true;
+            SDL_Quit();
             break;
 
         default:
