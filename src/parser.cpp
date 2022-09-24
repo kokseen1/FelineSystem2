@@ -106,4 +106,11 @@ void ScriptParser::handleCommand(std::string cmdString)
             setScript(matches[1].str());
         }
     }
+    else if (std::regex_match(cmdString, matches, std::regex("^#(\\d+)=(\\d+)")))
+    {
+        if (matches.size() == 3)
+        {
+            scriptVars[std::stoi(matches[1].str())] = std::stoi(matches[2].str());
+        }
+    }
 }

@@ -39,7 +39,9 @@ enum ARG
     ARG_CG_NAME = 2,
     ARG_CG_BODY = 3,
     ARG_CG_EYES = 5,
-    ARG_CG_MOUTH = 6
+    ARG_CG_MOUTH = 6,
+    ARG_CG_XSHIFT = 7,
+    ARG_CG_YSHIFT = 8,
 };
 
 typedef struct
@@ -47,6 +49,8 @@ typedef struct
     IMAGE_TYPE type;
     std::vector<std::string> names;
     int nameIdx;
+    int xShift;
+    int yShift;
 } ImageData;
 
 typedef std::pair<SDL_Texture *, Stdinfo> TextureData;

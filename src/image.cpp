@@ -40,7 +40,10 @@ void ImageManager::displayImage(ImageData imageData)
         {
             auto textureData = got->second;
             auto &stdinfo = textureData.second;
-            renderTexture(textureData.first, stdinfo.OffsetX, stdinfo.OffsetY);
+            auto defX = stdinfo.OffsetX - stdinfo.BaseX;
+            auto defY = stdinfo.OffsetY - stdinfo.BaseY;
+
+            renderTexture(textureData.first, defX + imageData.xShift, defY + imageData.yShift);
 
             // std::cout << "totalWidth: " << stdinfo.TotalWidth << std::endl;
             // std::cout << "totalHeight: " << stdinfo.TotalHeight << std::endl;
@@ -101,6 +104,9 @@ void ImageManager::setImage(std::vector<std::string> args, IMAGE_TYPE type)
         names.push_back(args[ARG_CG_NAME] + "_" + args[ARG_CG_BODY]);
         names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_EYES], 3));
         names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_MOUTH], 4));
+
+        imageData.xShift = 512;
+        imageData.yShift = 576;
 
         // TODO: Add additional arguments like xpos, ypos, effect
         break;

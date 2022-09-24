@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <regex>
+#include <map>
 
 #include <utils.hpp>
 #include <music.hpp>
@@ -78,6 +79,8 @@ private:
     }
 
 public:
+    std::map<int, int> scriptVars;
+
     ScriptParser(MusicPlayer *, ImageManager *);
 
     void parseNext();
