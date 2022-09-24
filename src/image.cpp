@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <iostream>
 
 #include <image.hpp>
 #include <hgdecoder.hpp>
@@ -13,7 +13,7 @@ ImageManager::ImageManager()
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    printf("ImageManager initialized\n");
+    std::cout << "ImageManager initialized" << std::endl;
 }
 
 // Render a texture onto the renderer at given position
@@ -30,8 +30,6 @@ void ImageManager::renderTexture(SDL_Texture *texture, int xpos, int ypos)
 // Aysnchronously render and display every asset available even when some are not
 void ImageManager::displayImage(ImageData imageData)
 {
-    SDL_RenderClear(renderer);
-
     for (int i = 0; i < imageData.names.size(); i++)
     {
         auto &name = imageData.names[i];
@@ -43,9 +41,8 @@ void ImageManager::displayImage(ImageData imageData)
             auto textureData = got->second;
             auto &stdinfo = textureData.second;
 
-            // Relies on bg always at name[0]
-            int xShift = i ? imageData.xShift : 0;
-            int yShift = i ? imageData.yShift : 0;
+            int xShift = imageData.xShift;
+            int yShift = imageData.yShift;
 
             auto xPos = stdinfo.OffsetX - stdinfo.BaseX + xShift;
             auto yPos = stdinfo.OffsetY - stdinfo.BaseY + yShift;
@@ -70,12 +67,10 @@ void ImageManager::displayImage(ImageData imageData)
         }
     }
 
-    if (imageData.type == IMAGE_TYPE::IMAGE_BG)
-    {
-        currentBg = imageData.names[0];
-    }
-
-    SDL_RenderPresent(renderer);
+    // if (imageData.type == IMAGE_TYPE::IMAGE_BG)
+    // {
+    //     currentBg = imageData.names[0];
+    // }
 }
 
 // Returns a pointer to a texture from a given frame
@@ -94,6 +89,25 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
+void ImageManager::displayAll()
+{
+    SDL_RenderClear(renderer);
+
+    for (auto &imageData : currEgs)
+        if (!imageData.names.empty())
+            displayImage(imageData);
+
+    for (auto &imageData : currBgs)
+        if (!imageData.names.empty())
+            displayImage(imageData);
+
+    for (auto &imageData : currSprites)
+        if (!imageData.names.empty())
+            displayImage(imageData);
+
+    SDL_RenderPresent(renderer);
+}
+
 // Parses image arguments into ImageData to be displayed
 // Names of assets must be inserted in ascending z-index
 void ImageManager::setImage(std::vector<std::string> args, IMAGE_TYPE type)
@@ -103,23 +117,48 @@ void ImageManager::setImage(std::vector<std::string> args, IMAGE_TYPE type)
 
     switch (type)
     {
+    case IMAGE_TYPE::IMAGE_EG:
+    {
+        names.push_back(args[ARG_EG_NAME]);
+        imageData.xShift = 0;
+        imageData.yShift = 0;
+        currEgs[std::stoi(args[ARG_EG_Z_INDEX])] = imageData;
+        break;
+    }
     case IMAGE_TYPE::IMAGE_BG:
-        names.push_back(args[ARG_BG_NAME]);
+        if (args[ARG_BG_NAME] != "0" and args[ARG_BG_NAME] != "move")
+        {
+            names.push_back(args[ARG_BG_NAME]);
+
+            imageData.xShift = 0;
+            imageData.yShift = 0;
+        }
+
+        currBgs[std::stoi(args[ARG_BG_Z_INDEX])] = imageData;
         break;
     case IMAGE_TYPE::IMAGE_CG:
-        names.push_back(currentBg);
-        names.push_back(args[ARG_CG_NAME] + "_" + args[ARG_CG_BODY]);
-        names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_EYES], 3));
-        names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_MOUTH], 4));
+        if (!args[ARG_CG_NAME].empty())
+        {
+            names.push_back(args[ARG_CG_NAME] + "_" + args[ARG_CG_BODY]);
+            names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_EYES], 3));
+            names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_MOUTH], 4));
 
-        imageData.xShift = 512;
-        imageData.yShift = 576;
+            imageData.xShift = 512;
+            imageData.yShift = 576;
+        }
+        else if (!args[ARG_CG_SPEC].empty())
+        {
+            // Handle effect here
+            // TODO: Add additional arguments like xpos, ypos, effect
+            return;
+        }
 
-        // TODO: Add additional arguments like xpos, ypos, effect
+        currSprites[std::stoi(args[ARG_CG_Z_INDEX])] = imageData;
+
         break;
     }
 
-    displayImage(imageData);
+    displayAll();
 
     // Used for synchronization
     // std::cout << SDL_GetTicks() << std::endl;
@@ -154,5 +193,5 @@ void ImageManager::processImage(byte *buf, size_t sz, ImageData imageData)
     // Store texture in cache
     textureDataCache.insert({imageData.names[imageData.nameIdx], std::make_pair(texture, *frame.Stdinfo)});
 
-    displayImage(imageData);
+    displayAll();
 }

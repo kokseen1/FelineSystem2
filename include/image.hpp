@@ -18,8 +18,11 @@
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 576
 
+#define MAX_Z_INDEX 10
+
 enum class IMAGE_TYPE
 {
+    IMAGE_EG,
     IMAGE_BG,
     IMAGE_CG,
 };
@@ -33,15 +36,16 @@ enum class IMAGE_SUBTYPE
 
 enum ARG
 {
+    ARG_EG_Z_INDEX = 1,
     ARG_BG_Z_INDEX = 1,
     ARG_CG_Z_INDEX = 1,
+    ARG_EG_NAME = 2,
     ARG_BG_NAME = 2,
     ARG_CG_NAME = 2,
     ARG_CG_BODY = 3,
     ARG_CG_EYES = 5,
     ARG_CG_MOUTH = 6,
-    ARG_CG_XSHIFT = 7,
-    ARG_CG_YSHIFT = 8,
+    ARG_CG_SPEC = 7,
 };
 
 typedef struct
@@ -66,7 +70,10 @@ public:
 private:
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
-    std::string currentBg;
+
+    ImageData currSprites[MAX_Z_INDEX];
+    ImageData currBgs[MAX_Z_INDEX];
+    ImageData currEgs[MAX_Z_INDEX];
 
     std::map<std::string, TextureData> textureDataCache;
 
@@ -77,4 +84,6 @@ private:
     void processImage(byte *, size_t, ImageData);
 
     void displayImage(ImageData);
+
+    void displayAll();
 };

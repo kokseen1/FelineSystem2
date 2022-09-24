@@ -65,6 +65,7 @@ std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
     std::vector<std::string> args;
     for (int i = 0; i < matches.size(); i++)
     {
+        // std::cout << "ARG " << i << " " << matches[i].str() << std::endl;
         // TODO: Might want to evaluate variable arithmetic here
         args.push_back(matches[i].str());
     }
@@ -75,6 +76,7 @@ std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
 // Parse command and dispatch to respective handlers
 void ScriptParser::handleCommand(std::string cmdString)
 {
+    // std::cout << cmdString << std::endl;
     std::smatch matches;
     if (std::regex_match(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -90,12 +92,16 @@ void ScriptParser::handleCommand(std::string cmdString)
             musicPlayer->setMusic(matches[2].str());
         }
     }
-    else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+) ([\\w\\d]+),([\\d]+),([\\d]+),([\\w\\d]),([\\w\\d]).*")))
+    // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
+    else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+)\\s?(?:([\\w\\d]+),(\\d+),([\\d]+),([\\w\\d]),([\\w\\d])|(\\w+))?.*")))
     {
-        // std::cout << cmdString << std::endl;
         imageManager->setImage(getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_CG);
     }
-    else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+) (\\S+).*")))
+    else if (std::regex_match(cmdString, matches, std::regex("^eg (\\d+)\\s?(\\S+)?.*")))
+    {
+        imageManager->setImage(getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_EG);
+    }
+    else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+)\\s?(\\S+)?.*")))
     {
         // TODO: Handle case
         // TODO: Range validation

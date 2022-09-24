@@ -20,31 +20,11 @@ static MusicPlayer musicPlayer;
 static ImageManager imageManager;
 static ScriptParser scriptParser(&musicPlayer, &imageManager);
 
-void nextScene()
-{
-    scriptParser.parseNext();
-    // static int scene_id = 1;
-    // std::stringstream ss;
-    // ss << "BG" << std::setfill('0') << std::setw(2) << std::to_string(scene_id);
-    // imageManager.setImage(ImageData{ss.str(), IMAGE_TYPE::IMAGE_BG});
-    // scene_id = scene_id == 11 ? 1 : scene_id + 1;
-}
-
-void nextTrack()
-{
-    scriptParser.parseNext();
-    // static int track_id = 1;
-    // std::stringstream ss;
-    // ss << ASSETS "/bgm/bgm" << std::setfill('0') << std::setw(2) << std::to_string(track_id) << ".ogg";
-    // musicPlayer.setMusic(ss.str());
-    // track_id = track_id == 9 ? 1 : track_id + 1;
-}
-
 #ifdef __EMSCRIPTEN__
 
 EM_BOOL wheel_callback(int eventType, const EmscriptenWheelEvent *e, void *userData)
 {
-    nextScene();
+    scriptParser.parseNext();
     return 0;
 }
 
@@ -54,7 +34,7 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
     {
         if (eventType == EMSCRIPTEN_EVENT_CLICK)
         {
-            nextTrack();
+            scriptParser.parseNext();
         }
     }
 
@@ -89,11 +69,11 @@ int main(int argc, char **argv)
             break;
 
         case SDL_MOUSEWHEEL:
-            nextScene();
+            scriptParser.parseNext();
             break;
 
         case SDL_MOUSEBUTTONDOWN:
-            nextTrack();
+            scriptParser.parseNext();
             break;
 
         case SDL_QUIT:
