@@ -62,7 +62,7 @@ namespace Utils
         auto bufVec = readFile(fpath);
         if (bufVec.empty())
         {
-            std::cout << "Could not read file " << fpath << std::endl;
+            // std::cout << "Could not read file " << fpath << std::endl;
             return;
         }
 
@@ -81,7 +81,7 @@ namespace Utils
             {
                 Arg *a = reinterpret_cast<Arg *>(arg);
                 auto fpath = a->fpath;
-                std::cout << "Could not fetch file " << fpath << std::endl;
+                // std::cout << "Could not fetch file " << fpath << std::endl;
             });
 #endif
     }

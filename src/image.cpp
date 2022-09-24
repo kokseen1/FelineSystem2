@@ -30,6 +30,8 @@ void ImageManager::renderTexture(SDL_Texture *texture, int xpos, int ypos)
 // Aysnchronously render and display every asset available even when some are not
 void ImageManager::displayImage(ImageData imageData)
 {
+    SDL_RenderClear(renderer);
+
     for (int i = 0; i < imageData.names.size(); i++)
     {
         auto &name = imageData.names[i];
@@ -40,10 +42,15 @@ void ImageManager::displayImage(ImageData imageData)
         {
             auto textureData = got->second;
             auto &stdinfo = textureData.second;
-            auto defX = stdinfo.OffsetX - stdinfo.BaseX;
-            auto defY = stdinfo.OffsetY - stdinfo.BaseY;
 
-            renderTexture(textureData.first, defX + imageData.xShift, defY + imageData.yShift);
+            // Relies on bg always at name[0]
+            int xShift = i ? imageData.xShift : 0;
+            int yShift = i ? imageData.yShift : 0;
+
+            auto xPos = stdinfo.OffsetX - stdinfo.BaseX + xShift;
+            auto yPos = stdinfo.OffsetY - stdinfo.BaseY + yShift;
+
+            renderTexture(textureData.first, xPos, yPos);
 
             // std::cout << "totalWidth: " << stdinfo.TotalWidth << std::endl;
             // std::cout << "totalHeight: " << stdinfo.TotalHeight << std::endl;
