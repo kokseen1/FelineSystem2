@@ -7,6 +7,7 @@
 #include <cstring>
 #include <iostream>
 #include <map>
+#include <utility>
 
 #include <hgdecoder.hpp>
 
@@ -36,18 +37,21 @@ enum ARG
     ARG_CG_Z_INDEX = 1,
     ARG_BG_NAME = 2,
     ARG_CG_NAME = 2,
-    ARG_CG_SPRITE = 3,
+    ARG_CG_BODY = 3,
     ARG_CG_EYES = 5,
     ARG_CG_MOUTH = 6
 };
 
 typedef struct
 {
-    const std::vector<std::string> args;
-    const IMAGE_TYPE type;
-    IMAGE_SUBTYPE subtype;
-    std::string name;
+    // const std::vector<std::string> args;
+    IMAGE_TYPE type;
+    // IMAGE_SUBTYPE subtype;
+    std::vector<std::string> names;
+    int nameIdx;
 } ImageData;
+
+typedef std::pair<SDL_Texture *, Stdinfo> TextureData;
 
 class ImageManager
 {
@@ -55,7 +59,7 @@ class ImageManager
 public:
     ImageManager();
 
-    void setImage(ImageData);
+    void setImage(std::vector<std::string>, IMAGE_TYPE);
 
 private:
     SDL_Window *window = NULL;
@@ -63,11 +67,11 @@ private:
     SDL_Texture *currentBg = NULL;
 
     // Map of image_name : texture
-    std::map<std::string, SDL_Texture *> textureCache;
+    std::map<std::string, TextureData> textureDataCache;
 
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
 
-    SDL_Texture *getCachedTexture(std::string);
+    TextureData getCachedTexture(std::string);
 
     void queueImage(ImageData);
 
@@ -76,4 +80,6 @@ private:
     void displayTexture(SDL_Texture *, ImageData);
 
     void processImage(byte *, size_t, ImageData);
+
+    void displayImage(ImageData);
 };

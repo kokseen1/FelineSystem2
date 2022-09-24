@@ -23,34 +23,73 @@ void ImageManager::renderTexture(SDL_Texture *texture, int xpos, int ypos)
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
 }
 
+TextureData ImageManager::getCachedTexture(std::string name)
+{
+}
+
+void ImageManager::displayImage(ImageData imageData)
+{
+    for (int i = 0; i < imageData.names.size(); i++)
+    {
+        auto &name = imageData.names[i];
+
+        // Attempt to retrieve from cache
+        auto got = textureDataCache.find(name);
+        if (got != textureDataCache.end())
+        {
+            auto textureData = got->second;
+            auto &stdinfo = textureData.second;
+            renderTexture(textureData.first, stdinfo.OffsetX, stdinfo.OffsetY);
+
+            // std::cout << "totalWidth: " << stdinfo.TotalWidth << std::endl;
+            // std::cout << "totalHeight: " << stdinfo.TotalHeight << std::endl;
+
+            // std::cout << "OffsetX: " << stdinfo.OffsetX << std::endl;
+            // std::cout << "OffsetY: " << stdinfo.OffsetY << std::endl;
+
+            // std::cout << "BaseX: " << stdinfo.BaseX << std::endl;
+            // std::cout << "BaseY: " << stdinfo.BaseY << std::endl;
+        }
+        else
+        {
+            // Fetch file if image not in cache
+            imageData.nameIdx = i;
+            auto fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
+            Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
+        }
+    }
+
+    SDL_RenderPresent(renderer);
+}
+
 void ImageManager::displayTexture(SDL_Texture *texture, ImageData imageData)
 {
-    switch (imageData.type)
-    {
-    case IMAGE_TYPE::IMAGE_BG:
-        renderTexture(texture, 0, 0);
-        currentBg = texture;
-        break;
-    case IMAGE_TYPE::IMAGE_CG:
-        switch (imageData.subtype)
-        {
-        case IMAGE_SUBTYPE::IMAGE_CG_SPRITE:
-            renderTexture(texture, 200, 0);
-            break;
-        case IMAGE_SUBTYPE::IMAGE_CG_EYES:
-            renderTexture(texture, 0, 0);
-            break;
-        case IMAGE_SUBTYPE::IMAGE_CG_MOUTH:
-            renderTexture(texture, 0, 200);
-            break;
-        }
-        break;
-    }
+    // switch (imageData.type)
+    // {
+    // case IMAGE_TYPE::IMAGE_BG:
+    //     renderTexture(texture, 0, 0);
+    //     currentBg = texture;
+    //     break;
+    // case IMAGE_TYPE::IMAGE_CG:
+    //     switch (imageData.subtype)
+    //     {
+    //     case IMAGE_SUBTYPE::IMAGE_CG_SPRITE:
+    //         renderTexture(texture, 200, 0);
+    //         break;
+    //     case IMAGE_SUBTYPE::IMAGE_CG_EYES:
+    //         renderTexture(texture, 0, 0);
+    //         break;
+    //     case IMAGE_SUBTYPE::IMAGE_CG_MOUTH:
+    //         renderTexture(texture, 0, 200);
+    //         break;
+    //     }
+    //     break;
+    // }
 
     // Do not free as texture is stored in the cache
     // SDL_DestroyTexture(texture);
 
-    SDL_RenderPresent(renderer);
+    // SDL_RenderPresent(renderer);
 }
 
 // Returns a pointer to a texture from a given frame
@@ -69,56 +108,54 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
-SDL_Texture *ImageManager::getCachedTexture(std::string name)
-{
-    auto got = textureCache.find(name);
-    if (got != textureCache.end())
-    {
-        return got->second;
-    }
-
-    return NULL;
-}
-
 // Attempts to retrieve image from cache first, else fetch file
-void ImageManager::queueImage(ImageData imageData)
-{
-    // Try cache first
-    SDL_Texture *texture = getCachedTexture(imageData.name);
-    if (texture != NULL)
-    {
-        displayTexture(texture, imageData);
-        return;
-    }
+// void ImageManager::queueImage(ImageData imageData)
+// {
+//     bool fetching = false;
+//     for (int i = 0; i < imageData.names.size(); i++)
+//     {
+//         auto &name = imageData.names[i];
+//         imageData.nameIdx = i;
 
-    // Fetch file if image not in cache
-    auto fpath = ASSETS IMAGE_PATH + imageData.name + IMAGE_EXT;
-    Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
-}
+//         // Fetch file if image not in cache
+//         if (textureDataCache.count(name) == 0)
+//         {
+//             auto fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
+//             Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
+//             fetching = true;
+//         }
+//     }
 
-void ImageManager::setImage(ImageData imageData)
+//     // Cannot do this
+//     // Display if all textures are already cached
+//     if (!fetching)
+//     {
+//         displayImage(imageData);
+//     }
+// }
+
+// Parses image arguments into ImageData to be displayed
+// Names of assets must be inserted in ascending z-index
+void ImageManager::setImage(std::vector<std::string> args, IMAGE_TYPE type)
 {
-    std::string &name = imageData.name;
-    switch (imageData.type)
+    ImageData imageData{type};
+    std::vector<std::string> &names = imageData.names;
+
+    switch (type)
     {
     case IMAGE_TYPE::IMAGE_BG:
-        name = imageData.args[ARG_BG_NAME];
-        queueImage(imageData);
+        names.push_back(args[ARG_BG_NAME]);
         break;
     case IMAGE_TYPE::IMAGE_CG:
-        name = imageData.args[ARG_CG_NAME] + "_" + imageData.args[ARG_CG_SPRITE];
-        imageData.subtype = IMAGE_SUBTYPE::IMAGE_CG_SPRITE;
-        queueImage(imageData);
+        names.push_back(args[ARG_CG_NAME] + "_" + args[ARG_CG_BODY]);
+        names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_EYES], 3));
+        names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_MOUTH], 4));
 
-        name = imageData.args[ARG_CG_NAME] + "_" + Utils::zeroPad(imageData.args[ARG_CG_EYES], 3);
-        imageData.subtype = IMAGE_SUBTYPE::IMAGE_CG_EYES;
-        queueImage(imageData);
-
-        name = imageData.args[ARG_CG_NAME] + "_" + Utils::zeroPad(imageData.args[ARG_CG_MOUTH], 4);
-        imageData.subtype = IMAGE_SUBTYPE::IMAGE_CG_MOUTH;
-        queueImage(imageData);
+        // TODO: Add additional arguments like xpos, ypos, effect
         break;
     }
+
+    displayImage(imageData);
 
     // Used for synchronization
     // std::cout << SDL_GetTicks() << std::endl;
@@ -146,10 +183,12 @@ void ImageManager::processImage(byte *buf, size_t sz, ImageData imageData)
     }
 
     // Just handle the first frame for now
-    SDL_Texture *texture = getTextureFromFrame(frames[0]);
+    auto &frame = frames[0];
+
+    SDL_Texture *texture = getTextureFromFrame(frame);
 
     // Store texture in cache
-    textureCache.insert({imageData.name, texture});
+    textureDataCache.insert({imageData.names[imageData.nameIdx], std::make_pair(texture, *frame.Stdinfo)});
 
-    displayTexture(texture, imageData);
+    displayImage(imageData);
 }

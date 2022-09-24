@@ -63,6 +63,7 @@ std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
     std::vector<std::string> args;
     for (int i = 0; i < matches.size(); i++)
     {
+        // TODO: Might want to evaluate variable arithmetic here
         args.push_back(matches[i].str());
     }
 
@@ -90,13 +91,13 @@ void ScriptParser::handleCommand(std::string cmdString)
     else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+) ([\\w\\d]+),([\\d]+),([\\d]+),([\\w\\d]),([\\w\\d]).*")))
     {
         // std::cout << cmdString << std::endl;
-        imageManager->setImage(ImageData{getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_CG});
+        imageManager->setImage(getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_CG);
     }
     else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+) (\\S+).*")))
     {
         // TODO: Handle case
         // TODO: Range validation
-        imageManager->setImage(ImageData{getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_BG});
+        imageManager->setImage(getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_BG);
     }
     else if (std::regex_match(cmdString, matches, std::regex("^next (\\S+)")))
     {
