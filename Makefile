@@ -19,10 +19,11 @@ SRC      :=                       \
 
 OBJECTS_LOCAL  := $(SRC:%.cpp=$(OBJ_DIR_LOCAL)/%.o)
 OBJECTS_WASM  := $(SRC:%.cpp=$(OBJ_DIR_WASM)/%.o)
-DEP = $(<:%.cpp=$(OBJ_DIR)/%.d)
+# DEP = $(<:%.cpp=$(OBJ_DIR)/%.d)
+DEP = $(patsubst %.o,%.d,$@)
 
-OBJECTS  := $(SRC:%.cpp=$(OBJ_DIR)/%.o)
-DEPENDENCIES := $(OBJECTS:.o=.d)
+DEPENDENCIES_LOCAL := $(OBJECTS_LOCAL:.o=.d)
+DEPENDENCIES_WASM := $(OBJECTS_WASM:.o=.d)
 
 MKDIR = if not exist "$(@D)" mkdir "$(@D)"
 
@@ -51,6 +52,7 @@ $(APP_DIR)/$(TARGET_WASM): $(OBJECTS_WASM)
 $(OBJ_DIR)/%.d:
 	@$(MKDIR)
 
--include $(DEPENDENCIES)
+-include $(DEPENDENCIES_LOCAL)
+-include $(DEPENDENCIES_WASM)
 
 .PHONY: all
