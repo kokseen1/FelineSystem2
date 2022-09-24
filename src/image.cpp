@@ -43,7 +43,12 @@ void ImageManager::displayImage(ImageData imageData)
         if (got != textureDataCache.end())
         {
             auto textureData = got->second;
+            auto &texture = textureData.first;
             auto &stdinfo = textureData.second;
+            if (texture == NULL)
+            {
+                continue;
+            }
 
             int xShift = imageData.xShift;
             int yShift = imageData.yShift;
@@ -51,7 +56,7 @@ void ImageManager::displayImage(ImageData imageData)
             auto xPos = stdinfo.OffsetX - stdinfo.BaseX + xShift;
             auto yPos = stdinfo.OffsetY - stdinfo.BaseY + yShift;
 
-            renderTexture(textureData.first, xPos, yPos);
+            renderTexture(texture, xPos, yPos);
 
             // std::cout << "totalWidth: " << stdinfo.TotalWidth << std::endl;
             // std::cout << "totalHeight: " << stdinfo.TotalHeight << std::endl;
@@ -77,6 +82,10 @@ void ImageManager::displayImage(ImageData imageData)
 SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
 {
     auto rgbaVec = HGDecoder::getPixelsFromFrame(frame);
+    if (rgbaVec.empty())
+    {
+        return NULL;
+    }
 
     // Pixel buffer must remain alive when using surface
     SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(rgbaVec.data(), frame.Stdinfo->Width, frame.Stdinfo->Height, frame.Stdinfo->BitDepth, PITCH(frame.Stdinfo->Width, frame.Stdinfo->BitDepth), RMASK, GMASK, BMASK, AMASK);
