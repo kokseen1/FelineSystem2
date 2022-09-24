@@ -33,6 +33,10 @@ void ImageManager::displayImage(ImageData imageData)
     for (int i = 0; i < imageData.names.size(); i++)
     {
         auto &name = imageData.names[i];
+        if (name.empty())
+        {
+            continue;
+        }
 
         // Attempt to retrieve texture from cache
         auto got = textureDataCache.find(name);
@@ -66,11 +70,6 @@ void ImageManager::displayImage(ImageData imageData)
             Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
         }
     }
-
-    // if (imageData.type == IMAGE_TYPE::IMAGE_BG)
-    // {
-    //     currentBg = imageData.names[0];
-    // }
 }
 
 // Returns a pointer to a texture from a given frame
@@ -93,15 +92,15 @@ void ImageManager::displayAll()
 {
     SDL_RenderClear(renderer);
 
-    for (auto &imageData : currEgs)
-        if (!imageData.names.empty())
-            displayImage(imageData);
-
     for (auto &imageData : currBgs)
         if (!imageData.names.empty())
             displayImage(imageData);
 
     for (auto &imageData : currSprites)
+        if (!imageData.names.empty())
+            displayImage(imageData);
+
+    for (auto &imageData : currEgs)
         if (!imageData.names.empty())
             displayImage(imageData);
 
