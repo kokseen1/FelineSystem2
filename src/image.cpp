@@ -16,6 +16,7 @@ ImageManager::ImageManager()
     printf("ImageManager initialized\n");
 }
 
+// Render a texture onto the renderer at given position
 void ImageManager::renderTexture(SDL_Texture *texture, int xpos, int ypos)
 {
     SDL_Rect DestR = {xpos, ypos};
@@ -27,13 +28,17 @@ TextureData ImageManager::getCachedTexture(std::string name)
 {
 }
 
+// Render assets specified by ImageData and display the image
+// Will first attempt to retrieve textures from cache
+// Otherwise, asset file will be fetched
+// Aysnchronously render and display every asset available even when some are not
 void ImageManager::displayImage(ImageData imageData)
 {
     for (int i = 0; i < imageData.names.size(); i++)
     {
         auto &name = imageData.names[i];
 
-        // Attempt to retrieve from cache
+        // Attempt to retrieve texture from cache
         auto got = textureDataCache.find(name);
         if (got != textureDataCache.end())
         {
@@ -52,7 +57,7 @@ void ImageManager::displayImage(ImageData imageData)
         }
         else
         {
-            // Fetch file if image not in cache
+            // Fetch file if not in cache
             imageData.nameIdx = i;
             auto fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
             Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
