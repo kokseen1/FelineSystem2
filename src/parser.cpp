@@ -134,20 +134,10 @@ void ScriptParser::handleCommand(std::string cmdString)
         int xShift = 0;
         int yShift = 0;
 
-        try
-        {
+        if (std::regex_match(xShiftStr, std::regex("^\\d+$")))
             xShift = std::stoi(xShiftStr);
-        }
-        catch (const std::invalid_argument &e)
-        {
-        }
-        try
-        {
+        if (std::regex_match(yShiftStr, std::regex("^\\d+$")))
             yShift = std::stoi(yShiftStr);
-        }
-        catch (const std::invalid_argument &e)
-        {
-        }
 
         imageManager->setImage(type, zIndex, asset, xShift, yShift);
 
