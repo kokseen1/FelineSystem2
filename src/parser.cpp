@@ -23,6 +23,13 @@ void ScriptParser::parseNext()
     {
         auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
 
+        char buf[1000] = "console.log('";
+#ifdef __EMSCRIPTEN__
+        strcat(buf, &stringTable->StringStart);
+        strcat(buf, "')");
+        emscripten_run_script(buf);
+#endif
+
         stringOffsetTable++;
         currStringEntry++;
 

@@ -35,9 +35,11 @@ void ImageManager::displayImage(ImageData imageData)
         auto &name = imageData.names[i];
         if (name.empty())
         {
+            std::cout << "Skipping empty name" << std::endl;
             continue;
         }
 
+        std::cout << "Want: " << name << std::endl;
         // Attempt to retrieve texture from cache
         auto got = textureDataCache.find(name);
         if (got != textureDataCache.end())
@@ -47,6 +49,7 @@ void ImageManager::displayImage(ImageData imageData)
             auto &stdinfo = textureData.second;
             if (texture == NULL)
             {
+                std::cout << "Skipping NULL texture in cache" << std::endl;
                 continue;
             }
 
@@ -69,6 +72,8 @@ void ImageManager::displayImage(ImageData imageData)
         }
         else
         {
+            textureDataCache.insert({name, std::make_pair(static_cast<SDL_Texture *>(NULL), Stdinfo{})});
+
             // Fetch file if not in cache
             imageData.nameIdx = i;
             auto fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
@@ -102,16 +107,13 @@ void ImageManager::displayAll()
     SDL_RenderClear(renderer);
 
     for (auto &imageData : currBgs)
-        if (!imageData.names.empty())
-            displayImage(imageData);
+        displayImage(imageData);
 
     for (auto &imageData : currSprites)
-        if (!imageData.names.empty())
-            displayImage(imageData);
+        displayImage(imageData);
 
     for (auto &imageData : currEgs)
-        if (!imageData.names.empty())
-            displayImage(imageData);
+        displayImage(imageData);
 
     SDL_RenderPresent(renderer);
 }
@@ -166,6 +168,8 @@ void ImageManager::setImage(std::vector<std::string> args, IMAGE_TYPE type)
         break;
     }
 
+    std::cout << "Queued: " << args[2] << std::endl;
+
     displayAll();
 
     // Used for synchronization
@@ -199,7 +203,10 @@ void ImageManager::processImage(byte *buf, size_t sz, ImageData imageData)
     SDL_Texture *texture = getTextureFromFrame(frame);
 
     // Store texture in cache
-    textureDataCache.insert({imageData.names[imageData.nameIdx], std::make_pair(texture, *frame.Stdinfo)});
+
+    textureDataCache[imageData.names[imageData.nameIdx]] = std::make_pair(texture, *frame.Stdinfo);
+
+    std::cout << "Stored: " << imageData.names[imageData.nameIdx] << std::endl;
 
     displayAll();
 }
