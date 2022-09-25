@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 #include <image.hpp>
 #include <hgdecoder.hpp>
@@ -40,44 +41,33 @@ void ImageManager::displayImage(ImageData imageData)
         }
 
         std::cout << "Want: " << name << std::endl;
+
         // Attempt to retrieve texture from cache
         auto got = textureDataCache.find(name);
         if (got != textureDataCache.end())
         {
             auto textureData = got->second;
             auto &texture = textureData.first;
-            auto &stdinfo = textureData.second;
             if (texture == NULL)
             {
-                std::cout << "Skipping NULL texture in cache" << std::endl;
+                // std::cout << "Skipping invalid " + name + " texture in cache" << std::endl;
                 continue;
             }
 
-            int xShift = imageData.xShift;
-            int yShift = imageData.yShift;
-
-            auto xPos = stdinfo.OffsetX - stdinfo.BaseX + xShift;
-            auto yPos = stdinfo.OffsetY - stdinfo.BaseY + yShift;
+            auto &stdinfo = textureData.second;
+            auto xPos = stdinfo.OffsetX - stdinfo.BaseX + imageData.xShift;
+            auto yPos = stdinfo.OffsetY - stdinfo.BaseY + imageData.yShift;
 
             renderTexture(texture, xPos, yPos);
-
-            // std::cout << "totalWidth: " << stdinfo.TotalWidth << std::endl;
-            // std::cout << "totalHeight: " << stdinfo.TotalHeight << std::endl;
-
-            // std::cout << "OffsetX: " << stdinfo.OffsetX << std::endl;
-            // std::cout << "OffsetY: " << stdinfo.OffsetY << std::endl;
-
-            // std::cout << "BaseX: " << stdinfo.BaseX << std::endl;
-            // std::cout << "BaseY: " << stdinfo.BaseY << std::endl;
         }
         else
         {
+            // Fetch file if not in cache
+            // Set empty entry in cache to signify that request has been made
             textureDataCache.insert({name, std::make_pair(static_cast<SDL_Texture *>(NULL), Stdinfo{})});
 
-            // Fetch file if not in cache
-            imageData.nameIdx = i;
-            auto fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
-            Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, imageData);
+            const std::string &fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
+            Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, name);
         }
     }
 }
@@ -118,66 +108,102 @@ void ImageManager::displayAll()
     SDL_RenderPresent(renderer);
 }
 
-// Parses image arguments into ImageData to be displayed
-// Names of assets must be inserted in ascending z-index
-void ImageManager::setImage(std::vector<std::string> args, IMAGE_TYPE type)
+void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
 {
-    ImageData imageData{type};
-    std::vector<std::string> &names = imageData.names;
+    if (zIndex >= Z_INDEX_MAX)
+    {
+        std::cout << "Attempted to clear at out of bounds z-index!" << std::endl;
+        return;
+    }
 
     switch (type)
     {
+    case IMAGE_TYPE::IMAGE_CG:
+        currSprites[zIndex].names.clear();
+        break;
     case IMAGE_TYPE::IMAGE_EG:
-    {
-        names.push_back(args[ARG_EG_NAME]);
-        imageData.xShift = 0;
-        imageData.yShift = 0;
-        currEgs[std::stoi(args[ARG_EG_Z_INDEX])] = imageData;
+        currEgs[zIndex].names.clear();
+        break;
+    case IMAGE_TYPE::IMAGE_BG:
+        currBgs[zIndex].names.clear();
         break;
     }
+}
+
+void ImageManager::clearAllImage(IMAGE_TYPE type)
+{
+    for (int i = 0; i < Z_INDEX_MAX; i++)
+    {
+        clearZIndex(type, i);
+    }
+}
+
+// Parses image arguments into ImageData to be displayed
+// Names of assets must be inserted in ascending z-index
+void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int xShift, int yShift)
+{
+    if (zIndex >= Z_INDEX_MAX)
+    {
+        std::cout << "Attempted set image at out of bounds z-index!" << std::endl;
+        return;
+    }
+
+    ImageData id;
+    switch (type)
+    {
+
     case IMAGE_TYPE::IMAGE_BG:
-        if (args[ARG_BG_NAME] != "0" and args[ARG_BG_NAME] != "move")
-        {
-            names.push_back(args[ARG_BG_NAME]);
-
-            imageData.xShift = 0;
-            imageData.yShift = 0;
-        }
-
-        currBgs[std::stoi(args[ARG_BG_Z_INDEX])] = imageData;
+        id.names.push_back(asset);
+        id.xShift = 0;
+        id.yShift = 0;
+        currBgs[zIndex] = id;
         break;
-    case IMAGE_TYPE::IMAGE_CG:
-        if (!args[ARG_CG_NAME].empty())
-        {
-            names.push_back(args[ARG_CG_NAME] + "_" + args[ARG_CG_BODY]);
-            names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_EYES], 3));
-            names.push_back(args[ARG_CG_NAME] + "_" + Utils::zeroPad(args[ARG_CG_MOUTH], 4));
 
-            imageData.xShift = 512;
-            imageData.yShift = 576;
-        }
-        else if (!args[ARG_CG_SPEC].empty())
+    case IMAGE_TYPE::IMAGE_EG:
+        id.names.push_back(asset);
+        id.xShift = 0;
+        id.yShift = 0;
+        currEgs[zIndex] = id;
+        break;
+
+    case IMAGE_TYPE::IMAGE_CG:
+        std::stringstream ss(asset);
+        std::vector<std::string> args;
+
+        while (ss.good())
         {
-            // Handle effect here
-            // TODO: Add additional arguments like xpos, ypos, effect
+            std::string arg;
+            getline(ss, arg, ',');
+            args.push_back(arg);
+        }
+
+        if (args.size() < 5)
+        {
+            std::cout << "Invalid CG args " << asset << std::endl;
             return;
         }
 
-        currSprites[std::stoi(args[ARG_CG_Z_INDEX])] = imageData;
+        std::string &cgBase = args[0];
+        id.names.push_back(cgBase + "_" + args[1]);
+        id.names.push_back(cgBase + "_" + Utils::zeroPad(args[3], 3));
+        id.names.push_back(cgBase + "_" + Utils::zeroPad(args[4], 4));
+        id.xShift = xShift;
+        id.yShift = yShift;
 
+        currSprites[zIndex] = id;
         break;
     }
 
-    std::cout << "Queued: " << args[2] << std::endl;
-
-    displayAll();
-
     // Used for synchronization
     // std::cout << SDL_GetTicks() << std::endl;
+
+    std::cout << "Queued: " << asset << std::endl;
+
+    displayAll();
 }
 
 // Decode a raw HG buffer and display the first frame
-void ImageManager::processImage(byte *buf, size_t sz, ImageData imageData)
+void ImageManager::processImage(byte *buf, size_t sz, std::string name)
 {
     HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
 
@@ -204,9 +230,9 @@ void ImageManager::processImage(byte *buf, size_t sz, ImageData imageData)
 
     // Store texture in cache
 
-    textureDataCache[imageData.names[imageData.nameIdx]] = std::make_pair(texture, *frame.Stdinfo);
+    textureDataCache[name] = std::make_pair(texture, *frame.Stdinfo);
 
-    std::cout << "Stored: " << imageData.names[imageData.nameIdx] << std::endl;
+    std::cout << "Stored: " << name << std::endl;
 
     displayAll();
 }

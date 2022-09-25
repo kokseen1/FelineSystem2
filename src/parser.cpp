@@ -101,19 +101,42 @@ void ScriptParser::handleCommand(std::string cmdString)
     }
     // bg 0 BG15_d 0 0 0
     // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
-    else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+)\\s?(?:([\\w\\d]+),(\\d+),([\\d]+),([\\w\\d]),([\\w\\d])|(\\w+))?.*")))
+    else if (std::regex_match(cmdString, matches, std::regex("^(bg|cg|eg)(?: (\\d)(?: ([\\w\\d,]+)(?: (\\S+)(?: (\\S+)(?: (\\d)(?: (\\d))?)?)?)?)?)?$")))
     {
-        imageManager->setImage(getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_CG);
-    }
-    else if (std::regex_match(cmdString, matches, std::regex("^eg (\\d+)\\s?(\\S+)?.*")))
-    {
-        imageManager->setImage(getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_EG);
-    }
-    else if (std::regex_match(cmdString, matches, std::regex("^bg (\\d+)\\s?(\\S+)?.*")))
-    {
-        // TODO: Handle case
-        // TODO: Range validation
-        imageManager->setImage(getArgsFromMatch(matches), IMAGE_TYPE::IMAGE_BG);
+        IMAGE_TYPE type;
+        const std::string &typeStr = matches[1].str();
+        if (typeStr == "bg")
+            type = IMAGE_TYPE::IMAGE_BG;
+        else if (typeStr == "cg")
+            type = IMAGE_TYPE::IMAGE_CG;
+        else if (typeStr == "eg")
+            type = IMAGE_TYPE::IMAGE_EG;
+
+        const std::string &zIndexStr = matches[2].str();
+        if (zIndexStr.empty())
+        {
+            imageManager->clearAllImage(type);
+            return;
+        }
+
+        int zIndex = std::stoi(zIndexStr);
+        const std::string &asset = matches[3].str();
+        if (asset.empty())
+        {
+            imageManager->clearZIndex(type, zIndex);
+            return;
+        }
+
+        // TODO: Evaluate offset variables
+        auto xShift = matches[4].str();
+        auto yShift = matches[5].str();
+
+        imageManager->setImage(type, zIndex, asset, 512, 576);
+
+        // for (int i = 0; i < matches.size(); i++)
+        // {
+        //     std::cout << i << " " << matches[i] << " Empty: " << matches[i].str().empty() << std::endl;
+        // }
     }
     else if (std::regex_match(cmdString, matches, std::regex("^next (\\S+)")))
     {
