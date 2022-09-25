@@ -24,11 +24,6 @@ void ScriptParser::parseNext()
         auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
 
         char buf[1000] = "console.log('";
-#ifdef __EMSCRIPTEN__
-        strcat(buf, &stringTable->StringStart);
-        strcat(buf, "')");
-        emscripten_run_script(buf);
-#endif
 
         stringOffsetTable++;
         currStringEntry++;
@@ -47,6 +42,11 @@ void ScriptParser::parseNext()
             goto next;
 
         case 0x30: // Perform any other command
+#ifdef __EMSCRIPTEN__
+            strcat(buf, &stringTable->StringStart);
+            strcat(buf, "')");
+            emscripten_run_script(buf);
+#endif
             handleCommand(&stringTable->StringStart);
             goto next;
 
@@ -99,6 +99,7 @@ void ScriptParser::handleCommand(std::string cmdString)
             musicPlayer->setMusic(matches[2].str());
         }
     }
+    // bg 0 BG15_d 0 0 0
     // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
     else if (std::regex_match(cmdString, matches, std::regex("^cg (\\d+)\\s?(?:([\\w\\d]+),(\\d+),([\\d]+),([\\w\\d]),([\\w\\d])|(\\w+))?.*")))
     {
