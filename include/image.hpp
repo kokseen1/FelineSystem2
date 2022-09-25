@@ -29,9 +29,9 @@ enum class IMAGE_TYPE
 
 typedef struct
 {
-    std::vector<std::string> names;
     int xShift;
     int yShift;
+    std::vector<std::string> names;
 } ImageData;
 
 typedef std::pair<SDL_Texture *, Stdinfo> TextureData;

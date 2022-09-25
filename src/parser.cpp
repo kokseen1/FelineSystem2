@@ -128,10 +128,28 @@ void ScriptParser::handleCommand(std::string cmdString)
         }
 
         // TODO: Evaluate offset variables
-        auto xShift = matches[4].str();
-        auto yShift = matches[5].str();
+        auto xShiftStr = matches[4].str();
+        auto yShiftStr = matches[5].str();
 
-        imageManager->setImage(type, zIndex, asset, 512, 576);
+        int xShift = 0;
+        int yShift = 0;
+
+        try
+        {
+            xShift = std::stoi(xShiftStr);
+        }
+        catch (const std::invalid_argument &e)
+        {
+        }
+        try
+        {
+            yShift = std::stoi(yShiftStr);
+        }
+        catch (const std::invalid_argument &e)
+        {
+        }
+
+        imageManager->setImage(type, zIndex, asset, xShift, yShift);
 
         // for (int i = 0; i < matches.size(); i++)
         // {

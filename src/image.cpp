@@ -148,21 +148,17 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         return;
     }
 
-    ImageData id;
+    ImageData id{xShift, yShift};
     switch (type)
     {
 
     case IMAGE_TYPE::IMAGE_BG:
         id.names.push_back(asset);
-        id.xShift = 0;
-        id.yShift = 0;
         currBgs[zIndex] = id;
         break;
 
     case IMAGE_TYPE::IMAGE_EG:
         id.names.push_back(asset);
-        id.xShift = 0;
-        id.yShift = 0;
         currEgs[zIndex] = id;
         break;
 
@@ -187,8 +183,9 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         id.names.push_back(cgBase + "_" + args[1]);
         id.names.push_back(cgBase + "_" + Utils::zeroPad(args[3], 3));
         id.names.push_back(cgBase + "_" + Utils::zeroPad(args[4], 4));
-        id.xShift = xShift;
-        id.yShift = yShift;
+
+        id.xShift = 512;
+        id.yShift = 576;
 
         currSprites[zIndex] = id;
         break;
