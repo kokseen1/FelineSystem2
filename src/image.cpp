@@ -40,7 +40,7 @@ void ImageManager::displayImage(ImageData imageData)
             continue;
         }
 
-        std::cout << "Want: " << name << std::endl;
+        LOG << "Want: " << name;
 
         // Attempt to retrieve texture from cache
         auto got = textureDataCache.find(name);
@@ -229,7 +229,7 @@ void ImageManager::processImage(byte *buf, size_t sz, std::string name)
 
     textureDataCache[name] = std::make_pair(texture, *frame.Stdinfo);
 
-    std::cout << "Stored: " << name << std::endl;
+    LOG << "Stored: " << name;
 
     displayAll();
 }
