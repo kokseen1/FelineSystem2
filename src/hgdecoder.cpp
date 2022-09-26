@@ -38,7 +38,7 @@ std::vector<byte> HGDecoder::getPixelsFromFrame(Frame frame)
     ReturnCode ret = ProcessImage(&RleDataDecompressed[0], frame.Img->DecompressedDataLength, &RleCmdDecompressed[0], frame.Img->DecompressedCmdLength, &rgbaBuffer[0], szRgbaBuffer, frame.Stdinfo->Width, frame.Stdinfo->Height, depthBytes, STRIDE(frame.Stdinfo->Width, depthBytes));
     if (ReturnCode::Success != ret)
     {
-        printf("ProcessImage error %lx\n", ret);
+        LOG << "ProcessImage error " << static_cast<int>(ret);
         return {};
     }
 

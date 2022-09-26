@@ -194,7 +194,7 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
     // Used for synchronization
     // std::cout << SDL_GetTicks() << std::endl;
 
-    std::cout << "Queued: " << asset << std::endl;
+    LOG << "Queued: " << asset;
 
     displayAll();
 }
