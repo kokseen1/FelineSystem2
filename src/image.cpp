@@ -40,19 +40,19 @@ void ImageManager::displayImage(ImageData imageData)
             continue;
         }
 
-        LOG << "Want: " << name;
-
         // Attempt to retrieve texture from cache
         auto got = textureDataCache.find(name);
         if (got != textureDataCache.end())
         {
             auto textureData = got->second;
-            auto &texture = textureData.first;
+            auto texture = textureData.first;
             if (texture == NULL)
             {
-                // std::cout << "Skipping invalid " + name + " texture in cache" << std::endl;
+                LOG << "Missing: " << name;
                 continue;
             }
+
+            LOG << "Render: " << name;
 
             auto &stdinfo = textureData.second;
             auto xPos = stdinfo.OffsetX - stdinfo.BaseX + imageData.xShift;
@@ -194,7 +194,7 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
     // Used for synchronization
     // std::cout << SDL_GetTicks() << std::endl;
 
-    LOG << "Queued: " << asset;
+    LOG << "Queued: " << asset << " @ " << zIndex;
 
     displayAll();
 }
@@ -229,7 +229,7 @@ void ImageManager::processImage(byte *buf, size_t sz, std::string name)
 
     textureDataCache[name] = std::make_pair(texture, *frame.Stdinfo);
 
-    LOG << "Stored: " << name;
+    LOG << "Cached: " << name;
 
     displayAll();
 }
