@@ -77,6 +77,7 @@ std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
 void ScriptParser::handleCommand(std::string cmdString)
 {
     LOG << cmdString;
+    std::cout << cmdString << std::endl;
     std::smatch matches;
     if (std::regex_match(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -94,7 +95,7 @@ void ScriptParser::handleCommand(std::string cmdString)
     }
     // bg 0 BG15_d 0 0 0
     // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
-    else if (std::regex_match(cmdString, matches, std::regex("^(bg|cg|eg)(?: (\\d)(?: ([\\w\\d,]+)(?: (\\S+)(?: (\\S+)(?: (\\d)(?: (\\d))?)?)?)?)?)?$")))
+    else if (std::regex_match(cmdString, matches, std::regex("^(bg|cg|eg)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^%\\s]+)(?: ([^%\\s]+)(?: (\\d)(?: (\\d))?)?)?)?)?)?$")))
     {
         IMAGE_TYPE type;
         const std::string &typeStr = matches[1].str();
@@ -127,10 +128,19 @@ void ScriptParser::handleCommand(std::string cmdString)
         int xShift = 0;
         int yShift = 0;
 
-        if (std::regex_match(xShiftStr, std::regex("^\\d+$")))
-            xShift = std::stoi(xShiftStr);
-        if (std::regex_match(yShiftStr, std::regex("^\\d+$")))
-            yShift = std::stoi(yShiftStr);
+        // try
+        // {
+        xShift = xShiftStr.empty() ? 0 : parser(xShiftStr);
+        yShift = yShiftStr.empty() ? 0 : parser(yShiftStr);
+        // }
+        // catch (std::runtime_error)
+        // {
+        // }
+
+        // if (std::regex_match(xShiftStr, std::regex("^\\d+$")))
+        //     xShift = std::stoi(xShiftStr);
+        // if (std::regex_match(yShiftStr, std::regex("^\\d+$")))
+        //     yShift = std::stoi(yShiftStr);
 
         imageManager->setImage(type, zIndex, asset, xShift, yShift);
 
@@ -139,6 +149,17 @@ void ScriptParser::handleCommand(std::string cmdString)
         //     std::cout << i << " " << matches[i] << " Empty: " << matches[i].str().empty() << std::endl;
         // }
     }
+    else if (std::regex_match(cmdString, matches, std::regex("^if\\s*\\((.+)\\)\\s+(.+)")))
+    {
+        if (matches.size() == 3)
+        {
+            std::string cond = matches[1].str();
+            if (parser(cond) == 1)
+            {
+                handleCommand(matches[2].str());
+            }
+        }
+    }
     else if (std::regex_match(cmdString, matches, std::regex("^next (\\S+)")))
     {
         if (matches.size() == 2)
@@ -146,11 +167,197 @@ void ScriptParser::handleCommand(std::string cmdString)
             setScript(matches[1].str());
         }
     }
-    else if (std::regex_match(cmdString, matches, std::regex("^#(\\d+)=(\\d+)")))
+    else if (std::regex_match(cmdString, std::regex("^#.*")))
     {
-        if (matches.size() == 3)
+        // std::cout << cmdString << std::endl;
+        parser(cmdString);
+    }
+}
+
+Lexer::Lexer(const std::string s) : iss{s}
+{
+    current_token = get_token();
+}
+
+Token Lexer::get_token()
+{
+    char c;
+
+    // Attempt to get a char
+    if (!iss.get(c))
+        return Token::Eof;
+
+    // Skip until non-whitespace or eof
+    while (isspace(c))
+    {
+        // std::cout << "Space" << std::endl;
+        if (!iss.get(c))
+            return Token::Eof;
+    }
+
+    switch (c)
+    {
+    case '#':
+    case '=':
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+    case '(':
+    case ')':
+        return Token(c);
+    }
+
+    // Tokens that utilize the buffer
+    buffer.clear();
+
+    if (isdigit(c))
+    {
+        while (isdigit(c))
         {
-            scriptVars[std::stoi(matches[1].str())] = std::stoi(matches[2].str());
+            buffer += c;
+            if (!iss.get(c))
+                return Token::Number;
+        }
+        // Put back c if loop exits as it is not a digit
+        iss.putback(c);
+        return Token::Number;
+    }
+
+    throw std::runtime_error("Invalid token");
+}
+void Lexer::advance()
+{
+    if (current_token != Token::Eof)
+    {
+        current_token = get_token();
+    }
+}
+
+double Parser::assign_expr()
+{
+    Token t = p_lexer->get_current_token();
+    double result = add_expr();
+
+    if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
+    {
+        p_lexer->advance();
+        if (p_lexer->get_current_token() == Token::Assign)
+        {
+            p_lexer->advance();
+            return result == add_expr();
+        }
+        double res = add_expr();
+        std::cout << "SETVAR '" << last_var_name << "' = "
+                  << " " << res << std::endl;
+        return symbol_table[last_var_name] = res;
+    }
+
+    return result;
+}
+
+double Parser::primary()
+{
+    std::string text = p_lexer->get_curr_buffer();
+    // std::cout << "Buf: " << text << std::endl;
+    double arg;
+    std::string var_name;
+
+    switch (p_lexer->get_current_token())
+    {
+    case Token::Number:
+        // std::cout << "NUM" << std::endl;
+        p_lexer->advance();
+        return std::stoi(text);
+    case Token::Id:
+        p_lexer->advance();
+        last_var_name = var_name = std::to_string(static_cast<int>(primary()));
+        return symbol_table[var_name];
+        break;
+    case Token::Lp:
+        p_lexer->advance();
+        arg = add_expr();
+        if (p_lexer->get_current_token() != Token::Rp)
+            throw std::runtime_error("No closing parentheses!");
+        p_lexer->advance();
+        return arg;
+
+    default:
+        std::cout << "TOKEN: " << static_cast<int>(p_lexer->get_current_token()) << std::endl;
+        throw std::runtime_error("Invalid primary value! (likely EOF)");
+    }
+}
+
+double Parser::unary_expr()
+{
+    switch (p_lexer->get_current_token())
+    {
+    case Token::Plus:
+        p_lexer->advance();
+        return +primary();
+    case Token::Minus:
+        p_lexer->advance();
+        return -primary();
+    default:
+        return primary();
+    }
+}
+
+double Parser::mul_expr()
+{
+    double result = unary_expr();
+
+    for (;;)
+    {
+        switch (p_lexer->get_current_token())
+        {
+        case (Token::Mul):
+            // std::cout << "MUL" << std::endl;
+            p_lexer->advance();
+            result *= unary_expr();
+            break;
+        case (Token::Div):
+            // std::cout << "DIV" << std::endl;
+            p_lexer->advance();
+            result /= unary_expr();
+            break;
+        default:
+            return result;
         }
     }
+}
+
+double Parser::add_expr()
+{
+    double result = mul_expr();
+
+    for (;;)
+    {
+        switch (p_lexer->get_current_token())
+        {
+        case Token::Plus:
+            p_lexer->advance();
+            result += mul_expr();
+            break;
+        case Token::Minus:
+            p_lexer->advance();
+            result -= mul_expr();
+            break;
+        default:
+            return result;
+        }
+    }
+}
+
+// Functor to evaluate a single string
+double Parser::operator()(std::string &s)
+{
+    // Initialize the lexer with the string
+    Lexer lexer = Lexer{s};
+    p_lexer = &lexer;
+
+    double result = assign_expr();
+
+    p_lexer = NULL;
+    return result;
 }
