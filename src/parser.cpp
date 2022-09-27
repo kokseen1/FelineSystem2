@@ -34,7 +34,7 @@ void ScriptParser::parseNext()
 
         case 0x20: // Display a message
         case 0x21: // Set speaker of the message
-#ifdef DIALOGUE
+#ifdef DIALOGUE_ENABLE
             std::cout << &stringTable->StringStart << std::endl;
 #endif
             goto next;

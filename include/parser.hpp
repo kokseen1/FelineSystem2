@@ -16,7 +16,7 @@
 #define SCRIPT_SIGNATURE "CatScene"
 #define SCRIPT_START "op"
 
-#define DIALOGUE
+#define DIALOGUE_ENABLE
 
 class ScriptParser
 {
