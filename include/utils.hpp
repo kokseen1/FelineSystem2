@@ -22,6 +22,9 @@ namespace Utils
     public:
         Log()
         {
+#ifndef LOGGING_ENABLE
+            return;
+#endif
 #ifdef __EMSCRIPTEN__
             ss << "console.log(`";
 #else
@@ -38,6 +41,9 @@ namespace Utils
 
         ~Log()
         {
+#ifndef LOGGING_ENABLE
+            return;
+#endif
 #ifdef __EMSCRIPTEN__
             ss << "`)";
             emscripten_run_script(ss.str().c_str());

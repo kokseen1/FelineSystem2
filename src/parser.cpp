@@ -23,8 +23,6 @@ void ScriptParser::parseNext()
     {
         auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
 
-        char buf[1000] = "console.log('";
-
         stringOffsetTable++;
         currStringEntry++;
 
@@ -42,11 +40,6 @@ void ScriptParser::parseNext()
             goto next;
 
         case 0x30: // Perform any other command
-#ifdef __EMSCRIPTEN__
-            strcat(buf, &stringTable->StringStart);
-            strcat(buf, "')");
-            emscripten_run_script(buf);
-#endif
             handleCommand(&stringTable->StringStart);
             goto next;
 
@@ -83,7 +76,7 @@ std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
 // Parse command and dispatch to respective handlers
 void ScriptParser::handleCommand(std::string cmdString)
 {
-    // std::cout << cmdString << std::endl;
+    LOG << cmdString;
     std::smatch matches;
     if (std::regex_match(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
