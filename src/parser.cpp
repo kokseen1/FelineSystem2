@@ -4,29 +4,27 @@
 
 Lexer::Lexer(const std::string s) : iss{s}
 {
-    current_token = get_token();
+    current_token = get_next_token();
 }
 
-Token Lexer::get_token()
+Token Lexer::get_next_token()
 {
-    char c;
+    char c = EOF;
 
     // Attempt to get a char
-    if (!iss.get(c))
-        return Token::Eof;
+    c = iss.get();
 
     // Skip until non-whitespace or eof
     while (isspace(c))
-    {
-        // std::cout << "Space" << std::endl;
-        if (!iss.get(c))
-            return Token::Eof;
-    }
+        c = iss.get();
+
+    if (c == EOF)
+        return Token::Eof;
 
     switch (c)
     {
-    case '#':
     case '=':
+    case '#':
     case '+':
     case '-':
     case '*':
@@ -36,7 +34,7 @@ Token Lexer::get_token()
         return Token(c);
     }
 
-    // Tokens that utilize the buffer
+    // Handle tokens that utilize the buffer
     buffer.clear();
 
     if (isdigit(c))
@@ -44,21 +42,21 @@ Token Lexer::get_token()
         while (isdigit(c))
         {
             buffer += c;
-            if (!iss.get(c))
-                return Token::Number;
+            c = iss.get();
         }
         // Put back c if loop exits as it is not a digit
         iss.putback(c);
         return Token::Number;
     }
 
-    throw std::runtime_error("Invalid token");
+    throw std::runtime_error(std::string("Invalid token: ") + c);
 }
+
 void Lexer::advance()
 {
     if (current_token != Token::Eof)
     {
-        current_token = get_token();
+        current_token = get_next_token();
     }
 }
 

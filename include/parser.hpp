@@ -7,6 +7,7 @@ enum class Token
     Number,
     Id = '#',
     Assign = '=',
+    Equality = '==',
     Plus = '+',
     Minus = '-',
     Mul = '*',
@@ -24,7 +25,7 @@ private:
     std::string buffer;
     std::istringstream iss;
 
-    Token get_token();
+    Token get_next_token();
 
 public:
     Lexer(const std::string);
