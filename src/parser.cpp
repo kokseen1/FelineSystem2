@@ -26,8 +26,11 @@ Token Lexer::get_next_token()
     case '=':
         c = iss.get();
         if (c == '=')
-            return Token::Equality;
+            return Token::Eq;
         iss.putback(c);
+        return Token::Assign;
+    case '<':
+    case '>':
     case '#':
     case '+':
     case '-':
@@ -157,10 +160,36 @@ double Parser::add_expr()
     }
 }
 
+double Parser::equality_expr()
+{
+    auto result = add_expr();
+
+    for (;;)
+    {
+        switch (p_lexer->get_current_token())
+        {
+        case Token::Eq:
+            p_lexer->advance();
+            result = result == add_expr();
+            break;
+        case Token::Gt:
+            p_lexer->advance();
+            result = result > add_expr();
+            break;
+        case Token::Lt:
+            p_lexer->advance();
+            result = result < add_expr();
+            break;
+        default:
+            return result;
+        }
+    }
+}
+
 double Parser::assign_expr()
 {
     Token t = p_lexer->get_current_token();
-    double result = add_expr();
+    double result = equality_expr();
 
     if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
     {
@@ -168,9 +197,9 @@ double Parser::assign_expr()
         if (p_lexer->get_current_token() == Token::Assign)
         {
             p_lexer->advance();
-            return result == add_expr();
+            return result == equality_expr();
         }
-        double res = add_expr();
+        double res = equality_expr();
         std::cout << "SETVAR #" << last_var_name << "="
                   << res << std::endl;
         return symbol_table[last_var_name] = res;

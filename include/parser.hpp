@@ -7,7 +7,9 @@ enum class Token
     Number,
     Id = '#',
     Assign = '=',
-    Equality = '==',
+    Eq = '==',
+    Lt = '<',
+    Gt = '>',
     Plus = '+',
     Minus = '-',
     Mul = '*',
@@ -44,6 +46,7 @@ private:
     Lexer *p_lexer = NULL;
     std::map<std::string, double> symbol_table{};
 
+    double equality_expr();
     double assign_expr();
     double add_expr();
     double mul_expr();
