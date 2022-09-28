@@ -14,7 +14,7 @@
 #define SCRIPT_PATH "scene/"
 #define SCRIPT_EXT ".cst"
 #define SCRIPT_SIGNATURE "CatScene"
-#define SCRIPT_START "op_cont2"
+#define SCRIPT_START "op"
 
 #define DIALOGUE_ENABLE
 

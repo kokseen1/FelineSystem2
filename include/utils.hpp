@@ -13,7 +13,7 @@
 #define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
 #define LOG Utils::Log()
 
-// #define LOGGING_ENABLE
+#define LOGGING_ENABLE
 
 namespace Utils
 {
