@@ -76,8 +76,8 @@ double Parser::assign_expr()
             return result == add_expr();
         }
         double res = add_expr();
-        std::cout << "SETVAR '" << last_var_name << "' = "
-                  << " " << res << std::endl;
+        std::cout << "SETVAR #" << last_var_name << "="
+                  << res << std::endl;
         return symbol_table[last_var_name] = res;
     }
 
