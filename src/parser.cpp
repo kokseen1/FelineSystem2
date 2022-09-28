@@ -164,6 +164,8 @@ double Parser::add_expr()
 double Parser::equality_expr()
 {
     auto result = add_expr();
+    auto tmp = result;
+    int boolean = -1;
 
     for (;;)
     {
@@ -171,18 +173,21 @@ double Parser::equality_expr()
         {
         case Token::Eq:
             p_lexer->advance();
-            result = result == add_expr();
+            boolean &= result == (tmp = add_expr());
+            result = tmp;
             break;
         case Token::Gt:
             p_lexer->advance();
-            result = result > add_expr();
+            boolean &= result > (tmp = add_expr());
+            result = tmp;
             break;
         case Token::Lt:
             p_lexer->advance();
-            result = result < add_expr();
+            boolean &= result < (tmp = add_expr());
+            result = tmp;
             break;
         default:
-            return result;
+            return boolean == -1 ? result : boolean;
         }
     }
 }
@@ -195,11 +200,6 @@ double Parser::assign_expr()
     if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
     {
         p_lexer->advance();
-        if (p_lexer->get_current_token() == Token::Assign)
-        {
-            p_lexer->advance();
-            return result == equality_expr();
-        }
         double res = equality_expr();
         std::cout << "SETVAR #" << last_var_name << "="
                   << res << std::endl;
