@@ -94,9 +94,11 @@ double Parser::primary()
         return arg;
 
     default:
-        int token = static_cast<int>(p_lexer->get_current_token());
-        auto msg = token == -1 ? "Unexpected EOF" : std::to_string(token);
-        throw std::runtime_error(std::string("Invalid primary value! ") + msg);
+        char token = static_cast<char>(p_lexer->get_current_token());
+        std::string msg(1, token);
+        if (token == -1)
+            msg = "unexpected EOF";
+        throw std::runtime_error(std::string("Invalid primary value: ") + msg);
     }
 }
 
@@ -195,15 +197,15 @@ double Parser::equality_expr()
 double Parser::assign_expr()
 {
     Token t = p_lexer->get_current_token();
-    double result = equality_expr();
+    auto result = equality_expr();
 
     if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
     {
         p_lexer->advance();
-        double res = equality_expr();
-        std::cout << "SETVAR #" << last_var_name << "="
-                  << res << std::endl;
-        return symbol_table[last_var_name] = res;
+        // Evaluate RHS
+        result = equality_expr();
+        std::cout << "SETVAR #" << last_var_name << "=" << result << std::endl;
+        return symbol_table[last_var_name] = result;
     }
 
     return result;
