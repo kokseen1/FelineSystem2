@@ -14,6 +14,18 @@ ImageManager::ImageManager()
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+    if (TTF_Init() == -1)
+    {
+        LOG << "Failed to init TTF";
+    }
+
+    font = TTF_OpenFont(FONT_PATH, 24);
+    if (font == NULL)
+    {
+        LOG << "Cannot find font!";
+    }
+
     std::cout << "ImageManager initialized" << std::endl;
 }
 
@@ -105,6 +117,24 @@ void ImageManager::displayAll()
 
     for (auto &imageData : currEgs)
         displayImage(imageData);
+
+    SDL_Surface *surface = TTF_RenderText_Solid(font, "TEST FONT", {0, 0, 0, 0});
+    if (surface == NULL)
+    {
+        LOG << "TTF Surface failed!";
+    }
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (texture == NULL)
+    {
+        LOG << "TTF texture failed!";
+    }
+    else
+    {
+        SDL_Rect r{0, 0, surface->w, surface->h};
+        SDL_RenderCopy(renderer, texture, NULL, &r);
+        SDL_DestroyTexture(texture);
+        SDL_FreeSurface(surface);
+    }
 
     SDL_RenderPresent(renderer);
 }

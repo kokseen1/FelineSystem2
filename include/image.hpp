@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <asmodean.h>
 
 #include <string>
@@ -14,6 +15,7 @@
 #define IMAGE_PATH "image/"
 #define IMAGE_EXT ".hg3"
 #define IMAGE_SIGNATURE "HG-3"
+#define FONT_PATH ASSETS "font.ttf"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 576
@@ -51,6 +53,8 @@ public:
 private:
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
+
+    TTF_Font *font;
 
     ImageData currSprites[Z_INDEX_MAX];
     ImageData currBgs[Z_INDEX_MAX];

@@ -2,9 +2,9 @@ EMXX     := em++
 CXX      := g++
 EMPPFLAGS := -DASSETS=\"assets/\"
 CPPFLAGS := -DASSETS=\"build/apps/assets/\"
-EMXXFLAGS := -sUSE_SDL=2 -sALLOW_MEMORY_GROWTH -sUSE_ZLIB=1 -sUSE_SDL_MIXER=1 -fdeclspec 
+EMXXFLAGS := -sUSE_SDL=2 -sALLOW_MEMORY_GROWTH -sUSE_ZLIB=1 -sUSE_SDL_MIXER=1 -sUSE_SDL_TTF=2 -fdeclspec --embed-file build/apps/assets/font.ttf@assets/font.ttf
 CXXFLAGS := -w
-LDFLAGS  := -LC:/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lz
+LDFLAGS  := -LC:/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lSDL2_ttf -lz
 BUILD    := ./build
 OBJ_DIR  := $(BUILD)/objects
 OBJ_DIR_LOCAL  := $(OBJ_DIR)/local
