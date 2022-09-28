@@ -79,6 +79,7 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
     auto rgbaVec = HGDecoder::getPixelsFromFrame(frame);
     if (rgbaVec.empty())
     {
+        LOG << "Could not get pixels from frame";
         return NULL;
     }
 
@@ -204,7 +205,7 @@ void ImageManager::processImage(byte *buf, size_t sz, std::string name)
     // Verify signature
     if (strncmp(hgHeader->FileSignature, IMAGE_SIGNATURE, sizeof(hgHeader->FileSignature)) != 0)
     {
-        std::cout << "Invalid image file signature!" << std::endl;
+        LOG << "Invalid image file signature!";
         return;
     }
 
@@ -213,7 +214,7 @@ void ImageManager::processImage(byte *buf, size_t sz, std::string name)
     std::vector<HGDecoder::Frame> frames = HGDecoder::getFrames(frameHeader);
     if (frames.empty())
     {
-        std::cout << "No frames found" << std::endl;
+        LOG << "No frames found";
         return;
     }
 

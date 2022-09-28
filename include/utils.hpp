@@ -13,6 +13,8 @@
 #define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
 #define LOG Utils::Log()
 
+// #define LOGGING_ENABLE
+
 namespace Utils
 {
     class Log
@@ -64,7 +66,7 @@ namespace Utils
     void fetchFileAndProcess(const std::string &fpath, TClass *classobj, FFAP_CB(cb), TUserdata userdata)
     {
         typedef FFAP_CB(TCallback);
-        // std::cout << "Fetching file " << fpath << std::endl;
+        LOG << "Fetch: " << fpath;
 
 #ifdef __EMSCRIPTEN__
 
@@ -102,7 +104,7 @@ namespace Utils
         auto bufVec = readFile(fpath);
         if (bufVec.empty())
         {
-            // std::cout << "Could not read file " << fpath << std::endl;
+            LOG << "Could not read file " << fpath;
             return;
         }
 
@@ -121,7 +123,7 @@ namespace Utils
             {
                 Arg *a = reinterpret_cast<Arg *>(arg);
                 auto fpath = a->fpath;
-                // std::cout << "Could not fetch file " << fpath << std::endl;
+                LOG << "Could not fetch file " << fpath;
             });
 #endif
     }
