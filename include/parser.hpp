@@ -39,7 +39,7 @@ public:
 class Parser
 {
 public:
-    double operator()(std::string &);
+    double parse(std::string &);
 
 private:
     std::string last_var; // TODO: Might have better alternative

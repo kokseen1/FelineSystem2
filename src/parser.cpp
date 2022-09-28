@@ -216,8 +216,8 @@ double Parser::assign_expr()
     return result;
 }
 
-// Functor to evaluate a single string
-double Parser::operator()(std::string &s)
+// Evaluate a single string
+double Parser::parse(std::string &s)
 {
     // Initialize the lexer with the string
     Lexer lexer = Lexer{s};

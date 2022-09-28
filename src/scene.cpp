@@ -130,8 +130,8 @@ void SceneManager::handleCommand(std::string cmdString)
 
         // try
         // {
-        xShift = xShiftStr.empty() ? 0 : parser(xShiftStr);
-        yShift = yShiftStr.empty() ? 0 : parser(yShiftStr);
+        xShift = xShiftStr.empty() ? 0 : parser.parse(xShiftStr);
+        yShift = yShiftStr.empty() ? 0 : parser.parse(yShiftStr);
         // }
         // catch (std::runtime_error)
         // {
@@ -154,7 +154,7 @@ void SceneManager::handleCommand(std::string cmdString)
         if (matches.size() == 3)
         {
             std::string cond = matches[1].str();
-            if (parser(cond) == 1)
+            if (parser.parse(cond) == 1)
             {
                 handleCommand(matches[2].str());
             }
@@ -170,6 +170,6 @@ void SceneManager::handleCommand(std::string cmdString)
     else if (std::regex_match(cmdString, std::regex("^#.*")))
     {
         // std::cout << cmdString << std::endl;
-        parser(cmdString);
+        parser.parse(cmdString);
     }
 }
