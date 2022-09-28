@@ -4,13 +4,12 @@
 #include <cstring>
 #include <string>
 #include <iostream>
-#include <sstream>
 #include <regex>
-#include <map>
 
 #include <utils.hpp>
 #include <music.hpp>
 #include <image.hpp>
+#include <parser.hpp>
 
 #define SCRIPT_PATH "scene/"
 #define SCRIPT_EXT ".cst"
@@ -18,54 +17,6 @@
 #define SCRIPT_START "op_cont2"
 
 #define DIALOGUE_ENABLE
-
-enum class Token
-{
-    Number,
-    Id = '#',
-    Assign = '=',
-    Plus = '+',
-    Minus = '-',
-    Mul = '*',
-    Div = '/',
-    Lp = '(',
-    Rp = ')',
-    Eof = -1,
-};
-
-class Lexer
-{
-
-private:
-    Token current_token;
-    std::string buffer;
-    std::istringstream iss;
-
-    Token get_token();
-
-public:
-    Lexer(const std::string);
-    Token get_current_token() { return current_token; };
-    std::string get_curr_buffer() { return buffer; };
-    void advance();
-};
-
-class Parser
-{
-public:
-    double operator()(std::string &);
-
-private:
-    std::string last_var_name; // TODO: Might have better alternative
-    Lexer *p_lexer = NULL;
-    std::map<std::string, double> symbol_table{};
-
-    double assign_expr();
-    double add_expr();
-    double mul_expr();
-    double unary_expr();
-    double primary();
-};
 
 class SceneManager
 {
