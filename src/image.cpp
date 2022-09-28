@@ -175,7 +175,7 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
 
         if (args.size() < 5)
         {
-            std::cout << "Invalid CG args " << asset << std::endl;
+            std::cout << "Invalid CG args for '" << asset << "'" << std::endl;
             return;
         }
 
@@ -183,9 +183,6 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         id.names.push_back(cgBase + "_" + args[1]);
         id.names.push_back(cgBase + "_" + Utils::zeroPad(args[3], 3));
         id.names.push_back(cgBase + "_" + Utils::zeroPad(args[4], 4));
-
-        std::cout << "xshift: " << id.xShift << std::endl;
-        std::cout << "yshift: " << id.yShift << std::endl;
 
         currSprites[zIndex] = id;
         break;

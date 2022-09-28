@@ -15,7 +15,7 @@ void SceneManager::parseNext()
 {
     if (currScriptData.empty())
     {
-        printf("Script not loaded!\n");
+        std::cout << "Script not loaded!" << std::endl;
         return;
     }
 
@@ -54,7 +54,7 @@ void SceneManager::parseNext()
     }
     else
     {
-        printf("End of script!\n");
+        std::cout << "End of script!" << std::endl;
     }
 }
 
@@ -62,7 +62,6 @@ void SceneManager::parseNext()
 void SceneManager::handleCommand(std::string cmdString)
 {
     LOG << cmdString;
-    std::cout << cmdString << std::endl;
     std::smatch matches;
     if (std::regex_match(cmdString, matches, std::regex("^pcm (\\S+)")))
     {

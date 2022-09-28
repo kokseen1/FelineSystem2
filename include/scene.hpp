@@ -42,7 +42,7 @@ private:
         // Verify signature
         if (strncmp(scriptHeader->FileSignature, SCRIPT_SIGNATURE, sizeof(scriptHeader->FileSignature)) != 0)
         {
-            printf("Invalid CST file signature!\n");
+            std::cout << "Invalid CST file signature!" << std::endl;
             return;
         }
 
@@ -59,7 +59,7 @@ private:
             auto scriptDataDecompressed = Utils::zlibUncompress(scriptHeader->DecompressedSize, scriptDataRaw, scriptHeader->CompressedSize);
             if (scriptDataDecompressed.empty())
             {
-                printf("Script uncompress error\n");
+                std::cout << "Script uncompress error" << std::endl;
                 return;
             }
             currScriptData = scriptDataDecompressed;

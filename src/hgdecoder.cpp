@@ -16,14 +16,14 @@ std::vector<byte> HGDecoder::getPixelsFromFrame(Frame frame)
     auto RleDataDecompressed = Utils::zlibUncompress(frame.Img->DecompressedDataLength, RleData, frame.Img->CompressedDataLength);
     if (RleDataDecompressed.empty())
     {
-        printf("RleData uncompress error\n");
+        std::cout << "RleData uncompress error" << std::endl;
         return {};
     }
 
     auto RleCmdDecompressed = Utils::zlibUncompress(frame.Img->DecompressedCmdLength, RleCmd, frame.Img->CompressedCmdLength);
     if (RleCmdDecompressed.empty())
     {
-        printf("RleCmd uncompress error\n");
+        std::cout << "RleCmd uncompress error" << std::endl;
         return {};
     }
 
@@ -32,7 +32,6 @@ std::vector<byte> HGDecoder::getPixelsFromFrame(Frame frame)
 
     uint32 szRgbaBuffer = frame.Stdinfo->Width * frame.Stdinfo->Height * depthBytes;
     std::vector<byte> rgbaBuffer(szRgbaBuffer);
-    // printf("Allocated %lu bytes\n", szRgbaBuffer);
 
     // Decode image
     ReturnCode ret = ProcessImage(&RleDataDecompressed[0], frame.Img->DecompressedDataLength, &RleCmdDecompressed[0], frame.Img->DecompressedCmdLength, &rgbaBuffer[0], szRgbaBuffer, frame.Stdinfo->Width, frame.Stdinfo->Height, depthBytes, STRIDE(frame.Stdinfo->Width, depthBytes));
@@ -64,7 +63,7 @@ HGDecoder::Frame HGDecoder::getFrame(FrameTag *frameTag)
         }
         else
         {
-            // printf("Ignoring tag %s\n", frameTag->TagName);
+            // Ignore tag
         }
 
         // Reached last tag

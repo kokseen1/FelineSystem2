@@ -10,7 +10,7 @@ MusicPlayer::MusicPlayer()
 {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)
     {
-        printf("%s", Mix_GetError());
+        std::cout << Mix_GetError() << std::endl;
     }
     std::cout << "MusicPlayer initialized" << std::endl;
 }

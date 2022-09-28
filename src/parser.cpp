@@ -209,7 +209,7 @@ double Parser::assign_expr()
         // Evaluate RHS
         p_lexer->advance();
         result = equality_expr();
-        std::cout << "SETVAR #" << last_var << "=" << result << std::endl;
+        // std::cout << "SETVAR #" << last_var << "=" << result << std::endl;
         return symbol_table[last_var] = result;
     }
 
