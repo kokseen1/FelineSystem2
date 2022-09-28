@@ -24,6 +24,10 @@ Token Lexer::get_next_token()
     switch (c)
     {
     case '=':
+        c = iss.get();
+        if (c == '=')
+            return Token::Equality;
+        iss.putback(c);
     case '#':
     case '+':
     case '-':
