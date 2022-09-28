@@ -64,28 +64,6 @@ void Lexer::advance()
     }
 }
 
-double Parser::assign_expr()
-{
-    Token t = p_lexer->get_current_token();
-    double result = add_expr();
-
-    if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
-    {
-        p_lexer->advance();
-        if (p_lexer->get_current_token() == Token::Assign)
-        {
-            p_lexer->advance();
-            return result == add_expr();
-        }
-        double res = add_expr();
-        std::cout << "SETVAR #" << last_var_name << "="
-                  << res << std::endl;
-        return symbol_table[last_var_name] = res;
-    }
-
-    return result;
-}
-
 double Parser::primary()
 {
     std::string text = p_lexer->get_curr_buffer();
@@ -177,6 +155,28 @@ double Parser::add_expr()
             return result;
         }
     }
+}
+
+double Parser::assign_expr()
+{
+    Token t = p_lexer->get_current_token();
+    double result = add_expr();
+
+    if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
+    {
+        p_lexer->advance();
+        if (p_lexer->get_current_token() == Token::Assign)
+        {
+            p_lexer->advance();
+            return result == add_expr();
+        }
+        double res = add_expr();
+        std::cout << "SETVAR #" << last_var_name << "="
+                  << res << std::endl;
+        return symbol_table[last_var_name] = res;
+    }
+
+    return result;
 }
 
 // Functor to evaluate a single string
