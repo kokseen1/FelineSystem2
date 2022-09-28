@@ -58,21 +58,6 @@ void SceneManager::parseNext()
     }
 }
 
-// Return matched command arguments as string vector
-// Might not be necessary
-std::vector<std::string> SceneManager::getArgsFromMatch(std::smatch matches)
-{
-    std::vector<std::string> args;
-    for (int i = 0; i < matches.size(); i++)
-    {
-        // std::cout << "ARG " << i << " " << matches[i].str() << std::endl;
-        // TODO: Might want to evaluate variable arithmetic here
-        args.push_back(matches[i].str());
-    }
-
-    return args;
-}
-
 // Parse command and dispatch to respective handlers
 void SceneManager::handleCommand(std::string cmdString)
 {
@@ -149,7 +134,6 @@ void SceneManager::handleCommand(std::string cmdString)
     }
     else if (std::regex_match(cmdString, std::regex("^#.*")))
     {
-        // std::cout << cmdString << std::endl;
         parser.parse(cmdString);
     }
 }

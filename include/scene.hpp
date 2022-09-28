@@ -33,8 +33,6 @@ private:
 
     void handleCommand(std::string);
 
-    std::vector<std::string> getArgsFromMatch(std::smatch);
-
     // Read a script from a memory buffer
     template <typename T>
     void loadFromBuf(byte *buf, size_t sz, T userdata)
