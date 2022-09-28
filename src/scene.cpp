@@ -121,33 +121,13 @@ void SceneManager::handleCommand(std::string cmdString)
             return;
         }
 
-        // TODO: Evaluate offset variables
         auto xShiftStr = matches[4].str();
         auto yShiftStr = matches[5].str();
 
-        int xShift = 0;
-        int yShift = 0;
-
-        // try
-        // {
-        xShift = xShiftStr.empty() ? 0 : parser.parse(xShiftStr);
-        yShift = yShiftStr.empty() ? 0 : parser.parse(yShiftStr);
-        // }
-        // catch (std::runtime_error)
-        // {
-        // }
-
-        // if (std::regex_match(xShiftStr, std::regex("^\\d+$")))
-        //     xShift = std::stoi(xShiftStr);
-        // if (std::regex_match(yShiftStr, std::regex("^\\d+$")))
-        //     yShift = std::stoi(yShiftStr);
+        int xShift = xShiftStr.empty() ? 0 : parser.parse(xShiftStr);
+        int yShift = yShiftStr.empty() ? 0 : parser.parse(yShiftStr);
 
         imageManager->setImage(type, zIndex, asset, xShift, yShift);
-
-        // for (int i = 0; i < matches.size(); i++)
-        // {
-        //     std::cout << i << " " << matches[i] << " Empty: " << matches[i].str().empty() << std::endl;
-        // }
     }
     else if (std::regex_match(cmdString, matches, std::regex("^if\\s*\\((.+)\\)\\s+(.+)")))
     {
