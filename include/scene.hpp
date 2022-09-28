@@ -67,7 +67,7 @@ private:
     double primary();
 };
 
-class ScriptParser
+class SceneManager
 {
 private:
     MusicPlayer *musicPlayer;
@@ -131,7 +131,7 @@ private:
     }
 
 public:
-    ScriptParser(MusicPlayer *, ImageManager *);
+    SceneManager(MusicPlayer *, ImageManager *);
 
     void parseNext();
 

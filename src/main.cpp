@@ -9,7 +9,7 @@
 
 #include <music.hpp>
 #include <image.hpp>
-#include <parser.hpp>
+#include <scene.hpp>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -18,13 +18,13 @@
 
 static MusicPlayer musicPlayer;
 static ImageManager imageManager;
-static ScriptParser scriptParser(&musicPlayer, &imageManager);
+static SceneManager sceneManager(&musicPlayer, &imageManager);
 
 #ifdef __EMSCRIPTEN__
 
 EM_BOOL wheel_callback(int eventType, const EmscriptenWheelEvent *e, void *userData)
 {
-    scriptParser.parseNext();
+    sceneManager.parseNext();
     return 0;
 }
 
@@ -34,7 +34,7 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
     {
         if (eventType == EMSCRIPTEN_EVENT_CLICK)
         {
-            scriptParser.parseNext();
+            sceneManager.parseNext();
         }
     }
 
@@ -69,11 +69,11 @@ int main(int argc, char **argv)
             break;
 
         case SDL_MOUSEWHEEL:
-            scriptParser.parseNext();
+            sceneManager.parseNext();
             break;
 
         case SDL_MOUSEBUTTONDOWN:
-            scriptParser.parseNext();
+            sceneManager.parseNext();
             break;
 
         case SDL_QUIT:

@@ -1,17 +1,17 @@
-#include <parser.hpp>
+#include <scene.hpp>
 
-ScriptParser::ScriptParser(MusicPlayer *mp, ImageManager *sm) : musicPlayer{mp}, imageManager{sm}
+SceneManager::SceneManager(MusicPlayer *mp, ImageManager *sm) : musicPlayer{mp}, imageManager{sm}
 {
     setScript(SCRIPT_START);
 };
 
-void ScriptParser::setScript(const std::string name)
+void SceneManager::setScript(const std::string name)
 {
     auto fpath = ASSETS SCRIPT_PATH + name + SCRIPT_EXT;
-    Utils::fetchFileAndProcess(fpath, this, &ScriptParser::loadFromBuf, NULL);
+    Utils::fetchFileAndProcess(fpath, this, &SceneManager::loadFromBuf, NULL);
 }
 
-void ScriptParser::parseNext()
+void SceneManager::parseNext()
 {
     if (currScriptData.empty())
     {
@@ -60,7 +60,7 @@ void ScriptParser::parseNext()
 
 // Return matched command arguments as string vector
 // Might not be necessary
-std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
+std::vector<std::string> SceneManager::getArgsFromMatch(std::smatch matches)
 {
     std::vector<std::string> args;
     for (int i = 0; i < matches.size(); i++)
@@ -74,7 +74,7 @@ std::vector<std::string> ScriptParser::getArgsFromMatch(std::smatch matches)
 }
 
 // Parse command and dispatch to respective handlers
-void ScriptParser::handleCommand(std::string cmdString)
+void SceneManager::handleCommand(std::string cmdString)
 {
     LOG << cmdString;
     std::cout << cmdString << std::endl;
