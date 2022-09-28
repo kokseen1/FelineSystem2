@@ -94,8 +94,9 @@ double Parser::primary()
         return arg;
 
     default:
-        std::cout << "TOKEN: " << static_cast<int>(p_lexer->get_current_token()) << std::endl;
-        throw std::runtime_error("Invalid primary value! (likely EOF)");
+        int token = static_cast<int>(p_lexer->get_current_token());
+        auto msg = token == -1 ? "Unexpected EOF" : std::to_string(token);
+        throw std::runtime_error(std::string("Invalid primary value! ") + msg);
     }
 }
 
