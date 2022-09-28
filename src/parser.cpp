@@ -72,7 +72,6 @@ double Parser::primary()
     std::string text = p_lexer->get_curr_buffer();
     // std::cout << "Buf: " << text << std::endl;
     double arg;
-    std::string var_name;
 
     switch (p_lexer->get_current_token())
     {
@@ -82,8 +81,9 @@ double Parser::primary()
         return std::stoi(text);
     case Token::Id:
         p_lexer->advance();
-        last_var_name = var_name = std::to_string(static_cast<int>(primary()));
-        return symbol_table[var_name];
+        // Save last variable name
+        last_var = std::to_string(static_cast<int>(primary()));
+        return symbol_table[last_var];
         break;
     case Token::Lp:
         p_lexer->advance();
@@ -201,11 +201,16 @@ double Parser::assign_expr()
 
     if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
     {
-        p_lexer->advance();
+        // Verify valid LHS (Not working for dynamic variable names)
+        // auto var_name = p_lexer->get_curr_buffer();
+        // if (var_name != last_var)
+        // throw(std::runtime_error("Invalid '" + var_name + "' on LHS of assignment!"));
+
         // Evaluate RHS
+        p_lexer->advance();
         result = equality_expr();
-        std::cout << "SETVAR #" << last_var_name << "=" << result << std::endl;
-        return symbol_table[last_var_name] = result;
+        std::cout << "SETVAR #" << last_var << "=" << result << std::endl;
+        return symbol_table[last_var] = result;
     }
 
     return result;
