@@ -30,10 +30,20 @@ Token Lexer::get_next_token()
         iss.putback(c);
         return Token::Assign;
     case '+':
+        c = iss.get();
+        if (c == '+')
+            return Token::Incr;
+        iss.putback(c);
+        return Token::Plus;
+    case '-':
+        c = iss.get();
+        if (c == '-')
+            return Token::Decr;
+        iss.putback(c);
+        return Token::Minus;
     case '<':
     case '>':
     case '#':
-    case '-':
     case '*':
     case '/':
     case '(':
@@ -64,6 +74,7 @@ void Lexer::advance()
     if (current_token != Token::Eof)
     {
         current_token = get_next_token();
+        // std::cout << "curr_token: " << static_cast<int>(current_token) << std::endl;
     }
 }
 
@@ -76,15 +87,26 @@ double Parser::primary()
     switch (p_lexer->get_current_token())
     {
     case Token::Number:
-        // std::cout << "NUM" << std::endl;
+        // std::cout << "NUM " << text << std::endl;
         p_lexer->advance();
         return std::stoi(text);
     case Token::Id:
         p_lexer->advance();
-        // Save last variable name
-        last_var = std::to_string(static_cast<int>(primary()));
-        return symbol_table[last_var];
-        break;
+        // Evaluate variable name
+        last_var_name = std::to_string(static_cast<int>(primary()));
+        if (p_lexer->get_current_token() == Token::Decr)
+        {
+            // std::cout << "DECREMENT" << std::endl;
+            p_lexer->advance();
+            return symbol_table[last_var_name]--;
+        }
+        if (p_lexer->get_current_token() == Token::Incr)
+        {
+            // std::cout << "INCREMENT" << std::endl;
+            p_lexer->advance();
+            return symbol_table[last_var_name]++;
+        }
+        return symbol_table[last_var_name];
     case Token::Lp:
         p_lexer->advance();
         arg = add_expr();
@@ -203,14 +225,19 @@ double Parser::assign_expr()
     {
         // Verify valid LHS (Not working for dynamic variable names)
         // auto var_name = p_lexer->get_curr_buffer();
-        // if (var_name != last_var)
+        // if (var_name != last_var_name)
         // throw(std::runtime_error("Invalid '" + var_name + "' on LHS of assignment!"));
 
         // Evaluate RHS
         p_lexer->advance();
         result = equality_expr();
-        // std::cout << "SETVAR #" << last_var << "=" << result << std::endl;
-        return symbol_table[last_var] = result;
+        // std::cout << "SETVAR #" << last_var_name << "=" << result << std::endl;
+        symbol_table[last_var_name] = result;
+    }
+
+    if (p_lexer->get_current_token() != Token::Eof)
+    {
+        std::cout << "Unexpected characters before EOF!" << std::endl;
     }
 
     return result;

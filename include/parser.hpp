@@ -11,7 +11,9 @@ enum class Token
     Lt = '<',
     Gt = '>',
     Plus = '+',
+    Incr = '++',
     Minus = '-',
+    Decr = '--',
     Mul = '*',
     Div = '/',
     Lp = '(',
@@ -42,7 +44,7 @@ public:
     double parse(std::string &);
 
 private:
-    std::string last_var; // TODO: Might have better alternative
+    std::string last_var_name; // TODO: Might have better alternative
     Lexer *p_lexer = NULL;
     std::map<std::string, double> symbol_table{};
 
