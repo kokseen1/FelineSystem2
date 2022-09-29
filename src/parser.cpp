@@ -129,7 +129,7 @@ double Parser::primary()
         return result;
 
     default:
-        throw std::runtime_error("Invalid primary operand: '" + p_lexer->get_curr_buffer() + "' Token: " + std::to_string(static_cast<int>(p_lexer->get_current_token())));
+        throw std::runtime_error(std::string("Invalid primary operand! Token: ") + static_cast<char>(p_lexer->get_current_token()));
     }
 }
 
