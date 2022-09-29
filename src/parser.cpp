@@ -253,7 +253,7 @@ double Parser::assign_expr()
 
     if (p_lexer->get_current_token() != Token::Eof)
     {
-        throw std::runtime_error("Unexpected '" + p_lexer->get_curr_buffer() + "' before EOF!");
+        throw std::runtime_error(std::string("Unexpected before EOF: ") + static_cast<char>(p_lexer->get_current_token()));
     }
 
     return result;
