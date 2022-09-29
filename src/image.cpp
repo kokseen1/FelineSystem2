@@ -125,9 +125,12 @@ void ImageManager::setText(std::string text)
         return;
     }
 
+    SDL_Rect textBaseRect = {TEXT_XPOS, WINDOW_HEIGHT - TEXT_HEIGHT, WINDOW_WIDTH, TEXT_HEIGHT};
+    SDL_RenderDrawRect(renderer, &textBaseRect);
+    SDL_RenderFillRect(renderer, &textBaseRect);
+
     SDL_Rect rect = {TEXT_XPOS, WINDOW_HEIGHT - TEXT_HEIGHT, surface->w, surface->h};
-    SDL_RenderDrawRect(renderer, &rect);
-    SDL_RenderFillRect(renderer, &rect);
+    SDL_RenderFillRect(renderer, &textBaseRect);
     SDL_RenderCopy(renderer, texture, NULL, &rect);
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
