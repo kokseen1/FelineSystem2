@@ -18,6 +18,8 @@ Token Lexer::get_next_token()
     while (isspace(c))
         c = iss.get();
 
+    buffer = c;
+
     if (c == EOF)
         return Token::Eof;
 
@@ -72,6 +74,11 @@ void Lexer::advance()
     }
 }
 
+void Parser::set_lexer_buffer(std::string &buffer)
+{
+    p_lexer->buffer = buffer;
+}
+
 double Parser::primary()
 {
     std::string buffer;
@@ -84,6 +91,7 @@ double Parser::primary()
 
         // Evaluate variable name
         last_var_name = std::to_string(primary());
+        set_lexer_buffer(last_var_name);
 
         // Store initial result, assume post increment/decrement
         result = symbol_table[last_var_name];
@@ -119,11 +127,7 @@ double Parser::primary()
         return result;
 
     default:
-        char token = static_cast<char>(p_lexer->get_current_token());
-        std::string msg(1, token);
-        if (token == -1)
-            msg = "unexpected EOF";
-        throw std::runtime_error(std::string("Invalid primary value: ") + msg);
+        throw std::runtime_error("Invalid primary operand: '" + p_lexer->get_curr_buffer() + "'");
     }
 }
 
@@ -145,6 +149,7 @@ double Parser::unary_expr()
 double Parser::mul_expr()
 {
     double result = unary_expr();
+    double operand;
 
     for (;;)
     {
@@ -158,7 +163,10 @@ double Parser::mul_expr()
         case (Token::Div):
             // std::cout << "DIV" << std::endl;
             p_lexer->advance();
-            result /= unary_expr();
+            operand = unary_expr();
+            if (operand == 0)
+                throw(std::runtime_error("Division by 0!"));
+            result /= operand;
             break;
         default:
             return result;
@@ -227,9 +235,9 @@ double Parser::assign_expr()
     if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
     {
         // Verify valid LHS (Not working for dynamic variable names)
-        // auto var_name = p_lexer->get_curr_buffer();
-        // if (var_name != last_var_name)
-        // throw(std::runtime_error("Invalid '" + var_name + "' on LHS of assignment!"));
+        auto buffer = p_lexer->get_curr_buffer();
+        if (buffer != last_var_name)
+            throw(std::runtime_error("Invalid '" + buffer + "' on LHS of assignment!"));
 
         // Evaluate RHS
         p_lexer->advance();
@@ -240,7 +248,7 @@ double Parser::assign_expr()
 
     if (p_lexer->get_current_token() != Token::Eof)
     {
-        std::cout << "Unexpected characters before EOF!" << std::endl;
+        throw std::runtime_error("Unexpected '" + p_lexer->get_curr_buffer() + "' before EOF!");
     }
 
     return result;
