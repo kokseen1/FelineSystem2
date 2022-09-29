@@ -29,14 +29,17 @@ Token Lexer::get_next_token()
         if (iss.get() == '=')
             return Token::Eq;
         iss.unget();
+        return Token::Assign;
     case '+':
         if (iss.get() == '+')
             return Token::Incr;
         iss.unget();
+        return Token::Plus;
     case '-':
         if (iss.get() == '-')
             return Token::Decr;
         iss.unget();
+        return Token::Minus;
     case '<':
     case '>':
     case '#':
