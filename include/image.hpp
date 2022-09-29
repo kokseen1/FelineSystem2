@@ -19,6 +19,8 @@
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 576
+#define TEXT_HEIGHT 150
+#define TEXT_XPOS 100
 
 #define Z_INDEX_MAX 10
 
@@ -42,6 +44,8 @@ class ImageManager
 {
 
 public:
+    std::string currText;
+
     ImageManager();
 
     void setImage(IMAGE_TYPE, int, std::string, int, int);
@@ -50,7 +54,7 @@ public:
 
     void clearZIndex(IMAGE_TYPE, int);
 
-    void setText(std::string);
+    void displayAll();
 
 private:
     SDL_Window *window = NULL;
@@ -72,5 +76,5 @@ private:
 
     void displayImage(ImageData);
 
-    void displayAll();
+    void setText(std::string);
 };

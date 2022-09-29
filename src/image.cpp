@@ -14,6 +14,8 @@ ImageManager::ImageManager()
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 100);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     if (TTF_Init() == -1)
     {
@@ -107,8 +109,8 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
 
 void ImageManager::setText(std::string text)
 {
-    SDL_Color color = {255, 0, 0, 0};
-    SDL_Surface *surface = TTF_RenderText_Solid(font, text.c_str(), color);
+    SDL_Color color = {255, 255, 255, 0};
+    SDL_Surface *surface = TTF_RenderText_Solid_Wrapped(font, text.c_str(), color, WINDOW_WIDTH - TEXT_XPOS);
     if (surface == NULL)
     {
         LOG << "TTF Surface failed!";
@@ -123,7 +125,9 @@ void ImageManager::setText(std::string text)
         return;
     }
 
-    SDL_Rect rect = {0, 0, surface->w, surface->h};
+    SDL_Rect rect = {TEXT_XPOS, WINDOW_HEIGHT - TEXT_HEIGHT, surface->w, surface->h};
+    SDL_RenderDrawRect(renderer, &rect);
+    SDL_RenderFillRect(renderer, &rect);
     SDL_RenderCopy(renderer, texture, NULL, &rect);
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
@@ -142,7 +146,7 @@ void ImageManager::displayAll()
     for (auto &imageData : currEgs)
         displayImage(imageData);
 
-    setText("TEST");
+    setText(currText);
 
     SDL_RenderPresent(renderer);
 }

@@ -33,6 +33,9 @@ void SceneManager::parseNext()
             break;
 
         case 0x20: // Display a message
+            imageManager->currText = std::string(&stringTable->StringStart);
+            imageManager->displayAll();
+            break;
         case 0x21: // Set speaker of the message
 #ifdef DIALOGUE_ENABLE
             std::cout << &stringTable->StringStart << std::endl;
