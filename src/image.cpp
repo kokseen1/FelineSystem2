@@ -105,6 +105,30 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
+void ImageManager::setText(std::string text)
+{
+    SDL_Color color = {255, 0, 0, 0};
+    SDL_Surface *surface = TTF_RenderText_Solid(font, text.c_str(), color);
+    if (surface == NULL)
+    {
+        LOG << "TTF Surface failed!";
+        return;
+    }
+
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (texture == NULL)
+    {
+        LOG << "TTF texture failed!";
+        SDL_FreeSurface(surface);
+        return;
+    }
+
+    SDL_Rect rect = {0, 0, surface->w, surface->h};
+    SDL_RenderCopy(renderer, texture, NULL, &rect);
+    SDL_DestroyTexture(texture);
+    SDL_FreeSurface(surface);
+}
+
 void ImageManager::displayAll()
 {
     SDL_RenderClear(renderer);
@@ -118,23 +142,7 @@ void ImageManager::displayAll()
     for (auto &imageData : currEgs)
         displayImage(imageData);
 
-    SDL_Surface *surface = TTF_RenderText_Solid(font, "TEST FONT", {0, 0, 0, 0});
-    if (surface == NULL)
-    {
-        LOG << "TTF Surface failed!";
-    }
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (texture == NULL)
-    {
-        LOG << "TTF texture failed!";
-    }
-    else
-    {
-        SDL_Rect r{0, 0, surface->w, surface->h};
-        SDL_RenderCopy(renderer, texture, NULL, &r);
-        SDL_DestroyTexture(texture);
-        SDL_FreeSurface(surface);
-    }
+    setText("TEST");
 
     SDL_RenderPresent(renderer);
 }

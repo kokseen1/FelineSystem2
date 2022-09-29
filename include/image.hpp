@@ -50,6 +50,8 @@ public:
 
     void clearZIndex(IMAGE_TYPE, int);
 
+    void setText(std::string);
+
 private:
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
