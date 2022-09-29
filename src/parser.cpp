@@ -18,8 +18,6 @@ Token Lexer::get_next_token()
     while (isspace(c))
         c = iss.get();
 
-    buffer = c;
-
     if (c == EOF)
         return Token::Eof;
 
@@ -47,6 +45,7 @@ Token Lexer::get_next_token()
     case '/':
     case '(':
     case ')':
+        buffer = c;
         return Token(c);
     }
 
