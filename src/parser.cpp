@@ -29,10 +29,10 @@ Token Lexer::get_next_token()
             return Token::Eq;
         iss.putback(c);
         return Token::Assign;
+    case '+':
     case '<':
     case '>':
     case '#':
-    case '+':
     case '-':
     case '*':
     case '/':
