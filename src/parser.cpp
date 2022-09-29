@@ -74,8 +74,7 @@ void Lexer::advance()
 
 double Parser::primary()
 {
-    std::string text = p_lexer->get_curr_buffer();
-    // std::cout << "Buf: " << text << std::endl;
+    std::string buffer;
     double result;
 
     switch (p_lexer->get_current_token())
@@ -107,9 +106,10 @@ double Parser::primary()
             }
         }
     case Token::Number:
-        // std::cout << "NUM " << text << std::endl;
+        buffer = p_lexer->get_curr_buffer();
+        // std::cout << "NUM " << buffer << std::endl;
         p_lexer->advance();
-        return std::stoi(text);
+        return std::stoi(buffer);
     case Token::Lp:
         p_lexer->advance();
         result = add_expr();
