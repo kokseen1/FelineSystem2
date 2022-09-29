@@ -15,12 +15,15 @@
 #define IMAGE_PATH "image/"
 #define IMAGE_EXT ".hg3"
 #define IMAGE_SIGNATURE "HG-3"
-#define FONT_PATH ASSETS "font.ttf"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 576
+
+#define FONT_PATH ASSETS "font.ttf"
+#define FONT_SIZE 24
+
 #define TEXT_HEIGHT 150
-#define TEXT_XPOS 100
+#define TEXT_XPOS 150
 
 #define Z_INDEX_MAX 10
 
@@ -61,6 +64,7 @@ private:
     SDL_Renderer *renderer = NULL;
 
     TTF_Font *font;
+    SDL_Color textColor = {255, 255, 255, 0};
 
     ImageData currSprites[Z_INDEX_MAX];
     ImageData currBgs[Z_INDEX_MAX];

@@ -30,12 +30,17 @@ void SceneManager::parseNext()
         {
         case 0x02: // Wait for input after message
         case 0x03: // Novel page break and wait for input after message
+            LOG << "BREAK";
             break;
 
         case 0x20: // Display a message
+            if (stringTable->StringStart == '\0')
+            {
+                LOG << "Empty text!";
+            }
             imageManager->currText = std::string(&stringTable->StringStart);
             imageManager->displayAll();
-            break;
+            goto next;
         case 0x21: // Set speaker of the message
 #ifdef DIALOGUE_ENABLE
             std::cout << &stringTable->StringStart << std::endl;

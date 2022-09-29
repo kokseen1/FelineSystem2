@@ -14,7 +14,7 @@ ImageManager::ImageManager()
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 100);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 50);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     if (TTF_Init() == -1)
@@ -22,7 +22,7 @@ ImageManager::ImageManager()
         LOG << "Failed to init TTF";
     }
 
-    font = TTF_OpenFont(FONT_PATH, 24);
+    font = TTF_OpenFont(FONT_PATH, FONT_SIZE);
     if (font == NULL)
     {
         LOG << "Cannot find font!";
@@ -62,7 +62,7 @@ void ImageManager::displayImage(ImageData imageData)
             auto texture = textureData.first;
             if (texture == NULL)
             {
-                LOG << "Missing: " << name;
+                // LOG << "Missing: " << name;
                 continue;
             }
 
@@ -109,8 +109,15 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
 
 void ImageManager::setText(std::string text)
 {
-    SDL_Color color = {255, 255, 255, 0};
-    SDL_Surface *surface = TTF_RenderText_Solid_Wrapped(font, text.c_str(), color, WINDOW_WIDTH - TEXT_XPOS);
+    if (text.empty())
+    {
+        return;
+    }
+
+    text = "`" + text + "`";
+
+    SDL_Surface *surface = TTF_RenderText_Solid_Wrapped(font, text.c_str(), textColor, WINDOW_WIDTH - TEXT_XPOS);
+
     if (surface == NULL)
     {
         LOG << "TTF Surface failed!";
