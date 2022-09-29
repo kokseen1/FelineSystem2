@@ -24,23 +24,17 @@ Token Lexer::get_next_token()
     switch (c)
     {
     case '=':
-        c = iss.get();
-        if (c == '=')
+        if (iss.get() == '=')
             return Token::Eq;
-        iss.putback(c);
-        return Token::Assign;
+        iss.unget();
     case '+':
-        c = iss.get();
-        if (c == '+')
+        if (iss.get() == '+')
             return Token::Incr;
-        iss.putback(c);
-        return Token::Plus;
+        iss.unget();
     case '-':
-        c = iss.get();
-        if (c == '-')
+        if (iss.get() == '-')
             return Token::Decr;
-        iss.putback(c);
-        return Token::Minus;
+        iss.unget();
     case '<':
     case '>':
     case '#':
@@ -82,38 +76,47 @@ double Parser::primary()
 {
     std::string text = p_lexer->get_curr_buffer();
     // std::cout << "Buf: " << text << std::endl;
-    double arg;
+    double result;
 
     switch (p_lexer->get_current_token())
     {
+    case Token::Id:
+        p_lexer->advance();
+
+        // Evaluate variable name
+        last_var_name = std::to_string(primary());
+
+        // Store initial result, assume post increment/decrement
+        result = symbol_table[last_var_name];
+        for (;;)
+        {
+            switch (p_lexer->get_current_token())
+            {
+            case (Token::Decr):
+                // std::cout << "DECREMENT" << std::endl;
+                p_lexer->advance();
+                symbol_table[last_var_name]--;
+                break;
+            case (Token::Incr):
+                // std::cout << "INCREMENT" << std::endl;
+                p_lexer->advance();
+                symbol_table[last_var_name]++;
+                break;
+            default:
+                return result;
+            }
+        }
     case Token::Number:
         // std::cout << "NUM " << text << std::endl;
         p_lexer->advance();
         return std::stoi(text);
-    case Token::Id:
-        p_lexer->advance();
-        // Evaluate variable name
-        last_var_name = std::to_string(static_cast<int>(primary()));
-        if (p_lexer->get_current_token() == Token::Decr)
-        {
-            // std::cout << "DECREMENT" << std::endl;
-            p_lexer->advance();
-            return symbol_table[last_var_name]--;
-        }
-        if (p_lexer->get_current_token() == Token::Incr)
-        {
-            // std::cout << "INCREMENT" << std::endl;
-            p_lexer->advance();
-            return symbol_table[last_var_name]++;
-        }
-        return symbol_table[last_var_name];
     case Token::Lp:
         p_lexer->advance();
-        arg = add_expr();
+        result = add_expr();
         if (p_lexer->get_current_token() != Token::Rp)
             throw std::runtime_error("No closing parentheses!");
         p_lexer->advance();
-        return arg;
+        return result;
 
     default:
         char token = static_cast<char>(p_lexer->get_current_token());
