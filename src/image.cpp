@@ -114,8 +114,6 @@ void ImageManager::renderText(std::string text)
         return;
     }
 
-    text = "`" + text + "`";
-
     SDL_Surface *surface = TTF_RenderText_Solid_Wrapped(font, text.c_str(), textColor, WINDOW_WIDTH - TEXT_XPOS);
 
     if (surface == NULL)

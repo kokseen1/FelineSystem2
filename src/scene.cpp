@@ -1,4 +1,5 @@
 #include <scene.hpp>
+#include <algorithm>
 
 SceneManager::SceneManager(MusicPlayer *mp, ImageManager *sm) : musicPlayer{mp}, imageManager{sm}
 {
@@ -38,8 +39,13 @@ void SceneManager::parseNext()
             {
                 LOG << "Empty text!";
             }
-            imageManager->currText = std::string(&stringTable->StringStart);
-            imageManager->displayAll();
+            else
+            {
+                imageManager->currText = std::string(&stringTable->StringStart);
+                imageManager->currText.erase(std::remove(imageManager->currText.begin(), imageManager->currText.end(), '['), imageManager->currText.end());
+                imageManager->currText.erase(std::remove(imageManager->currText.begin(), imageManager->currText.end(), ']'), imageManager->currText.end());
+                imageManager->displayAll();
+            }
             goto next;
         case 0x21: // Set speaker of the message
 #ifdef DIALOGUE_ENABLE
