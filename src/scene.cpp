@@ -119,6 +119,11 @@ void SceneManager::handleCommand(std::string cmdString)
             return;
         }
 
+        if (asset == "blend")
+        {
+            return;
+        }
+
         auto xShiftStr = matches[4].str();
         auto yShiftStr = matches[5].str();
 
