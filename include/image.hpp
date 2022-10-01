@@ -23,7 +23,7 @@
 #define FONT_SIZE 24
 
 #define TEXT_HEIGHT 150
-#define TEXT_XPOS 150
+#define TEXT_XPOS 250
 
 #define Z_INDEX_MAX 10
 
@@ -66,7 +66,7 @@ private:
     TTF_Font *font;
     SDL_Color textColor = {255, 255, 255, 0};
 
-    ImageData currSprites[Z_INDEX_MAX];
+    ImageData currCgs[Z_INDEX_MAX];
     ImageData currBgs[Z_INDEX_MAX];
     ImageData currEgs[Z_INDEX_MAX];
 
@@ -78,7 +78,9 @@ private:
 
     void processImage(byte *, size_t, std::string);
 
-    void displayImage(ImageData);
+    void renderImage(ImageData);
 
-    void setText(std::string);
+    void renderImages();
+
+    void renderText(std::string);
 };

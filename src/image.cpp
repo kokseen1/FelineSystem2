@@ -43,7 +43,7 @@ void ImageManager::renderTexture(SDL_Texture *texture, int xpos, int ypos)
 // Will first attempt to retrieve textures from cache
 // Otherwise, asset file will be fetched
 // Aysnchronously render and display every asset available even when some are not
-void ImageManager::displayImage(ImageData imageData)
+void ImageManager::renderImage(ImageData imageData)
 {
     for (int i = 0; i < imageData.names.size(); i++)
     {
@@ -107,7 +107,7 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
-void ImageManager::setText(std::string text)
+void ImageManager::renderText(std::string text)
 {
     if (text.empty())
     {
@@ -143,20 +143,26 @@ void ImageManager::setText(std::string text)
     SDL_FreeSurface(surface);
 }
 
+// Render images in order of z-index
+void ImageManager::renderImages()
+{
+    for (auto &imageData : currBgs)
+        renderImage(imageData);
+
+    for (auto &imageData : currCgs)
+        renderImage(imageData);
+
+    for (auto &imageData : currEgs)
+        renderImage(imageData);
+}
+
 void ImageManager::displayAll()
 {
     SDL_RenderClear(renderer);
 
-    for (auto &imageData : currBgs)
-        displayImage(imageData);
+    renderImages();
 
-    for (auto &imageData : currSprites)
-        displayImage(imageData);
-
-    for (auto &imageData : currEgs)
-        displayImage(imageData);
-
-    setText(currText);
+    renderText(currText);
 
     SDL_RenderPresent(renderer);
 }
@@ -172,7 +178,7 @@ void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
     switch (type)
     {
     case IMAGE_TYPE::IMAGE_CG:
-        currSprites[zIndex].names.clear();
+        currCgs[zIndex].names.clear();
         break;
     case IMAGE_TYPE::IMAGE_EG:
         currEgs[zIndex].names.clear();
@@ -237,7 +243,7 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         id.names.push_back(cgBase + "_" + Utils::zeroPad(args[3], 3));
         id.names.push_back(cgBase + "_" + Utils::zeroPad(args[4], 4));
 
-        currSprites[zIndex] = id;
+        currCgs[zIndex] = id;
         break;
     }
 

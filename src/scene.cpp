@@ -143,4 +143,8 @@ void SceneManager::handleCommand(std::string cmdString)
     {
         parser.parse(cmdString);
     }
+    else if (std::regex_match(cmdString, std::regex("^fselect$")))
+    {
+        LOG << "FSELECT";
+    }
 }
