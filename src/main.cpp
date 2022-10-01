@@ -41,6 +41,40 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
     return 0;
 }
 
+// The event handler functions can return 1 to suppress the event and disable the default action. That calls event.preventDefault();
+// Returning 0 signals that the event was not consumed by the code, and will allow the event to pass on and bubble up normally.
+EM_BOOL key_callback(int eventType, const EmscriptenKeyboardEvent *e, void *userData)
+{
+    if (eventType == EMSCRIPTEN_EVENT_KEYPRESS && (e->which >= 49 && e->which <= 57))
+    {
+        sceneManager.selectChoice(e->which - 49);
+    }
+    // if (eventType == EMSCRIPTEN_EVENT_KEYPRESS && (!strcmp(e->key, "k")))
+    // LOG << "choice";
+    if (eventType == EMSCRIPTEN_EVENT_KEYPRESS && (!strcmp(e->key, "f") || e->which == 102))
+    {
+        EmscriptenFullscreenChangeEvent fsce;
+        EMSCRIPTEN_RESULT ret = emscripten_get_fullscreen_status(&fsce);
+        if (!fsce.isFullscreen)
+        {
+            printf("Requesting fullscreen..\n");
+            ret = emscripten_request_fullscreen("#canvas", 1);
+        }
+        else
+        {
+            printf("Exiting fullscreen..\n");
+            ret = emscripten_exit_fullscreen();
+            ret = emscripten_get_fullscreen_status(&fsce);
+            if (fsce.isFullscreen)
+            {
+                fprintf(stderr, "Fullscreen exit did not work!\n");
+            }
+        }
+    }
+
+    return 0;
+}
+
 #endif
 
 int main(int argc, char **argv)
@@ -53,6 +87,7 @@ int main(int argc, char **argv)
 
 #ifdef __EMSCRIPTEN__
     EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);
+    ret = emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, key_callback);
     ret = emscripten_set_wheel_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, wheel_callback);
 
     // emscripten_set_main_loop(nextTrack, 0, 1);
