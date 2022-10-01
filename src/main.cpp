@@ -75,6 +75,24 @@ int main(int argc, char **argv)
         case SDL_MOUSEBUTTONDOWN:
             sceneManager.parseNext();
             break;
+        case SDL_KEYDOWN:
+            switch (event.key.keysym.sym)
+            {
+            case SDLK_1:
+            case SDLK_2:
+            case SDLK_3:
+            case SDLK_4:
+            case SDLK_5:
+            case SDLK_6:
+            case SDLK_7:
+            case SDLK_8:
+            case SDLK_9:
+                sceneManager.selectChoice(event.key.keysym.sym - SDLK_1);
+                break;
+            default:
+                break;
+            }
+            break;
 
         case SDL_QUIT:
             done = true;

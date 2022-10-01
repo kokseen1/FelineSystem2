@@ -139,6 +139,19 @@ void SceneManager::handleCommand(std::string cmdString)
             setScript(matches[1].str());
         }
     }
+    else if (std::regex_match(cmdString, matches, std::regex("^(\\d+) (\\w+) (.+)")))
+    {
+        if (matches.size() == 4)
+        {
+            currChoices.push_back(std::make_pair(matches[2].str(), matches[3].str()));
+        }
+
+        for (int i = 0; i < currChoices.size(); i++)
+        {
+            LOG << "[" << i + 1 << "] " << currChoices[i].second;
+        }
+    }
+    // Non-capturing regex
     else if (std::regex_match(cmdString, std::regex("^#.*")))
     {
         parser.parse(cmdString);
@@ -146,5 +159,19 @@ void SceneManager::handleCommand(std::string cmdString)
     else if (std::regex_match(cmdString, std::regex("^fselect$")))
     {
         LOG << "FSELECT";
+        currChoices.clear();
+    }
+}
+
+void SceneManager::selectChoice(int idx)
+{
+    if (idx < currChoices.size())
+    {
+        setScript(currChoices[idx].first);
+        currChoices.clear();
+    }
+    else
+    {
+        LOG << "Selected choice out of bounds!";
     }
 }

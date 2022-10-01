@@ -14,7 +14,7 @@
 #define SCRIPT_PATH "scene/"
 #define SCRIPT_EXT ".cst"
 #define SCRIPT_SIGNATURE "CatScene"
-#define SCRIPT_START "op"
+#define SCRIPT_START "com38"
 
 #define DIALOGUE_ENABLE
 
@@ -24,6 +24,8 @@ private:
     MusicPlayer *musicPlayer;
     ImageManager *imageManager;
     Parser parser;
+
+    std::vector<std::pair<std::string, std::string>> currChoices;
 
     std::vector<byte> currScriptData;
     StringOffsetTable *stringOffsetTable;
@@ -77,6 +79,8 @@ private:
         // Calculate entry count
         stringEntryCount = (stringTableBase - reinterpret_cast<byte *>(stringOffsetTable)) / sizeof(StringOffsetTable);
         currStringEntry = 0;
+
+        parseNext();
     }
 
 public:
@@ -85,4 +89,6 @@ public:
     void parseNext();
 
     void setScript(const std::string);
+
+    void selectChoice(int);
 };
