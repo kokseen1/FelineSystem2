@@ -148,7 +148,7 @@ void SceneManager::handleCommand(std::string cmdString)
 
         for (int i = 0; i < currChoices.size(); i++)
         {
-            LOG << "[" << i + 1 << "] " << currChoices[i].second;
+            std::cout << "[" << i + 1 << "] " << currChoices[i].second << std::endl;
         }
     }
     // Non-capturing regex
