@@ -25,7 +25,7 @@ ImageManager::ImageManager()
     font = TTF_OpenFont(FONT_PATH, FONT_SIZE);
     if (font == NULL)
     {
-        LOG << "Cannot find font!";
+        throw std::runtime_error("Cannot find font!");
     }
 
     std::cout << "ImageManager initialized" << std::endl;
