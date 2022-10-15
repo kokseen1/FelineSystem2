@@ -6,6 +6,8 @@
 
 namespace Utils
 {
+    int null = NULL;
+
     std::string zeroPad(std::string str, size_t len)
     {
         return std::string(len - std::min(len, str.length()), '0') + str;
