@@ -10,6 +10,7 @@
 #include <music.hpp>
 #include <image.hpp>
 #include <parser.hpp>
+#include <file.hpp>
 
 #define SCRIPT_PATH "scene/"
 #define SCRIPT_EXT ".cst"
@@ -21,8 +22,9 @@
 class SceneManager
 {
 private:
-    MusicPlayer *musicPlayer;
-    ImageManager *imageManager;
+    FileManager *fileManager = NULL;
+    MusicPlayer *musicPlayer = NULL;
+    ImageManager *imageManager = NULL;
     Parser parser;
 
     std::vector<std::pair<std::string, std::string>> currChoices;
@@ -84,7 +86,7 @@ private:
     }
 
 public:
-    SceneManager(MusicPlayer *, ImageManager *);
+    SceneManager(MusicPlayer *, ImageManager *, FileManager *);
 
     void parseNext();
 

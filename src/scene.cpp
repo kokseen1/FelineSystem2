@@ -1,7 +1,7 @@
 #include <scene.hpp>
 #include <algorithm>
 
-SceneManager::SceneManager(MusicPlayer *mp, ImageManager *sm) : musicPlayer{mp}, imageManager{sm}
+SceneManager::SceneManager(MusicPlayer *mp, ImageManager *sm, FileManager* fm) : musicPlayer{mp}, imageManager{sm}, fileManager{fm}
 {
     setScript(SCRIPT_START);
 };
@@ -9,7 +9,7 @@ SceneManager::SceneManager(MusicPlayer *mp, ImageManager *sm) : musicPlayer{mp},
 void SceneManager::setScript(const std::string name)
 {
     auto fpath = ASSETS SCRIPT_PATH + name + SCRIPT_EXT;
-    Utils::fetchFileAndProcess(fpath, this, &SceneManager::loadFromBuf, NULL);
+    fileManager->fetchFileAndProcess(fpath, this, &SceneManager::loadFromBuf, NULL);
 }
 
 void SceneManager::parseNext()

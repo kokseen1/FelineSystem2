@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include <file.hpp>
+
 #define CHANNEL_SOUND 0
 #define MUSIC_PATH "bgm/"
 #define MUSIC_EXT ".ogg"
@@ -27,7 +29,7 @@ class MusicPlayer
     };
 
 public:
-    MusicPlayer();
+    MusicPlayer(FileManager *fileManager);
 
     void setMusic(const std::string);
 
@@ -36,6 +38,8 @@ public:
     void playPcm(std::string);
 
 private:
+    FileManager *fileManager = NULL;
+
     Mix_Music *music = NULL;
     Mix_Chunk *soundChunk = NULL;
     SDL_RWops *musicOps = NULL;

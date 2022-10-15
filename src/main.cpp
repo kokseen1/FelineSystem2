@@ -10,15 +10,17 @@
 #include <music.hpp>
 #include <image.hpp>
 #include <scene.hpp>
+#include <file.hpp>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/html5.h>
 #endif
 
-static MusicPlayer musicPlayer;
-static ImageManager imageManager;
-static SceneManager sceneManager(&musicPlayer, &imageManager);
+static FileManager fileManager;
+static MusicPlayer musicPlayer(&fileManager);
+static ImageManager imageManager(&fileManager);
+static SceneManager sceneManager(&musicPlayer, &imageManager, &fileManager);
 
 #ifdef __EMSCRIPTEN__
 

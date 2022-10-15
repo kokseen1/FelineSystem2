@@ -6,7 +6,7 @@
 #include <utils.hpp>
 
 // Create SDL window and renderer
-ImageManager::ImageManager()
+ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
 {
     window = SDL_CreateWindow("FelineSystem2",
                               SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -81,7 +81,7 @@ void ImageManager::renderImage(ImageData imageData)
             textureDataCache.insert({name, std::make_pair(static_cast<SDL_Texture *>(NULL), Stdinfo{})});
 
             const std::string &fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
-            Utils::fetchFileAndProcess(fpath, this, &ImageManager::processImage, name);
+            fileManager->fetchFileAndProcess(fpath, this, &ImageManager::processImage, name);
         }
     }
 }

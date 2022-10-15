@@ -6,7 +6,7 @@
 #define EXT_PCM ".ogg"
 
 // Initialize the audio player
-MusicPlayer::MusicPlayer()
+MusicPlayer::MusicPlayer(FileManager *fm) : fileManager{fm}
 {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)
     {
@@ -32,14 +32,14 @@ void MusicPlayer::playPcm(std::string pcm)
 // Set the current sound file
 void MusicPlayer::setSound(const std::string fpath)
 {
-    Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playSoundFromMem, NULL);
+    fileManager->fetchFileAndProcess(fpath, this, &MusicPlayer::playSoundFromMem, NULL);
 }
 
 // Set the current music file
 void MusicPlayer::setMusic(const std::string name)
 {
     auto fpath = ASSETS MUSIC_PATH + name + MUSIC_EXT;
-    Utils::fetchFileAndProcess(fpath, this, &MusicPlayer::playMusicFromMem, NULL);
+    fileManager->fetchFileAndProcess(fpath, this, &MusicPlayer::playMusicFromMem, NULL);
 }
 
 // Play a local file via filename

@@ -11,6 +11,7 @@
 #include <utility>
 
 #include <hgdecoder.hpp>
+#include <file.hpp>
 
 #define IMAGE_PATH "image/"
 #define IMAGE_EXT ".hg3"
@@ -49,7 +50,7 @@ class ImageManager
 public:
     std::string currText;
 
-    ImageManager();
+    ImageManager(FileManager *) ;
 
     void setImage(IMAGE_TYPE, int, std::string, int, int);
 
@@ -60,6 +61,8 @@ public:
     void displayAll();
 
 private:
+    FileManager *fileManager = NULL;
+
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
 
