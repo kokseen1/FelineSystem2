@@ -80,7 +80,7 @@ void ImageManager::renderImage(ImageData imageData)
             // Set empty entry in cache to signify that request has been made
             textureDataCache.insert({name, std::make_pair(static_cast<SDL_Texture *>(NULL), Stdinfo{})});
 
-            const std::string &fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
+            std::string fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
             fileManager->fetchFileAndProcess(fpath, this, &ImageManager::processImage, name);
         }
     }

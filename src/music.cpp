@@ -30,7 +30,7 @@ void MusicPlayer::playPcm(std::string pcm)
 }
 
 // Set the current sound file
-void MusicPlayer::setSound(const std::string fpath)
+void MusicPlayer::setSound(std::string fpath)
 {
     fileManager->fetchFileAndProcess(fpath, this, &MusicPlayer::playSoundFromMem, NULL);
 }

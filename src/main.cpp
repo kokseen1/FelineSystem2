@@ -17,16 +17,16 @@
 #include <emscripten/html5.h>
 #endif
 
-static FileManager fileManager;
-static MusicPlayer musicPlayer(&fileManager);
-static ImageManager imageManager(&fileManager);
-static SceneManager sceneManager(&musicPlayer, &imageManager, &fileManager);
+#define KIF_DB ASSETS "kif.fs2"
+
+static FileManager fileManager(KIF_DB);
+auto sceneManager = fileManager.sceneManager;
 
 #ifdef __EMSCRIPTEN__
 
 EM_BOOL wheel_callback(int eventType, const EmscriptenWheelEvent *e, void *userData)
 {
-    sceneManager.parseNext();
+    sceneManager->parseNext();
     return 0;
 }
 
@@ -36,7 +36,7 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
     {
         if (eventType == EMSCRIPTEN_EVENT_CLICK)
         {
-            sceneManager.parseNext();
+            sceneManager->parseNext();
         }
     }
 
@@ -49,7 +49,7 @@ EM_BOOL key_callback(int eventType, const EmscriptenKeyboardEvent *e, void *user
 {
     if (eventType == EMSCRIPTEN_EVENT_KEYPRESS && (e->which >= 49 && e->which <= 57))
     {
-        sceneManager.selectChoice(e->which - 49);
+        sceneManager->selectChoice(e->which - 49);
     }
     // if (eventType == EMSCRIPTEN_EVENT_KEYPRESS && (!strcmp(e->key, "k")))
     // LOG << "choice";
@@ -106,11 +106,11 @@ int main(int argc, char **argv)
             break;
 
         case SDL_MOUSEWHEEL:
-            sceneManager.parseNext();
+            sceneManager->parseNext();
             break;
 
         case SDL_MOUSEBUTTONDOWN:
-            sceneManager.parseNext();
+            sceneManager->parseNext();
             break;
         case SDL_KEYDOWN:
             switch (event.key.keysym.sym)
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
             case SDLK_7:
             case SDLK_8:
             case SDLK_9:
-                sceneManager.selectChoice(event.key.keysym.sym - SDLK_1);
+                sceneManager->selectChoice(event.key.keysym.sym - SDLK_1);
                 break;
             default:
                 break;

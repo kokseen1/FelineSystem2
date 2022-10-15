@@ -33,7 +33,7 @@ public:
 
     void setMusic(const std::string);
 
-    void setSound(const std::string);
+    void setSound(std::string);
 
     void playPcm(std::string);
 
