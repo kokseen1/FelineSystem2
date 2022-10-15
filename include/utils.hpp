@@ -124,6 +124,7 @@ namespace Utils
                 Arg *a = reinterpret_cast<Arg *>(arg);
                 auto fpath = a->fpath;
                 LOG << "Could not fetch file " << fpath;
+                delete arg;
             });
 #endif
     }
