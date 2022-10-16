@@ -4,9 +4,9 @@
 
 FileManager::FileManager(const char *dbpath)
 {
-    static MusicPlayer musicPlayer(this);
+    static MusicManager musicManager(this);
     static ImageManager imageManager(this);
-    static SceneManager sceneManager(&musicPlayer, &imageManager, this);
+    static SceneManager sceneManager(&musicManager, &imageManager, this);
     fetchFileAndProcess(dbpath, this, &FileManager::parseKifDb, Utils::null);
 }
 

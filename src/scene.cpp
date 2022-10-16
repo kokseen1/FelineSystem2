@@ -1,7 +1,7 @@
 #include <scene.hpp>
 #include <algorithm>
 
-SceneManager::SceneManager(MusicPlayer *mp, ImageManager *sm, FileManager *fm) : musicPlayer{mp}, imageManager{sm}, fileManager{fm}
+SceneManager::SceneManager(MusicManager *mm, ImageManager *sm, FileManager *fm) : musicManager{mm}, imageManager{sm}, fileManager{fm}
 {
     fileManager->sceneManager = this;
 };
@@ -82,14 +82,14 @@ void SceneManager::handleCommand(std::string cmdString)
     {
         if (matches.size() == 2)
         {
-            musicPlayer->playPcm(matches[1].str());
+            musicManager->playPcm(matches[1].str());
         }
     }
     else if (std::regex_match(cmdString, matches, std::regex("^bgm (\\d+) (\\S+).*")))
     {
         if (matches.size() == 3)
         {
-            musicPlayer->setMusic(matches[2].str());
+            musicManager->setMusic(matches[2].str());
         }
     }
     // bg 0 BG15_d 0 0 0

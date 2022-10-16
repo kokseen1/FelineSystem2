@@ -13,7 +13,7 @@
 #define MUSIC_PATH "bgm/"
 #define MUSIC_EXT ".ogg"
 
-class MusicPlayer
+class MusicManager
 {
     const std::map<std::string, std::string> pcmPathMap = {
         {"YUM", "pcm_a/"},
@@ -29,7 +29,7 @@ class MusicPlayer
     };
 
 public:
-    MusicPlayer(FileManager *fileManager);
+    MusicManager(FileManager *fileManager);
 
     void setMusic(const std::string);
 

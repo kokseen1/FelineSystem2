@@ -6,17 +6,17 @@
 #define EXT_PCM ".ogg"
 
 // Initialize the audio player
-MusicPlayer::MusicPlayer(FileManager *fm) : fileManager{fm}
+MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
 {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)
     {
         std::cout << Mix_GetError() << std::endl;
     }
-    std::cout << "MusicPlayer initialized" << std::endl;
+    std::cout << "MusicManager initialized" << std::endl;
 }
 
 // Play a pcm file via its name
-void MusicPlayer::playPcm(std::string pcm)
+void MusicManager::playPcm(std::string pcm)
 {
     for (auto const &x : pcmPathMap)
     {
@@ -30,20 +30,20 @@ void MusicPlayer::playPcm(std::string pcm)
 }
 
 // Set the current sound file
-void MusicPlayer::setSound(std::string fpath)
+void MusicManager::setSound(std::string fpath)
 {
-    fileManager->fetchFileAndProcess(fpath, this, &MusicPlayer::playSoundFromMem, NULL);
+    fileManager->fetchFileAndProcess(fpath, this, &MusicManager::playSoundFromMem, NULL);
 }
 
 // Set the current music file
-void MusicPlayer::setMusic(const std::string name)
+void MusicManager::setMusic(const std::string name)
 {
     auto fpath = ASSETS MUSIC_PATH + name + MUSIC_EXT;
-    fileManager->fetchFileAndProcess(fpath, this, &MusicPlayer::playMusicFromMem, NULL);
+    fileManager->fetchFileAndProcess(fpath, this, &MusicManager::playMusicFromMem, NULL);
 }
 
 // Play a local file via filename
-void MusicPlayer::playMusicFromFile(const std::string fpath)
+void MusicManager::playMusicFromFile(const std::string fpath)
 {
     stopAndFreeMusic();
     music = Mix_LoadMUS(fpath.c_str());
@@ -57,7 +57,7 @@ void MusicPlayer::playMusicFromFile(const std::string fpath)
 }
 
 // Stop and free any existing music
-void MusicPlayer::stopAndFreeMusic()
+void MusicManager::stopAndFreeMusic()
 {
     if (music != NULL)
     {
@@ -67,7 +67,7 @@ void MusicPlayer::stopAndFreeMusic()
 }
 
 // Free any existing music SDL_RWops
-void MusicPlayer::freeOps(SDL_RWops *ops)
+void MusicManager::freeOps(SDL_RWops *ops)
 {
     if (ops != NULL)
     {

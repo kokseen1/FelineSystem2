@@ -25,7 +25,7 @@ class SceneManager
 {
 private:
     FileManager *fileManager = NULL;
-    MusicPlayer *musicPlayer = NULL;
+    MusicManager *musicManager = NULL;
     ImageManager *imageManager = NULL;
     Parser parser;
 
@@ -88,7 +88,7 @@ private:
     }
 
 public:
-    SceneManager(MusicPlayer *, ImageManager *, FileManager *);
+    SceneManager(MusicManager *, ImageManager *, FileManager *);
 
     void parseNext();
 
