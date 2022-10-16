@@ -10,8 +10,22 @@ from catsys.mt19937 import mt_genrand
 import pathlib
 import sys, os
 
-KIF_SIGNATURE = b"KIF\x00"
+NULL = b"\x00"
+KIF_SIGNATURE = b"KIF" + NULL
+KEY_FILENAME = b"__key__.dat"
 ENTRY_SIZE = 64 + 4 + 4
+
+
+def parse_kif_header(f, raw=False):
+    # Verify signature
+    sig = f.read(4)
+    assert sig == KIF_SIGNATURE
+
+    # Get num entries
+    num_entries_raw = f.read(4)
+    if raw:
+        return num_entries_raw
+    return int.from_bytes(num_entries_raw, "little", signed=False)
 
 
 def get_kif_entry(f):
@@ -21,25 +35,20 @@ def get_kif_entry(f):
     return data[:-8], data[-8:]
 
 
-def dump_kif(kif_path: pathlib.Path, out, toc_seed, kif_idx):
+def dump_kif(kif_path: pathlib.Path, out, toc_seed):
     bf = None
     num_entries = 0
 
     with open(kif_path, "rb") as f:
-        # Verify signature
-        sig = f.read(4)
-        assert sig == KIF_SIGNATURE
-
-        # Get num entries
-        num_entries = int.from_bytes(f.read(4), "little", signed=False)
-        print(f"Dumping {num_entries} entries from {kif_path.name}")
+        num_entries = parse_kif_header(f)
+        print(f"Parsing {num_entries} entries in {kif_path.name}")
 
         # Parse entry table
         for i in range(num_entries):
             fname_raw, metadata_raw = get_kif_entry(f)
 
             # Initialize blowfish
-            if fname_raw.rstrip(b"\x00") == b"__key__.dat":
+            if fname_raw.rstrip(NULL) == KEY_FILENAME:
                 key = mt_genrand(int.from_bytes(metadata_raw[4:], "little")).to_bytes(
                     4, "little"
                 )
@@ -59,17 +68,12 @@ def dump_kif(kif_path: pathlib.Path, out, toc_seed, kif_idx):
                 )
             else:
                 # Unencrypted archive
-                fname = fname_raw.rstrip(b"\x00").decode()
+                fname = fname_raw.rstrip(NULL).decode()
                 metadata = metadata_raw
 
-            out.write(
-                fname.encode(CS2_ENCODING)
-                + b"\x00"
-                + metadata
-                + kif_idx.to_bytes(1, "little"),
-            )
+            out.write(fname.encode(CS2_ENCODING) + NULL + metadata)
 
-    return num_entries
+    return num_entries - 1 if bf else num_entries
 
 
 def dump_kifs(path_raw, dbpath):
@@ -101,13 +105,30 @@ def dump_kifs(path_raw, dbpath):
 
     with open(dbpath, "wb") as out:
         # Write NULL delimited index table
-        out.write(b"\x00".join([p.name.encode() for p in kif_paths]))
+        for kif_path in kif_paths:
+            encrypted = False
+            with open(kif_path, "rb") as f:
+                num_entries = parse_kif_header(f)
+                fname_raw, metadata_raw = get_kif_entry(f)
+                # Assumes key is always the first entry
+                if fname_raw.rstrip(NULL) == KEY_FILENAME:
+                    num_entries -= 1
+                    encrypted = True
+                out.write(kif_path.name.encode())
+                out.write(NULL)
+                out.write(int.to_bytes(num_entries, 4, "little", signed=False))
+                if encrypted:
+                    out.write(b"\x01")
+                    out.write(metadata_raw[4:])
+                else:
+                    out.write(b"\x00")
+
         # Signify end of table
-        out.write(b"\x00\x00")
+        out.write(NULL)
 
         # Dump KIF entries
         for kif_idx, kif_path in enumerate(kif_paths):
-            total_dumped += dump_kif(kif_path, out, toc_seed, kif_idx)
+            total_dumped += dump_kif(kif_path, out, toc_seed)
 
     print(f"Dumped {total_dumped} entries to {dbpath}")
 
