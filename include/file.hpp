@@ -15,14 +15,20 @@
 #include <sstream>
 
 #define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
-#define SIZEOF_KDE 9
 
 typedef struct
 {
     uint32 Offset;
     uint32 Length;
-    unsigned char FileIndex;
+    unsigned char Index;
 } KifDbEntry;
+
+typedef struct
+{
+    std::string Filename;
+    unsigned char IsEncrypted;
+    byte FileKey[4];
+} KifTableEntry;
 
 class SceneManager;
 
@@ -54,7 +60,8 @@ public:
         auto got = kifDb.find(fpath);
         if (got != kifDb.end())
         {
-            fpath = ASSETS + kifTable[got->second.FileIndex];
+            fpath = ASSETS + kifTable[got->second.Index].Filename;
+            std::cout << fpath << std::endl;
             offset = got->second.Offset;
             length = got->second.Length;
         }
@@ -122,8 +129,9 @@ public:
                 LOG << "Decode: " << fpath;
                 LOG << "Size: " << bufVec.size();
                 Blowfish bf;
-                auto k = 1749731286;
-                auto key = static_cast<byte *>(static_cast<void *>(&k));
+                // TODO: Check if index valid
+                // TODO: Check if IsEncrypted
+                auto key = kifTable[got->second.Index].FileKey;
                 bf.SetKey(key, 4);
                 bf.Decrypt(bufVec.data(), bufVec.data(), bufVec.size() & ~7);
             }
@@ -214,7 +222,7 @@ public:
 
 private:
     std::unordered_map<std::string, KifDbEntry> kifDb;
-    std::vector<std::string> kifTable;
+    std::vector<KifTableEntry> kifTable;
 
     void parseKifDb(byte *, size_t, int);
 };

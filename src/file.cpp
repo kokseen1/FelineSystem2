@@ -14,25 +14,43 @@ FileManager::FileManager(const char *dbpath)
 
 void FileManager::parseKifDb(byte *buf, size_t sz, int userdata)
 {
-    auto end = buf + sz;
+    std::vector<uint32> entryCountVec;
 
+    // Parse archive table
     for (;;)
     {
         std::string fname(reinterpret_cast<const char *>(buf));
         buf += fname.size() + 1;
         if (fname.size() == 0)
             break;
-        kifTable.push_back(fname);
+        entryCountVec.push_back(*(reinterpret_cast<uint32 *>(buf)));
+        buf += 4;
+
+        KifTableEntry kte{fname, *(reinterpret_cast<unsigned char *>(buf))};
+        buf += 1;
+        if (kte.IsEncrypted == '\x01')
+        {
+            memcpy(kte.FileKey, buf, 4);
+            buf += 4;
+        }
+        kifTable.push_back(kte);
     }
 
-    for (;;)
+    // Parse archive item entries
+    for (std::size_t i = 0; i != entryCountVec.size(); ++i)
     {
-        std::string fname(reinterpret_cast<const char *>(buf));
-        buf += fname.size() + 1;
-        kifDb[fname] = *(reinterpret_cast<KifDbEntry *>(buf));
-        buf += SIZEOF_KDE;
-        if (buf == end)
-            break;
+        for (uint32 j = 0; j < entryCountVec[i]; j++)
+        {
+            std::string fname(reinterpret_cast<const char *>(buf));
+            buf += fname.size() + 1;
+            KifDbEntry kde;
+            kde.Offset = *(reinterpret_cast<uint32 *>(buf));
+            buf += 4;
+            kde.Length = *(reinterpret_cast<uint32 *>(buf));
+            buf += 4;
+            kde.Index = i;
+            kifDb[fname] = kde;
+        }
     }
 
     sceneManager->setScript(SCRIPT_START);
