@@ -35,6 +35,10 @@ def get_kif_entry(f):
     return data[:-8], data[-8:]
 
 
+def gen_file_key(seed):
+    return mt_genrand(int.from_bytes(seed, "little")).to_bytes(4, "little")
+
+
 def dump_kif(kif_path: pathlib.Path, out, toc_seed):
     bf = None
     num_entries = 0
@@ -49,9 +53,7 @@ def dump_kif(kif_path: pathlib.Path, out, toc_seed):
 
             # Initialize blowfish
             if fname_raw.rstrip(NULL) == KEY_FILENAME:
-                key = mt_genrand(int.from_bytes(metadata_raw[4:], "little")).to_bytes(
-                    4, "little"
-                )
+                key = gen_file_key(metadata_raw[4:])
                 bf = get_blowfish(key)
                 continue
 
@@ -119,7 +121,7 @@ def dump_kifs(path_raw, dbpath):
                 out.write(int.to_bytes(num_entries, 4, "little", signed=False))
                 if encrypted:
                     out.write(b"\x01")
-                    out.write(metadata_raw[4:])
+                    out.write(gen_file_key(metadata_raw[4:]))
                 else:
                     out.write(b"\x00")
 
