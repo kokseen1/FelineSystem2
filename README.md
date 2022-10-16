@@ -10,7 +10,7 @@
 |`char[len]`|ArchiveName|NULL-terminated filename of the KIF archive|
 |`uint32`|EntryCount|Number of entries in archive|
 |`unsigned char`|IsEncrypted|`0x01` if archive is encrypted, `0x00` otherwise|
-|`uint32`|FileKey|Blowfish key for decrypting entries (Only exists if IsEncrypted is `0x01`)|
+|`byte[4]`|FileKey|Blowfish key for decrypting entries (Only exists if IsEncrypted is `0x01`)|
 |`0x00`|TableEnd|Signifies end of table|
 
 ### Archive Item Entry
