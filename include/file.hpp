@@ -57,10 +57,13 @@ public:
         uint64_t offset = -1;
         uint64_t length = -1;
 
+        KifTableEntry kte  ;
+
         auto got = kifDb.find(fpath);
         if (got != kifDb.end())
         {
-            fpath = ASSETS + kifTable[got->second.Index].Filename;
+            kte = kifTable[got->second.Index];
+            fpath = ASSETS + kte.Filename;
             std::cout << fpath << std::endl;
             offset = got->second.Offset;
             length = got->second.Length;
@@ -124,7 +127,8 @@ public:
         }
 
 #endif
-            if (ends_with(fpath, ".int"))
+            if (!kte.Filename.empty())
+            // if (ends_with(fpath, ".int"))
             {
                 LOG << "Decode: " << fpath;
                 LOG << "Size: " << bufVec.size();
