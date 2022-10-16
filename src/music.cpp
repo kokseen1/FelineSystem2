@@ -18,15 +18,16 @@ MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
 // Play a pcm file via its name
 void MusicManager::playPcm(std::string pcm)
 {
-    for (auto const &x : pcmPathMap)
-    {
-        if (pcm.rfind(x.first) == 0)
-        {
-            std::string fpath = ASSETS + x.second + pcm + EXT_PCM;
-            setSound(fpath);
-            return;
-        }
-    }
+    setSound(pcm + EXT_PCM);
+    // for (auto const &x : pcmPathMap)
+    // {
+    //     if (pcm.rfind(x.first) == 0)
+    //     {
+    //         std::string fpath = ASSETS + x.second + pcm + EXT_PCM;
+    //         setSound(fpath);
+    //         return;
+    //     }
+    // }
 }
 
 // Set the current sound file
@@ -38,7 +39,8 @@ void MusicManager::setSound(std::string fpath)
 // Set the current music file
 void MusicManager::setMusic(const std::string name)
 {
-    auto fpath = ASSETS MUSIC_PATH + name + MUSIC_EXT;
+    auto fpath = name + MUSIC_EXT;
+    // auto fpath = ASSETS MUSIC_PATH + name + MUSIC_EXT;
     fileManager->fetchFileAndProcess(fpath, this, &MusicManager::playMusicFromMem, NULL);
 }
 
