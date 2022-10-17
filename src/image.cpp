@@ -209,8 +209,7 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
     {
 
     case IMAGE_TYPE::IMAGE_BG:
-        for (auto &c : asset)
-            c = tolower(c);
+        Utils::lowercase(asset);
         id.names.push_back(asset);
         currBgs[zIndex] = id;
         break;

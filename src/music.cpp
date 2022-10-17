@@ -18,7 +18,9 @@ MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
 // Play a pcm file via its name
 void MusicManager::playPcm(std::string pcm)
 {
-    setSound(pcm + EXT_PCM);
+    std::string fname = pcm + EXT_PCM;
+    Utils::lowercase(fname);
+    setSound(fname);
 }
 
 // Play a file buffer as music

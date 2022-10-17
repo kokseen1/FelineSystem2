@@ -60,4 +60,9 @@ namespace Utils
 
     std::vector<byte> zlibUncompress(uint32, byte *, uint32 &);
 
+    inline void lowercase(std::string &s)
+    {
+        for (auto &c : s)
+            c = tolower(c);
+    }
 }
