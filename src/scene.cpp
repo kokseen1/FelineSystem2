@@ -76,7 +76,7 @@ void SceneManager::parseNext()
         {
         case 0x02: // Wait for input after message
         case 0x03: // Novel page break and wait for input after message
-            LOG << "BREAK";
+            // LOG << "BREAK";
             break;
 
         case 0x20: // Display a message

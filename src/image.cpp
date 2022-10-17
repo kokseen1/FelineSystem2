@@ -66,7 +66,7 @@ void ImageManager::renderImage(ImageData imageData)
                 continue;
             }
 
-            LOG << "Render: " << name;
+            // LOG << "Render: " << name;
 
             auto &stdinfo = textureData.second;
             auto xPos = stdinfo.OffsetX - stdinfo.BaseX + imageData.xShift;
@@ -249,7 +249,7 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
     // Used for synchronization
     // std::cout << SDL_GetTicks() << std::endl;
 
-    LOG << "Queued: " << asset << " @ " << zIndex;
+    // LOG << "Queued: " << asset << " @ " << zIndex;
 
     displayAll();
 }
