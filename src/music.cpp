@@ -61,7 +61,7 @@ void MusicManager::playSoundFromMem(byte *buf, size_t sz, int userdata)
 // Set the current sound file
 void MusicManager::setSound(std::string fpath)
 {
-    fileManager->fetchFileAndProcess(fpath, this, &MusicManager::playSoundFromMem, NULL);
+    fileManager->fetchFileAndProcess(fpath, this, &MusicManager::playSoundFromMem, 0);
 }
 
 // Set the current music file
@@ -69,7 +69,7 @@ void MusicManager::setMusic(const std::string name)
 {
     auto fpath = name + MUSIC_EXT;
     // auto fpath = ASSETS MUSIC_PATH + name + MUSIC_EXT;
-    fileManager->fetchFileAndProcess(fpath, this, &MusicManager::playMusicFromMem, NULL);
+    fileManager->fetchFileAndProcess(fpath, this, &MusicManager::playMusicFromMem, 0);
 }
 
 // Play a local file via filename
