@@ -5,6 +5,7 @@ SceneManager::SceneManager(MusicManager *mm, ImageManager *sm, FileManager *fm) 
 {
     fileManager->sceneManager = this;
 };
+
 // Read a script from a memory buffer
 void SceneManager::loadFromBuf(byte *buf, size_t sz, int userdata)
 {
@@ -53,9 +54,7 @@ void SceneManager::loadFromBuf(byte *buf, size_t sz, int userdata)
 }
 void SceneManager::setScript(const std::string name)
 {
-    auto fpath = name + SCRIPT_EXT;
-    // auto fpath = ASSETS SCRIPT_PATH + name + SCRIPT_EXT;
-    fileManager->fetchFileAndProcess(fpath, this, &SceneManager::loadFromBuf, 0);
+    fileManager->fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadFromBuf, 0);
 }
 
 void SceneManager::parseNext()
@@ -121,7 +120,9 @@ void SceneManager::parseNext()
 // Parse command and dispatch to respective handlers
 void SceneManager::handleCommand(std::string cmdString)
 {
+#ifdef LOG_CMD
     LOG << cmdString;
+#endif
     std::smatch matches;
     if (std::regex_match(cmdString, matches, std::regex("^pcm (\\S+)")))
     {

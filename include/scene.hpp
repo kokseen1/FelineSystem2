@@ -14,12 +14,12 @@
 #include <parser.hpp>
 #include <file.hpp>
 
-#define SCRIPT_PATH "scene/"
 #define SCRIPT_EXT ".cst"
 #define SCRIPT_SIGNATURE "CatScene"
-#define SCRIPT_START "com46"
+#define SCRIPT_START "op"
 
-#define DIALOGUE_ENABLE
+// #define DIALOGUE_ENABLE
+// #define LOG_CMD
 
 class SceneManager
 {

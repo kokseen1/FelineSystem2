@@ -13,7 +13,6 @@
 #include <hgdecoder.hpp>
 #include <file.hpp>
 
-#define IMAGE_PATH "image/"
 #define IMAGE_EXT ".hg3"
 #define IMAGE_SIGNATURE "HG-3"
 
@@ -50,7 +49,7 @@ class ImageManager
 public:
     std::string currText;
 
-    ImageManager(FileManager *) ;
+    ImageManager(FileManager *);
 
     void setImage(IMAGE_TYPE, int, std::string, int, int);
 

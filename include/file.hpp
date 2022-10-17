@@ -3,6 +3,13 @@
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/fetch.h>
+
+// Large file support
+#define fseek64 fseeko
+#define ftell64 ftello
+#else
+#define fseek64 _fseeki64
+#define ftell64 _ftelli64
 #endif
 
 #include <asmodean.h>
@@ -14,6 +21,7 @@
 #include <string>
 #include <sstream>
 
+// Macro for function signature of callbacks passed to FFAP function
 #define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
 
 typedef struct
@@ -25,11 +33,12 @@ typedef struct
 
 typedef struct
 {
-    std::string Filename;
-    unsigned char IsEncrypted;
+    const std::string Filename;
+    const unsigned char IsEncrypted;
     byte FileKey[4];
 } KifTableEntry;
 
+// Forward declaration
 class SceneManager;
 
 class FileManager
@@ -39,106 +48,123 @@ public:
 
     FileManager(const char *);
 
-    std::vector<byte> readFile(const std::string, uint64_t = -1, uint64_t = -1);
-
-    static inline bool ends_with(std::string const &value, std::string const &ending)
-    {
-        if (ending.size() > value.size())
-            return false;
-        return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
-    }
-
+    // Find asset in KIF DB and fetch it and pass data to callback
     template <typename TClass, typename TUserdata>
-    void fetchFileAndProcess(std::string fpath, TClass *classobj, FFAP_CB(cb), TUserdata userdata)
+    void fetchAssetAndProcess(const std::string &fname, TClass *classobj, FFAP_CB(cb), TUserdata userdata)
     {
-        typedef FFAP_CB(TCallback);
-        LOG << "Fetch: " << fpath;
-
-        uint64_t offset = -1;
-        uint64_t length = -1;
-
-        KifTableEntry kte  ;
-
-        auto got = kifDb.find(fpath);
+        auto got = kifDb.find(fname);
         if (got != kifDb.end())
         {
-            kte = kifTable[got->second.Index];
-            fpath = ASSETS + kte.Filename;
-            std::cout << fpath << std::endl;
-            offset = got->second.Offset;
-            length = got->second.Length;
+            const auto &kte = kifTable[got->second.Index];
+            auto offset = got->second.Offset;
+            auto length = got->second.Length;
+
+            typedef FFAP_CB(TCallback);
+
+            // Struct containing original callback data to pass to decryption function callback
+            typedef struct
+            {
+                KifTableEntry kte;
+                TClass *classobj;
+                TCallback cb;
+                TUserdata userdata;
+            } A;
+
+            const A a = {
+                kte,
+                classobj,
+                cb,
+                userdata};
+
+            fetchFileAndProcess(ASSETS + kte.Filename, this, &FileManager::decryptKifAndProcess<A>, a, offset, length);
+        }
+    }
+
+    // Post-fetch decryption function for KIF assets
+    // Passes the decrypted asset to the original callback
+    template <typename A>
+    void decryptKifAndProcess(byte *data, size_t sz, const A a)
+    {
+        if (a.kte.IsEncrypted == '\x01')
+        {
+            // Blowfish decryption
+            Blowfish bf;
+            bf.SetKey(a.kte.FileKey, 4);
+            bf.Decrypt(data, data, sz & ~7);
         }
 
-#ifdef __EMSCRIPTEN__
+        // Call the original callback function
+        (a.classobj->*a.cb)(data, sz, a.userdata);
+    }
 
-        // Define struct to pass to callback as arg
-        typedef struct
-        {
-            const std::string fpath;
-            TClass *classobj;
-            TCallback cb;
-            TUserdata userdata;
-        } Arg;
+    std::vector<byte> readFile(const std::string &, uint64_t = 0, uint64_t = 0);
+
+    // Multi-platform function to fetch a file and pass the contents to a callback
+    // Supports optional offset and length arguments
+    template <typename TClass, typename TUserdata>
+    void fetchFileAndProcess(const std::string &fpath, TClass *classobj, FFAP_CB(cb), const TUserdata &userdata, uint64_t offset = 0, uint64_t length = 0)
+    {
+        typedef FFAP_CB(TCallback);
+
+        LOG << "Fetch: " << fpath;
+
+#ifdef __EMSCRIPTEN__
 
         emscripten_fetch_attr_t attr;
         emscripten_fetch_attr_init(&attr);
         strcpy(attr.requestMethod, "GET");
         attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
 
+        // Define struct to hold additional callback data in addition to userdata
+        typedef struct
+        {
+            TClass *classobj;
+            TCallback cb;
+            TUserdata userdata;
+        } Misc;
+
+        attr.userData = new Misc{
+            classobj,
+            cb,
+            userdata};
+
+        // Handle optional byte range request
         const char *headers[] = {"Range", NULL, NULL};
         std::string range;
-        if (offset != -1 && length != -1)
+        if (length != 0)
         {
             std::ostringstream os;
             // Subtract 1 as last byte should not be included
             os << "bytes=" << offset << "-" << offset + length - 1;
-            std::cout << os.str() << std::endl;
             range = os.str();
             headers[1] = range.c_str();
-            // const char *headers[] = {"Range", os.str().c_str(), NULL};
             attr.requestHeaders = headers;
         }
 
-        attr.userData = new Arg{
-            fpath,
-            classobj,
-            cb,
-            userdata};
+        // Success callback
         attr.onsuccess = [](emscripten_fetch_t *fetch)
         {
-            LOG << "FETCHed " << fetch->numBytes;
+            LOG << "Fetched: " << fetch->url << " Size: " << fetch->numBytes;
             auto buf = reinterpret_cast<const byte *>(fetch->data);
             std::vector<byte> bufVec(buf, buf + fetch->numBytes);
 
             // Retrieve arguments
-            Arg *a = reinterpret_cast<Arg *>(fetch->userData);
+            auto a = reinterpret_cast<Misc *>(fetch->userData);
             TClass *classobj = a->classobj;
             TCallback cb = a->cb;
             TUserdata userdata = a->userdata;
-            std::string fpath = a->fpath;
+
 #else
 
         // Handle local file read
         auto bufVec = readFile(fpath, offset, length);
         if (bufVec.empty())
         {
-            LOG << "Could not read file " << fpath;
+            LOG << "Could not read local file " << fpath;
             return;
         }
 
 #endif
-            if (!kte.Filename.empty())
-            // if (ends_with(fpath, ".int"))
-            {
-                LOG << "Decode: " << fpath;
-                LOG << "Size: " << bufVec.size();
-                Blowfish bf;
-                // TODO: Check if index valid
-                // TODO: Check if IsEncrypted
-                auto key = kifTable[got->second.Index].FileKey;
-                bf.SetKey(key, 4);
-                bf.Decrypt(bufVec.data(), bufVec.data(), bufVec.size() & ~7);
-            }
 
             // Call callback function
             (classobj->*cb)(bufVec.data(), bufVec.size(), userdata);
@@ -147,85 +173,22 @@ public:
 
             delete fetch->userData;
         };
+
         attr.onerror = [](emscripten_fetch_t *fetch)
         {
             std::cout << fetch->statusText << ": " << fetch->url << std::endl;
             delete fetch->userData;
         };
+
         emscripten_fetch(&attr, fpath.c_str());
 #endif
     }
 
-    // Fetch a file and pass the buffer to a callback
-    template <typename TClass, typename TUserdata>
-    void fetchFileAndProcessOld(const std::string &fpath, TClass *classobj, FFAP_CB(cb), TUserdata userdata)
-    {
-        typedef FFAP_CB(TCallback);
-        LOG << "Fetch: " << fpath;
-
-#ifdef __EMSCRIPTEN__
-
-        // Define struct to pass to callback as arg
-        typedef struct
-        {
-            const std::string fpath;
-            TClass *classobj;
-            TCallback cb;
-            TUserdata userdata;
-        } Arg;
-
-        Arg *a = new Arg{
-            fpath,
-            classobj,
-            cb,
-            userdata};
-
-        emscripten_async_wget_data(
-            fpath.c_str(),
-            a,
-            [](void *arg, void *buf, int sz)
-            {
-                std::vector<byte> bufVec(static_cast<byte *>(buf), static_cast<byte *>(buf) + sz);
-
-                // Retrieve arguments
-                Arg *a = reinterpret_cast<Arg *>(arg);
-                TClass *classobj = a->classobj;
-                TCallback cb = a->cb;
-                TUserdata userdata = a->userdata;
-
-#else
-
-        // Handle local file read
-        auto bufVec = readFile(fpath);
-        if (bufVec.empty())
-        {
-            LOG << "Could not read file " << fpath;
-            return;
-        }
-
-#endif
-
-                // Call callback function
-                (classobj->*cb)(bufVec.data(), bufVec.size(), userdata);
-
-#ifdef __EMSCRIPTEN__
-
-                delete arg;
-            },
-
-            // onError callback
-            [](void *arg)
-            {
-                Arg *a = reinterpret_cast<Arg *>(arg);
-                auto fpath = a->fpath;
-                LOG << "Could not fetch file " << fpath;
-                delete arg;
-            });
-#endif
-    }
-
 private:
+    // Map of each asset to their respective offset and length and archive index in the KIF table
     std::unordered_map<std::string, KifDbEntry> kifDb;
+
+    // Vector of KIF archives along with their decryption keys
     std::vector<KifTableEntry> kifTable;
 
     void parseKifDb(byte *, size_t, int);

@@ -80,9 +80,7 @@ void ImageManager::renderImage(ImageData imageData)
             // Set empty entry in cache to signify that request has been made
             textureDataCache.insert({name, std::make_pair(static_cast<SDL_Texture *>(NULL), Stdinfo{})});
 
-            std::string fpath = name + IMAGE_EXT;
-            // std::string fpath = ASSETS IMAGE_PATH + name + IMAGE_EXT;
-            fileManager->fetchFileAndProcess(fpath, this, &ImageManager::processImage, name);
+            fileManager->fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, name);
         }
     }
 }
@@ -211,7 +209,8 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
     {
 
     case IMAGE_TYPE::IMAGE_BG:
-        for (auto & c: asset) c = tolower(c);
+        for (auto &c : asset)
+            c = tolower(c);
         id.names.push_back(asset);
         currBgs[zIndex] = id;
         break;
