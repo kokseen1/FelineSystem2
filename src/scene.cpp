@@ -5,12 +5,57 @@ SceneManager::SceneManager(MusicManager *mm, ImageManager *sm, FileManager *fm) 
 {
     fileManager->sceneManager = this;
 };
+// Read a script from a memory buffer
+void SceneManager::loadFromBuf(byte *buf, size_t sz, int userdata)
+{
+    CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
 
+    // Verify signature
+    if (strncmp(scriptHeader->FileSignature, SCRIPT_SIGNATURE, sizeof(scriptHeader->FileSignature)) != 0)
+    {
+        std::cout << "Invalid CST file signature!" << std::endl;
+        return;
+    }
+
+    // Get pointer to start of raw data
+    auto *scriptDataRaw = reinterpret_cast<byte *>(scriptHeader + 1);
+
+    if (scriptHeader->CompressedSize == 0)
+    {
+        // Uncompressed script
+        currScriptData = std::vector<byte>(scriptDataRaw, scriptDataRaw + scriptHeader->DecompressedSize);
+    }
+    else
+    {
+        auto scriptDataDecompressed = Utils::zlibUncompress(scriptHeader->DecompressedSize, scriptDataRaw, scriptHeader->CompressedSize);
+        if (scriptDataDecompressed.empty())
+        {
+            std::cout << "Script uncompress error" << std::endl;
+            return;
+        }
+        currScriptData = scriptDataDecompressed;
+    }
+
+    // Init script data
+
+    ScriptDataHeader *scriptDataHeader = reinterpret_cast<ScriptDataHeader *>(currScriptData.data());
+    byte *tablesStart = reinterpret_cast<byte *>(scriptDataHeader + 1);
+
+    // Locate offset table and string table
+    stringOffsetTable = reinterpret_cast<StringOffsetTable *>(tablesStart + scriptDataHeader->StringOffsetTableOffset);
+    stringTableBase = tablesStart + scriptDataHeader->StringTableOffset;
+
+    // Calculate entry count
+    stringEntryCount = (stringTableBase - reinterpret_cast<byte *>(stringOffsetTable)) / sizeof(StringOffsetTable);
+    currStringEntry = 0;
+
+    parseNext();
+}
 void SceneManager::setScript(const std::string name)
 {
     auto fpath = name + SCRIPT_EXT;
     // auto fpath = ASSETS SCRIPT_PATH + name + SCRIPT_EXT;
-    fileManager->fetchFileAndProcess(fpath, this, &SceneManager::loadFromBuf, NULL);
+    fileManager->fetchFileAndProcess(fpath, this, &SceneManager::loadFromBuf, 0);
 }
 
 void SceneManager::parseNext()

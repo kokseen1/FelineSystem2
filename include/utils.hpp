@@ -18,8 +18,6 @@
 
 namespace Utils
 {
-    extern int null;
-
     class Log
     {
         std::stringstream ss;

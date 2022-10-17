@@ -39,53 +39,7 @@ private:
 
     void handleCommand(std::string);
 
-    // Read a script from a memory buffer
-    template <typename T>
-    void loadFromBuf(byte *buf, size_t sz, T userdata)
-    {
-        CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
-
-        // Verify signature
-        if (strncmp(scriptHeader->FileSignature, SCRIPT_SIGNATURE, sizeof(scriptHeader->FileSignature)) != 0)
-        {
-            std::cout << "Invalid CST file signature!" << std::endl;
-            return;
-        }
-
-        // Get pointer to start of raw data
-        auto *scriptDataRaw = reinterpret_cast<byte *>(scriptHeader + 1);
-
-        if (scriptHeader->CompressedSize == 0)
-        {
-            // Uncompressed script
-            currScriptData = std::vector<byte>(scriptDataRaw, scriptDataRaw + scriptHeader->DecompressedSize);
-        }
-        else
-        {
-            auto scriptDataDecompressed = Utils::zlibUncompress(scriptHeader->DecompressedSize, scriptDataRaw, scriptHeader->CompressedSize);
-            if (scriptDataDecompressed.empty())
-            {
-                std::cout << "Script uncompress error" << std::endl;
-                return;
-            }
-            currScriptData = scriptDataDecompressed;
-        }
-
-        // Init script data
-
-        ScriptDataHeader *scriptDataHeader = reinterpret_cast<ScriptDataHeader *>(currScriptData.data());
-        byte *tablesStart = reinterpret_cast<byte *>(scriptDataHeader + 1);
-
-        // Locate offset table and string table
-        stringOffsetTable = reinterpret_cast<StringOffsetTable *>(tablesStart + scriptDataHeader->StringOffsetTableOffset);
-        stringTableBase = tablesStart + scriptDataHeader->StringTableOffset;
-
-        // Calculate entry count
-        stringEntryCount = (stringTableBase - reinterpret_cast<byte *>(stringOffsetTable)) / sizeof(StringOffsetTable);
-        currStringEntry = 0;
-
-        parseNext();
-    }
+    void loadFromBuf(byte *, size_t, int);
 
 public:
     SceneManager(MusicManager *, ImageManager *, FileManager *);

@@ -30,6 +30,34 @@ void MusicManager::playPcm(std::string pcm)
     // }
 }
 
+// Play a file buffer as music
+void MusicManager::playMusicFromMem(byte *buf, size_t sz, int userdata)
+{
+    stopAndFreeMusic();
+    freeOps(musicOps);
+    musicVec.clear();
+
+    musicVec.insert(musicVec.end(), buf, buf + sz);
+    musicOps = SDL_RWFromConstMem(musicVec.data(), sz);
+    music = Mix_LoadMUS_RW(musicOps, 0);
+
+    Mix_PlayMusic(music, -1);
+}
+
+// Play a file buffer as sound
+void MusicManager::playSoundFromMem(byte *buf, size_t sz, int userdata)
+{
+    if (soundChunk != NULL)
+    {
+        Mix_HaltChannel(CHANNEL_SOUND);
+        Mix_FreeChunk(soundChunk);
+    }
+    freeOps(soundOps);
+
+    soundOps = SDL_RWFromConstMem(buf, sz);
+    soundChunk = Mix_LoadWAV_RW(soundOps, 0);
+    Mix_PlayChannel(CHANNEL_SOUND, soundChunk, 0);
+}
 // Set the current sound file
 void MusicManager::setSound(std::string fpath)
 {
