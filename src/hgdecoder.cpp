@@ -51,7 +51,7 @@ HGDecoder::Frame HGDecoder::getFrame(FrameTag *frameTag)
 
     while (1)
     {
-        LOG << "Found tag " << frameTag->TagName;
+        // LOG << "Found tag " << frameTag->TagName;
         if (!strcmp(frameTag->TagName, "stdinfo"))
         {
             // Store pointer to Stdinfo
@@ -65,7 +65,7 @@ HGDecoder::Frame HGDecoder::getFrame(FrameTag *frameTag)
         else
         {
             // Ignore tag
-            LOG << "Ignoring tag " << frameTag->TagName;
+            // LOG << "Ignoring tag " << frameTag->TagName;
         }
 
         // Reached last tag
