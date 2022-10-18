@@ -16,10 +16,7 @@
                 "ASSETS=\"build/apps/assets/\""
             ],
             "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "C:/MinGW/bin/g++.exe",
-            "cStandard": "c17",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "windows-gcc-x64"
+            "compilerPath": "C:/MinGW/bin/g++.exe"
         }
     ],
     "version": 4
