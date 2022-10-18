@@ -4,10 +4,5 @@
 *.dll
 test.cpp
 build/objects/
-build/apps/assets/pcm*
-build/apps/assets/image/
-build/apps/assets/scene/
-build/apps/assets/bgm/
-*.fs2
 *.pyc
 *.int
