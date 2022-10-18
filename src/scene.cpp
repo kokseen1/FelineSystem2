@@ -1,13 +1,13 @@
 #include <scene.hpp>
 #include <algorithm>
 
-SceneManager::SceneManager(MusicManager *mm, ImageManager *sm, FileManager *fm) : musicManager{mm}, imageManager{sm}, fileManager{fm}
+SceneManager::SceneManager(MusicManager *mm, ImageManager *im, FileManager *fm) : musicManager{mm}, imageManager{im}, fileManager{fm}
 {
-    fileManager->sceneManager = this;
+    fileManager->init(this);
 };
 
 // Read a script from a memory buffer
-void SceneManager::loadFromBuf(byte *buf, size_t sz, int userdata)
+void SceneManager::loadScript(byte *buf, size_t sz, int userdata)
 {
     CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
 
@@ -52,9 +52,15 @@ void SceneManager::loadFromBuf(byte *buf, size_t sz, int userdata)
 
     parseNext();
 }
+
 void SceneManager::setScript(const std::string name)
 {
-    fileManager->fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadFromBuf, 0);
+    fileManager->fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadScript, 0);
+}
+
+void SceneManager::start()
+{
+    setScript(SCRIPT_START);
 }
 
 void SceneManager::parseNext()

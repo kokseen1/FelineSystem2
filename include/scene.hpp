@@ -24,13 +24,12 @@
 class SceneManager
 {
 private:
+    Parser parser;
     FileManager *fileManager = NULL;
     MusicManager *musicManager = NULL;
     ImageManager *imageManager = NULL;
-    Parser parser;
 
     std::vector<std::pair<std::string, std::string>> currChoices;
-
     std::vector<byte> currScriptData;
     StringOffsetTable *stringOffsetTable;
     byte *stringTableBase;
@@ -39,14 +38,16 @@ private:
 
     void handleCommand(std::string);
 
-    void loadFromBuf(byte *, size_t, int);
+    void loadScript(byte *, size_t, int);
+
+    void setScript(const std::string);
 
 public:
     SceneManager(MusicManager *, ImageManager *, FileManager *);
 
     void parseNext();
 
-    void setScript(const std::string);
+    void start();
 
     void selectChoice(int);
 };

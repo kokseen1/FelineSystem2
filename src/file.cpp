@@ -3,14 +3,14 @@
 #include <scene.hpp>
 #include <fstream>
 
-FileManager::FileManager(const char *dbpath)
+FileManager::FileManager()
 {
-    // Initialize manager classes
-    static MusicManager musicManager(this);
-    static ImageManager imageManager(this);
-    static SceneManager sceneManager(&musicManager, &imageManager, this);
+}
 
-    fetchFileAndProcess(dbpath, this, &FileManager::parseKifDb, 0);
+void FileManager::init(SceneManager *sm)
+{
+    sceneManager = sm;
+    fetchFileAndProcess(KIF_DB, this, &FileManager::parseKifDb, 0);
 }
 
 // Parse a raw KIF database file and populate the KIF DB and table
@@ -65,7 +65,7 @@ void FileManager::parseKifDb(byte *buf, size_t sz, int userdata)
     LOG << "Parsed " << kifDb.size() << " KIF entries";
 
     // Start game
-    sceneManager->setScript(SCRIPT_START);
+    sceneManager->start();
 }
 
 // Read a local file and return its contents as a vector
