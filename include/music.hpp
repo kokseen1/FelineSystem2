@@ -1,13 +1,13 @@
 #pragma once
 
-#include <SDL2/SDL_mixer.h>
+#include <file.hpp>
 #include <asmodean.h>
+
+#include <SDL2/SDL_mixer.h>
 
 #include <map>
 #include <string>
 #include <vector>
-
-#include <file.hpp>
 
 #define CHANNEL_SOUND 0
 #define MUSIC_EXT ".ogg"

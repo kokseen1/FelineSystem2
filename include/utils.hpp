@@ -1,11 +1,11 @@
 #pragma once
 
+#include <asmodean.h>
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
-
 #include <stdio.h>
-#include <asmodean.h>
 
 #include <iostream>
 #include <sstream>

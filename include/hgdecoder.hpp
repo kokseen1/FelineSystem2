@@ -1,7 +1,8 @@
 #pragma once
 
-#include <SDL2/SDL.h>
 #include <hgxformat.h>
+
+#include <SDL2/SDL.h>
 
 #include <vector>
 

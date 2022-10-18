@@ -1,6 +1,11 @@
 #pragma once
 
 #include <cstformat.h>
+#include <utils.hpp>
+#include <music.hpp>
+#include <image.hpp>
+#include <parser.hpp>
+#include <file.hpp>
 
 #include <vector>
 #include <cstring>
@@ -8,14 +13,9 @@
 #include <iostream>
 #include <regex>
 
-#include <utils.hpp>
-#include <music.hpp>
-#include <image.hpp>
-#include <parser.hpp>
-#include <file.hpp>
-
 #define SCRIPT_EXT ".cst"
 #define SCRIPT_SIGNATURE "CatScene"
+
 #define SCRIPT_START "op"
 
 // #define DIALOGUE_ENABLE

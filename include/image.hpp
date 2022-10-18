@@ -1,17 +1,17 @@
 #pragma once
 
+#include <hgdecoder.hpp>
+#include <file.hpp>
+
+#include <asmodean.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-#include <asmodean.h>
 
 #include <string>
 #include <cstring>
 #include <iostream>
 #include <map>
 #include <utility>
-
-#include <hgdecoder.hpp>
-#include <file.hpp>
 
 #define IMAGE_EXT ".hg3"
 #define IMAGE_SIGNATURE "HG-3"

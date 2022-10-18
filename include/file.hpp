@@ -1,9 +1,12 @@
 #pragma once
 
+#include <utils.hpp>
+#include <asmodean.h>
+#include <blowfish.h>
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/fetch.h>
-
 // Large file support
 #define fseek64 fseeko
 #define ftell64 ftello
@@ -12,10 +15,6 @@
 #define ftell64 _ftelli64
 #endif
 
-#include <asmodean.h>
-#include <utils.hpp>
-#include <blowfish.h>
-
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -23,6 +22,7 @@
 
 // Macro for function signature of callbacks passed to FFAP function
 #define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
+
 #define KIF_DB ASSETS "kif.fs2"
 
 typedef struct

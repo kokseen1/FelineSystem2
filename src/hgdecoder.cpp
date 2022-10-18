@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <string.h>
 #include <hgdecoder.hpp>
+#include <utils.hpp>
 #include <hgx2bmp.h>
 
-#include <utils.hpp>
+#include <stdio.h>
+#include <string.h>
 
 // Decodes a frame and returns a vector of pixels rgbaBuffer
 std::vector<byte> HGDecoder::getPixelsFromFrame(Frame frame)

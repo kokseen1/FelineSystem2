@@ -1,4 +1,5 @@
 #include <scene.hpp>
+
 #include <algorithm>
 
 SceneManager::SceneManager(MusicManager *mm, ImageManager *im, FileManager *fm) : musicManager{mm}, imageManager{im}, fileManager{fm}

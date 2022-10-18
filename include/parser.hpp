@@ -28,7 +28,7 @@ class Parser
 public:
     double parse(std::string &);
 
-    void set_lexer_buffer(std::string&);
+    void set_lexer_buffer(std::string &);
 
 private:
     std::string last_var_name; // TODO: Might have better alternative
@@ -45,7 +45,7 @@ private:
 
 class Lexer
 {
-    friend void Parser::set_lexer_buffer(std::string&);
+    friend void Parser::set_lexer_buffer(std::string &);
 
 private:
     Token current_token;

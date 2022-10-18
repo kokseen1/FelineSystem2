@@ -1,9 +1,9 @@
-#include <iostream>
-#include <sstream>
-
 #include <image.hpp>
 #include <hgdecoder.hpp>
 #include <utils.hpp>
+
+#include <iostream>
+#include <sstream>
 
 // Create SDL window and renderer
 ImageManager::ImageManager(FileManager *fm) : fileManager{fm}

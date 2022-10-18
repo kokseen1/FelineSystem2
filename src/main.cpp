@@ -1,12 +1,3 @@
-#include <stdio.h>
-#include <SDL2/SDL.h>
-
-#include <fstream>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <iomanip>
-
 #include <music.hpp>
 #include <image.hpp>
 #include <scene.hpp>
@@ -16,6 +7,14 @@
 #include <emscripten.h>
 #include <emscripten/html5.h>
 #endif
+#include <stdio.h>
+#include <SDL2/SDL.h>
+
+#include <fstream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <iomanip>
 
 // Initialize manager classes
 static FileManager fileManager;

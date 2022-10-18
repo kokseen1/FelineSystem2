@@ -1,6 +1,8 @@
 #include <file.hpp>
-#include <string.h>
 #include <scene.hpp>
+
+#include <string.h>
+
 #include <fstream>
 
 FileManager::FileManager()

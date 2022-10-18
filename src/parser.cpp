@@ -1,6 +1,6 @@
-#include <iostream>
-
 #include <parser.hpp>
+
+#include <iostream>
 
 Lexer::Lexer(const std::string s) : iss{s}
 {
