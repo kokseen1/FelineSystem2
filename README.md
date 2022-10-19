@@ -42,3 +42,10 @@ FelineSystem2 contains a recursive-descent parser custom-built to parse CatScene
 - Integers are the only data type that exist
 - Variable names can only be integers
 - Variable names can by dynamically evaluated
+
+## Special Thanks
+
+- [Trigger](https://github.com/trigger-segfault) for creating such an [amazingly comprehensive knowledgebase](https://github.com/trigger-segfault/TriggersTools.CatSystem2/wiki) of the CS2 engine
+- [asmodean](http://asmodean.reverse.net/pages/exkifint.html) for being a pioneer in reversing the CS2 engine
+- [Dodder](http://www.doddlercon.com/main/) for [Hacking the Grisaia](http://www.doddlercon.com/main/?p=171) for localization
+- [koestl](https://twitter.com/koestl) for his impeccable translations and contributions to localization
