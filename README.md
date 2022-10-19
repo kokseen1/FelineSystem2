@@ -1,7 +1,17 @@
 # ![icon](https://i.imgur.com/fgr54yA.png) FelineSystem2
 
+An open source from-scratch remake of the CS2 engine.
+
+## Features
+
+- Multi-platform (WASM, Windows SDL2)
+- Raw KIF archive decryption
+- HG-3 image decoding and caching
+- Custom-built CatScene recursive-descent parser
 
 ## KIF Database Structure
+
+FelineSystem2 implements a custom database of the game's KIF archives and assets, stored as a binary file.
 
 ### Archive Table
 
