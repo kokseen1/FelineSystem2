@@ -35,8 +35,6 @@ FelineSystem2 implements a custom database of the game's KIF archives and assets
 
 ### Parser
 
-FelineSystem2 contains a recursive-descent parser custom-built to parse CatScene scripts.
-
 - If statements must contain a whitespace after the closing parenthesis of the condition
 - Operators follow C-Style left-to-right precedence and associativity
 - Integers are the only data type that exist
