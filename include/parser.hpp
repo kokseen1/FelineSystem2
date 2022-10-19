@@ -8,6 +8,7 @@ enum class Token
     Id = '#',
     Assign = '=',
     Eq = '==',
+    Neq = '!=',
     Lt = '<',
     Gt = '>',
     Plus = '+',

@@ -23,6 +23,15 @@ Token Lexer::get_next_token()
 
     switch (c)
     {
+        // Multi character tokens
+        // First check for first character match
+        // Then check next character, otherwise call unget and return first token
+    case '!':
+        if (iss.get() == '=')
+            return Token::Neq;
+        iss.unget();
+        // No other token that starts with !
+        throw std::runtime_error(std::string("Invalid token: ") + c);
     case '=':
         if (iss.get() == '=')
             return Token::Eq;
@@ -38,6 +47,8 @@ Token Lexer::get_next_token()
             return Token::Decr;
         iss.unget();
         return Token::Minus;
+
+        // Single character tokens
     case '<':
     case '>':
     case '#':
@@ -214,6 +225,11 @@ double Parser::equality_expr()
         case Token::Eq:
             p_lexer->advance();
             boolean &= result == (tmp = add_expr());
+            result = tmp;
+            break;
+        case Token::Neq:
+            p_lexer->advance();
+            boolean &= result != (tmp = add_expr());
             result = tmp;
             break;
         case Token::Gt:
