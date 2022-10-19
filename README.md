@@ -39,7 +39,7 @@ FelineSystem2 implements a custom database of the game's KIF archives and assets
 - Operators follow C-Style left-to-right precedence and associativity
 - Integers are the only data type that exist
 - Variable names can only be integers
-- Variable names can by dynamically evaluated
+- Variable names can be dynamically evaluated
 
 ## Special Thanks
 
