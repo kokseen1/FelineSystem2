@@ -282,6 +282,7 @@ double Parser::parse(std::string &s)
     Lexer lexer = Lexer{s};
     p_lexer = &lexer;
 
+    // Begin with expression of least precedence
     double result = assign_expr();
 
     p_lexer = NULL;
