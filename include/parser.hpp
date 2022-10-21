@@ -4,24 +4,40 @@
 
 enum class Token
 {
-    Number,
-    Id = '#',
-    Assign = '=',
-    Eq = '==',
-    Neq = '!=',
-    And = '&&',
-    Bor = '|',
-    Lt = '<',
-    Gt = '>',
-    Plus = '+',
-    Incr = '++',
-    Minus = '-',
-    Decr = '--',
-    Mul = '*',
-    Div = '/',
+    Eof = -1,
+    Number = 0,
+
+    // Descending order of precedence
     Lp = '(',
     Rp = ')',
-    Eof = -1,
+    Id = '#',
+    Incr = '++',
+    Decr = '--',
+
+    Mul = '*',
+    Div = '/',
+
+    Plus = '+',
+    Minus = '-',
+
+    Shl = '<<',
+    Shr = '>>',
+
+    Lt = '<',
+    Gt = '>',
+
+    Eq = '==',
+    Neq = '!=',
+
+    Band = '&',
+
+    Bor = '|',
+
+    And = '&&',
+
+    Or = '||',
+
+    Assign = '=',
 };
 
 class Lexer;
