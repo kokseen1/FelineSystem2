@@ -20,10 +20,9 @@
 #define WINDOW_HEIGHT 576
 
 #define FONT_PATH ASSETS "font.ttf"
-#define FONT_SIZE 24
+#define FONT_SIZE 22
 
-#define TEXT_HEIGHT 150
-#define TEXT_XPOS 250
+#define TEXTBOX_WIDTH 650
 
 #define Z_INDEX_MAX 10
 
@@ -78,7 +77,7 @@ private:
 
     void renderTexture(SDL_Texture *, int, int);
 
-    void processImage(byte *, size_t, std::string);
+    void processImage(byte *, size_t, std::pair<std::string, int>);
 
     void renderImage(ImageData);
 

@@ -88,7 +88,7 @@ public:
     {
         typedef FFAP_CB(TCallback);
 
-        LOG << "Fetch: " << fpath;
+        // LOG << "Fetch: " << fpath;
 
 #ifdef __EMSCRIPTEN__
 

@@ -1,9 +1,11 @@
 #include <image.hpp>
 #include <hgdecoder.hpp>
 #include <utils.hpp>
+#include <sys_mwnd.h>
 
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 // Create SDL window and renderer
 ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
@@ -27,6 +29,12 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
     {
         throw std::runtime_error("Cannot find font!");
     }
+
+    // Fetch and cache message window assets
+    // fileManager->fetchFileAndProcess(ASSETS "sys_mwnd", this, &ImageManager::processImage, std::pair<std::string, int>("sys_mwnd_42", 42));
+    // fileManager->fetchFileAndProcess(ASSETS "sys_mwnd", this, &ImageManager::processImage, std::pair<std::string, int>("sys_mwnd_43", 43));
+    processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>("sys_mwnd_42", 42));
+    processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>("sys_mwnd_43", 43));
 
     std::cout << "ImageManager initialized" << std::endl;
 }
@@ -80,7 +88,8 @@ void ImageManager::renderImage(ImageData imageData)
             // Set empty entry in cache to signify that request has been made
             textureDataCache.insert({name, std::make_pair(static_cast<SDL_Texture *>(NULL), Stdinfo{})});
 
-            fileManager->fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, name);
+            // Just handle the first frame for now
+            fileManager->fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, std::pair<std::string, int>(name, 0));
         }
     }
 }
@@ -113,30 +122,52 @@ void ImageManager::renderText(std::string text)
         return;
     }
 
-    SDL_Surface *surface = TTF_RenderText_Solid_Wrapped(font, text.c_str(), textColor, WINDOW_WIDTH - TEXT_XPOS);
+    auto got = textureDataCache.find("sys_mwnd_43");
+    if (got != textureDataCache.end())
+    {
+        auto textureData = got->second;
+        auto texture = textureData.first;
+        if (texture != NULL)
+        {
+            auto &stdinfo = textureData.second;
+            SDL_SetTextureAlphaMod(texture, 120);
+            renderTexture(texture, stdinfo.OffsetX, WINDOW_HEIGHT - stdinfo.Height);
+        }
+    }
 
+    got = textureDataCache.find("sys_mwnd_42");
+    if (got != textureDataCache.end())
+    {
+        auto textureData = got->second;
+        auto texture = textureData.first;
+        if (texture != NULL)
+        {
+            auto &stdinfo = textureData.second;
+            renderTexture(texture, stdinfo.OffsetX, WINDOW_HEIGHT - stdinfo.Height);
+        }
+    }
+
+    // Render text
+    SDL_Surface *surface = TTF_RenderText_Solid_Wrapped(font, text.c_str(), textColor, TEXTBOX_WIDTH);
     if (surface == NULL)
     {
         LOG << "TTF Surface failed!";
         return;
     }
 
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (texture == NULL)
+    SDL_Texture *ttfTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (ttfTexture == NULL)
     {
         LOG << "TTF texture failed!";
         SDL_FreeSurface(surface);
         return;
     }
 
-    SDL_Rect textBaseRect = {TEXT_XPOS, WINDOW_HEIGHT - TEXT_HEIGHT, WINDOW_WIDTH, TEXT_HEIGHT};
-    SDL_RenderDrawRect(renderer, &textBaseRect);
-    SDL_RenderFillRect(renderer, &textBaseRect);
+    // Horizontally center text
+    SDL_Rect rect = {(WINDOW_WIDTH - TEXTBOX_WIDTH) / 2, 450, surface->w, surface->h};
+    SDL_RenderCopy(renderer, ttfTexture, NULL, &rect);
 
-    SDL_Rect rect = {TEXT_XPOS, WINDOW_HEIGHT - TEXT_HEIGHT, surface->w, surface->h};
-    SDL_RenderFillRect(renderer, &textBaseRect);
-    SDL_RenderCopy(renderer, texture, NULL, &rect);
-    SDL_DestroyTexture(texture);
+    SDL_DestroyTexture(ttfTexture);
     SDL_FreeSurface(surface);
 }
 
@@ -254,8 +285,11 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
 }
 
 // Decode a raw HG buffer and display the first frame
-void ImageManager::processImage(byte *buf, size_t sz, std::string name)
+void ImageManager::processImage(byte *buf, size_t sz, std::pair<std::string, int> nameIdx)
 {
+    auto name = nameIdx.first;
+    auto frameIdx = nameIdx.second;
+
     HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
 
     // Verify signature
@@ -274,16 +308,19 @@ void ImageManager::processImage(byte *buf, size_t sz, std::string name)
         return;
     }
 
-    // Just handle the first frame for now
-    auto &frame = frames[0];
+    if (frames.size() > 1)
+    {
+        LOG << name << " contains " << frames.size() << " frames; Size: " << sz;
+    }
+
+    auto &frame = frames[frameIdx];
 
     SDL_Texture *texture = getTextureFromFrame(frame);
 
     // Store texture in cache
-
     textureDataCache[name] = std::make_pair(texture, *frame.Stdinfo);
 
-    LOG << "Cached: " << name;
+    LOG << "Cached: " << name << "[" << frameIdx << "]";
 
     displayAll();
 }
