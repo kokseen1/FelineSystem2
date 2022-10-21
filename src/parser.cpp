@@ -215,8 +215,8 @@ double Parser::add_expr()
 double Parser::equality_expr()
 {
     auto result = add_expr();
-    auto tmp = result;
-    int boolean = -1;
+    // auto tmp = result;
+    // int boolean = -1;
 
     for (;;)
     {
@@ -224,26 +224,30 @@ double Parser::equality_expr()
         {
         case Token::Eq:
             p_lexer->advance();
-            boolean &= result == (tmp = add_expr());
-            result = tmp;
+
+            // C-style
+            result = result == add_expr();
+
+            // Python-style operator chaining (ANDed)
+            // boolean &= result == (tmp = add_expr());
+            // result = tmp;
+
             break;
         case Token::Neq:
             p_lexer->advance();
-            boolean &= result != (tmp = add_expr());
-            result = tmp;
+            result = result != add_expr();
             break;
         case Token::Gt:
             p_lexer->advance();
-            boolean &= result > (tmp = add_expr());
-            result = tmp;
+            result = result > add_expr();
             break;
         case Token::Lt:
             p_lexer->advance();
-            boolean &= result < (tmp = add_expr());
-            result = tmp;
+            result = result < add_expr();
             break;
         default:
-            return boolean == -1 ? result : boolean;
+            return result;
+            // return boolean == -1 ? result : boolean;
         }
     }
 }
