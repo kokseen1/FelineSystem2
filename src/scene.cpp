@@ -147,7 +147,7 @@ void SceneManager::handleCommand(std::string cmdString)
     }
     // bg 0 BG15_d 0 0 0
     // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
-    else if (std::regex_match(cmdString, matches, std::regex("^(bg|cg|eg)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^a-z][^%\\s]*)(?: ([^a-z][^%\\s]*)(?: (\\d)(?: (\\d))?)?)?)?)?)?$")))
+    else if (std::regex_match(cmdString, matches, std::regex("^(bg|cg|eg)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^a-z][^%\\s]*)(?: ([^a-z][^%\\s]*)(?: (\\d)(?: (\\d))?)?)?)?)?)?\\s*$")))
     {
         IMAGE_TYPE type;
         const std::string &typeStr = matches[1].str();
