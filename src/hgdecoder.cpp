@@ -31,6 +31,10 @@ std::vector<byte> HGDecoder::getPixelsFromFrame(Frame frame)
     int depthBytes = BYTE_DEPTH(frame.Stdinfo->BitDepth);
 
     uint32 szRgbaBuffer = frame.Stdinfo->Width * frame.Stdinfo->Height * depthBytes;
+    if (szRgbaBuffer < 1024)
+    {
+        szRgbaBuffer = 1024;
+    }
     std::vector<byte> rgbaBuffer(szRgbaBuffer);
 
     // Decode image
