@@ -9,6 +9,8 @@ enum class Token
     Assign = '=',
     Eq = '==',
     Neq = '!=',
+    And = '&&',
+    Bor = '|',
     Lt = '<',
     Gt = '>',
     Plus = '+',
@@ -36,6 +38,7 @@ private:
     Lexer *p_lexer = NULL;
     std::map<std::string, double> symbol_table{};
 
+    double inequality_expr();
     double equality_expr();
     double assign_expr();
     double add_expr();

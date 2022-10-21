@@ -212,9 +212,31 @@ double Parser::add_expr()
     }
 }
 
-double Parser::equality_expr()
+double Parser::inequality_expr()
 {
     auto result = add_expr();
+
+    for (;;)
+    {
+        switch (p_lexer->get_current_token())
+        {
+        case Token::Gt:
+            p_lexer->advance();
+            result = result > add_expr();
+            break;
+        case Token::Lt:
+            p_lexer->advance();
+            result = result < add_expr();
+            break;
+        default:
+            return result;
+        }
+    }
+}
+
+double Parser::equality_expr()
+{
+    auto result = inequality_expr();
     // auto tmp = result;
     // int boolean = -1;
 
@@ -224,26 +246,15 @@ double Parser::equality_expr()
         {
         case Token::Eq:
             p_lexer->advance();
-
-            // C-style
-            result = result == add_expr();
+            result = result == inequality_expr(); // C-style
 
             // Python-style operator chaining (ANDed)
-            // boolean &= result == (tmp = add_expr());
+            // boolean &= result == (tmp = inequality_expr());
             // result = tmp;
-
             break;
         case Token::Neq:
             p_lexer->advance();
-            result = result != add_expr();
-            break;
-        case Token::Gt:
-            p_lexer->advance();
-            result = result > add_expr();
-            break;
-        case Token::Lt:
-            p_lexer->advance();
-            result = result < add_expr();
+            result = result != inequality_expr();
             break;
         default:
             return result;
