@@ -31,47 +31,54 @@ Token Lexer::get_next_token()
             return Token::Or;
         iss.unget();
         return Token::Bor;
+
     case '&':
         if (iss.get() == '&')
             return Token::And;
         iss.unget();
         return Token::Band;
+
     case '!':
         if (iss.get() == '=')
             return Token::Neq;
         iss.unget();
         // No other token that starts with !
         throw std::runtime_error(std::string("Invalid token: ") + c);
+
     case '=':
         if (iss.get() == '=')
             return Token::Eq;
         iss.unget();
         return Token::Assign;
-    case '+':
-        if (iss.get() == '+')
-            return Token::Incr;
-        iss.unget();
-        return Token::Plus;
-    case '-':
-        if (iss.get() == '-')
-            return Token::Decr;
-        iss.unget();
-        return Token::Minus;
+
     case '<':
         if (iss.get() == '<')
             return Token::Shl;
         iss.unget();
         return Token::Lt;
+
     case '>':
         if (iss.get() == '>')
             return Token::Shr;
         iss.unget();
         return Token::Gt;
 
+    case '+':
+        if (iss.get() == '+')
+            return Token::Incr;
+        iss.unget();
+        return Token::Plus;
+
+    case '-':
+        if (iss.get() == '-')
+            return Token::Decr;
+        iss.unget();
+        return Token::Minus;
+
         // Single character tokens
-    case '#':
     case '*':
     case '/':
+    case '#':
     case '(':
     case ')':
         buffer = c;
