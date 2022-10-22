@@ -131,7 +131,13 @@ void SceneManager::handleCommand(const std::string &cmdString)
     LOG << "'" << cmdString << "'";
 #endif
     std::smatch matches;
-    if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
+    if (std::regex_search(cmdString, matches, std::regex("^wait(?: (\\d+))")))
+    {
+        const std::string &arg = matches[1].str();
+        Uint32 ms = arg.empty() ? 100 : std::stoi(arg);
+        SDL_Delay(ms);
+    }
+    else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
         std::string asset = matches[1].str();
 #ifdef LOWERCASE_ASSETS
