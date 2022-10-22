@@ -20,7 +20,7 @@
 #define WINDOW_HEIGHT 576
 
 #define FONT_PATH ASSETS "font.ttf"
-#define FONT_SIZE 22
+#define FONT_SIZE 20
 
 #define TEXTBOX_WIDTH 650
 
