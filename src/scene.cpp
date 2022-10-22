@@ -133,11 +133,41 @@ void SceneManager::handleCommand(const std::string &cmdString)
     std::smatch matches;
     if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
-        musicManager->playPcm(matches[1].str());
+        std::string asset = matches[1].str();
+#ifdef LOWERCASE_ASSETS
+        Utils::lowercase(asset);
+#endif
+        musicManager->setPCM(asset);
     }
     else if (std::regex_search(cmdString, matches, std::regex("^bgm (\\d+) (\\S+)")))
     {
         musicManager->setMusic(matches[2].str());
+    }
+    else if (std::regex_search(cmdString, matches, std::regex("^se (\\d) ([\\w\\d]+)(?: ([\\w\\d]+))?")))
+    {
+        std::string asset = matches[2].str();
+        const std::string &arg2 = matches[3].str();
+        const int &channel = std::stoi(matches[1].str());
+        int loop = 0;
+
+        if (!arg2.empty())
+        {
+            if (asset == "end")
+            {
+                musicManager->stopSound(channel);
+                return;
+            }
+
+            if (asset == "loop")
+            {
+                asset = arg2;
+                loop = -1;
+            }
+        }
+#ifdef LOWERCASE_ASSETS
+        Utils::lowercase(asset);
+#endif
+        musicManager->setSE(asset, channel, loop);
     }
 
     // Display images
