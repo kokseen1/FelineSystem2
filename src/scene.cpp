@@ -93,14 +93,19 @@ void SceneManager::parseNext()
             }
             else
             {
+                if (speakerCounter == 0)
+                    imageManager->currSpeaker.clear();
+
                 imageManager->currText = std::string(&stringTable->StringStart);
                 imageManager->currText.erase(std::remove(imageManager->currText.begin(), imageManager->currText.end(), '['), imageManager->currText.end());
                 imageManager->currText.erase(std::remove(imageManager->currText.begin(), imageManager->currText.end(), ']'), imageManager->currText.end());
                 imageManager->displayAll();
+                speakerCounter--;
             }
             goto next;
         case 0x21: // Set speaker of the message
             imageManager->currSpeaker = std::string(&stringTable->StringStart);
+            speakerCounter = 1;
             goto next;
 
         case 0x30: // Perform any other command

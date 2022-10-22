@@ -36,6 +36,8 @@ private:
     size_t stringEntryCount;
     size_t currStringEntry;
 
+    int speakerCounter = 0;
+
     void handleCommand(const std::string&);
 
     void loadScript(byte *, size_t, int);

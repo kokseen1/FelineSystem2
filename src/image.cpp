@@ -224,7 +224,6 @@ void ImageManager::displayAll()
     renderText(currText);
 
     renderSpeaker(currSpeaker);
-    currSpeaker.clear();
 
     SDL_RenderPresent(renderer);
 }
