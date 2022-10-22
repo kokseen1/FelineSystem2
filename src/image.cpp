@@ -238,19 +238,27 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         return;
     }
 
+#ifdef LOWERCASE_ASSETS
+    Utils::lowercase(asset);
+#endif
     ImageData id{xShift, yShift};
     switch (type)
     {
 
     case IMAGE_TYPE::IMAGE_BG:
-        Utils::lowercase(asset);
-        id.names.push_back(asset);
-        currBgs[zIndex] = id;
+        if (fileManager->inDb(asset + IMAGE_EXT))
+        {
+            id.names.push_back(asset);
+            currBgs[zIndex] = id;
+        }
         break;
 
     case IMAGE_TYPE::IMAGE_EG:
-        id.names.push_back(asset);
-        currEgs[zIndex] = id;
+        if (fileManager->inDb(asset + IMAGE_EXT))
+        {
+            id.names.push_back(asset);
+            currEgs[zIndex] = id;
+        }
         break;
 
     case IMAGE_TYPE::IMAGE_CG:
@@ -271,11 +279,20 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         }
 
         std::string &cgBase = args[0];
-        id.names.push_back(cgBase + "_" + args[1]);
-        id.names.push_back(cgBase + "_" + Utils::zeroPad(args[3], 3));
-        id.names.push_back(cgBase + "_" + Utils::zeroPad(args[4], 4));
+        std::string cg1 = cgBase + "_" + args[1];
+        std::string cg2 = cgBase + "_" + Utils::zeroPad(args[3], 3);
+        std::string cg3 = cgBase + "_" + Utils::zeroPad(args[4], 4);
 
-        currCgs[zIndex] = id;
+        if (fileManager->inDb(cg1 + IMAGE_EXT))
+            id.names.push_back(cg1);
+        if (fileManager->inDb(cg2 + IMAGE_EXT))
+            id.names.push_back(cg2);
+        if (fileManager->inDb(cg3 + IMAGE_EXT))
+            id.names.push_back(cg3);
+
+        if (!id.names.empty())
+            currCgs[zIndex] = id;
+
         break;
     }
 
@@ -284,7 +301,8 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
 
     // LOG << "Queued: " << asset << " @ " << zIndex;
 
-    displayAll();
+    if (!id.names.empty())
+        displayAll();
 }
 
 // Decode a raw HG buffer and display the first frame

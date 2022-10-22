@@ -60,6 +60,9 @@ void FileManager::parseKifDb(byte *buf, size_t sz, int userdata)
             buf += 4;
             kde.Index = archiveIdx;
 
+#ifdef LOWERCASE_ASSETS
+            Utils::lowercase(fname);
+#endif
             kifDb[fname] = kde;
         }
     }

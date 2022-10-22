@@ -19,7 +19,9 @@ MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
 void MusicManager::playPcm(std::string pcm)
 {
     std::string fname = pcm + PCM_EXT;
-    // Utils::lowercase(fname);
+#ifdef LOWERCASE_ASSETS
+    Utils::lowercase(fname);
+#endif
     setSound(fname);
 }
 

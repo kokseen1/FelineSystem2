@@ -125,30 +125,27 @@ void SceneManager::parseNext()
 }
 
 // Parse command and dispatch to respective handlers
-void SceneManager::handleCommand(std::string cmdString)
+void SceneManager::handleCommand(const std::string &cmdString)
 {
 #ifdef LOG_CMD
-    LOG <<  "`" << cmdString << "`";
+    LOG << "'" << cmdString << "'";
 #endif
     std::smatch matches;
-    if (std::regex_match(cmdString, matches, std::regex("^pcm (\\S+)")))
+    if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
-        if (matches.size() == 2)
-        {
-            musicManager->playPcm(matches[1].str());
-        }
+        musicManager->playPcm(matches[1].str());
     }
-    else if (std::regex_match(cmdString, matches, std::regex("^bgm (\\d+) (\\S+).*")))
+    else if (std::regex_search(cmdString, matches, std::regex("^bgm (\\d+) (\\S+)")))
     {
-        if (matches.size() == 3)
-        {
-            musicManager->setMusic(matches[2].str());
-        }
+        musicManager->setMusic(matches[2].str());
     }
-    // bg 0 BG15_d 0 0 0
-    // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
-    else if (std::regex_match(cmdString, matches, std::regex("^(bg|cg|eg)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^a-z][^%\\s]*)(?: ([^a-z][^%\\s]*)(?: (\\d)(?: (\\d))?)?)?)?)?)?\\s*$")))
+
+    // Display images
+    else if (std::regex_match(cmdString, matches, std::regex("^(bg|cg|eg)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^a-z][^%\\s]*)(?: ([^a-z][^%\\s]*)(?: (\\d+)(?: (\\d+))?)?)?)?)?)?\\s*$")))
     {
+        // bg 0 BG15_d 0 0 0
+        // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
+
         IMAGE_TYPE type;
         const std::string &typeStr = matches[1].str();
         if (typeStr == "bg")
@@ -167,14 +164,9 @@ void SceneManager::handleCommand(std::string cmdString)
 
         int zIndex = std::stoi(zIndexStr);
         const std::string &asset = matches[3].str();
-        if (asset.empty())
+        if (asset.empty() || asset == "0")
         {
             imageManager->clearZIndex(type, zIndex);
-            return;
-        }
-
-        if (asset == "blend")
-        {
             return;
         }
 
@@ -186,42 +178,42 @@ void SceneManager::handleCommand(std::string cmdString)
 
         imageManager->setImage(type, zIndex, asset, xShift, yShift);
     }
-    else if (std::regex_match(cmdString, matches, std::regex("^if\\s*\\((.+)\\)\\s+(.+)")))
+
+    // Conditional statement
+    else if (std::regex_search(cmdString, matches, std::regex("^if\\s*\\((.+)\\)\\s+(.+)")))
     {
-        if (matches.size() == 3)
+        std::string cond = matches[1].str();
+        if (parser.parse(cond) == 1)
         {
-            std::string cond = matches[1].str();
-            if (parser.parse(cond) == 1)
-            {
-                handleCommand(matches[2].str());
-            }
+            handleCommand(matches[2].str());
         }
     }
-    else if (std::regex_match(cmdString, matches, std::regex("^next (\\S+)")))
+
+    // Next scene
+    else if (std::regex_search(cmdString, matches, std::regex("^next (\\S+)")))
     {
-        if (matches.size() == 2)
-        {
-            setScript(matches[1].str());
-        }
+        setScript(matches[1].str());
     }
+
+    // Choice options
     else if (std::regex_match(cmdString, matches, std::regex("^(\\d+) (\\w+) (.+)")))
     {
-        if (matches.size() == 4)
-        {
-            currChoices.push_back(std::make_pair(matches[2].str(), matches[3].str()));
-        }
+        currChoices.push_back(std::make_pair(matches[2].str(), matches[3].str()));
 
         for (int i = 0; i < currChoices.size(); i++)
         {
             std::cout << "[" << i + 1 << "] " << currChoices[i].second << std::endl;
         }
     }
+
     // Non-capturing regex
-    else if (std::regex_match(cmdString, std::regex("^#.*")))
+
+    // Variable assignment
+    else if (std::regex_match(cmdString, std::regex("^#.+")))
     {
         parser.parse(cmdString);
     }
-    else if (std::regex_match(cmdString, std::regex("^fselect$")))
+    else if (std::regex_search(cmdString, std::regex("^fselect")))
     {
         LOG << "FSELECT";
         currChoices.clear();
