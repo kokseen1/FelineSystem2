@@ -100,9 +100,7 @@ void SceneManager::parseNext()
             }
             goto next;
         case 0x21: // Set speaker of the message
-#ifdef DIALOGUE_ENABLE
-            std::cout << &stringTable->StringStart << std::endl;
-#endif
+            imageManager->currSpeaker = std::string(&stringTable->StringStart);
             goto next;
 
         case 0x30: // Perform any other command

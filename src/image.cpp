@@ -115,6 +115,37 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
+void ImageManager::renderSpeaker(const std::string &text)
+{
+    if (text.empty())
+    {
+        return;
+    }
+
+    // Render text
+    SDL_Surface *surface = TTF_RenderText_Solid_Wrapped(font, text.c_str(), textColor, 0);
+    if (surface == NULL)
+    {
+        LOG << "TTF Surface failed!";
+        return;
+    }
+
+    SDL_Texture *ttfTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (ttfTexture == NULL)
+    {
+        LOG << "TTF texture failed!";
+        SDL_FreeSurface(surface);
+        return;
+    }
+
+    // Horizontally center text
+    SDL_Rect rect = {SPEAKER_XPOS, SPEAKER_YPOS, surface->w, surface->h};
+    SDL_RenderCopy(renderer, ttfTexture, NULL, &rect);
+
+    SDL_DestroyTexture(ttfTexture);
+    SDL_FreeSurface(surface);
+}
+
 void ImageManager::renderText(std::string text)
 {
     if (text.empty())
@@ -164,7 +195,7 @@ void ImageManager::renderText(std::string text)
     }
 
     // Horizontally center text
-    SDL_Rect rect = {(WINDOW_WIDTH - TEXTBOX_WIDTH) / 2, 450, surface->w, surface->h};
+    SDL_Rect rect = {TEXT_XPOS, TEXT_YPOS, surface->w, surface->h};
     SDL_RenderCopy(renderer, ttfTexture, NULL, &rect);
 
     SDL_DestroyTexture(ttfTexture);
@@ -191,6 +222,9 @@ void ImageManager::displayAll()
     renderImages();
 
     renderText(currText);
+
+    renderSpeaker(currSpeaker);
+    currSpeaker.clear();
 
     SDL_RenderPresent(renderer);
 }
