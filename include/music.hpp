@@ -9,8 +9,8 @@
 #include <string>
 #include <vector>
 
-#define SOUND_CHANNELS 6
-#define CHANNEL_PCM 5
+#define SOUND_CHANNELS 8
+#define CHANNEL_PCM SOUND_CHANNELS - 1
 
 #define MUSIC_EXT ".ogg"
 #define PCM_EXT ".ogg"
