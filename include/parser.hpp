@@ -45,7 +45,7 @@ class Lexer;
 class Parser
 {
 public:
-    double parse(std::string &);
+    double parse(const std::string &);
 
     void set_lexer_buffer(std::string &);
 
@@ -54,13 +54,18 @@ private:
     Lexer *p_lexer = NULL;
     std::map<std::string, double> symbol_table{};
 
+    double primary();
+    double unary_expr();
+    double mul_expr();
+    double add_expr();
+    double bitshift_expr();
     double inequality_expr();
     double equality_expr();
+    double band_expr();
+    double bor_expr();
+    double and_expr();
+    double or_expr();
     double assign_expr();
-    double add_expr();
-    double mul_expr();
-    double unary_expr();
-    double primary();
 };
 
 class Lexer
