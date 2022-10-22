@@ -206,12 +206,15 @@ void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
     switch (type)
     {
     case IMAGE_TYPE::IMAGE_CG:
+        // LOG << "CLEARING CG" << zIndex;
         currCgs[zIndex].names.clear();
         break;
     case IMAGE_TYPE::IMAGE_EG:
+        // LOG << "CLEARING EG" << zIndex;
         currEgs[zIndex].names.clear();
         break;
     case IMAGE_TYPE::IMAGE_BG:
+        // LOG << "CLEARING BG" << zIndex;
         currBgs[zIndex].names.clear();
         break;
     }
