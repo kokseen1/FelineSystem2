@@ -128,7 +128,7 @@ void SceneManager::parseNext()
 void SceneManager::handleCommand(std::string cmdString)
 {
 #ifdef LOG_CMD
-    LOG << cmdString;
+    LOG <<  "`" << cmdString << "`";
 #endif
     std::smatch matches;
     if (std::regex_match(cmdString, matches, std::regex("^pcm (\\S+)")))
