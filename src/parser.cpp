@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#define BASE_EXPR or_expr
+
 Lexer::Lexer(const std::string s) : iss{s}
 {
     current_token = get_next_token();
@@ -158,7 +160,7 @@ double Parser::primary()
         return std::stoi(buffer);
     case Token::Lp:
         p_lexer->advance();
-        result = add_expr();
+        result = BASE_EXPR();
         if (p_lexer->get_current_token() != Token::Rp)
             throw std::runtime_error("No closing parentheses!");
         p_lexer->advance();
@@ -391,7 +393,7 @@ double Parser::or_expr()
 double Parser::assign_expr()
 {
     Token t = p_lexer->get_current_token();
-    auto result = or_expr();
+    auto result = BASE_EXPR();
 
     if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
     {
@@ -402,7 +404,7 @@ double Parser::assign_expr()
 
         // Evaluate RHS
         p_lexer->advance();
-        result = or_expr();
+        result = BASE_EXPR();
         // std::cout << "SETVAR #" << last_var_name << "=" << result << std::endl;
         symbol_table[last_var_name] = result;
     }
