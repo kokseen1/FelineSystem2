@@ -195,6 +195,8 @@ void SceneManager::parseNext()
 
 void SceneManager::wait(const int duration)
 {
+    if (duration > 1000)
+        return;
     SDL_Delay(duration);
 }
 
@@ -208,7 +210,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     if (std::regex_search(cmdString, matches, std::regex("^wait(?: (\\d+))")))
     {
         const std::string &arg = matches[1].str();
-        Uint32 ms = arg.empty() ? 100 : std::stoi(arg);
+        Uint32 ms = arg.empty() ? 1 : std::stoi(arg);
         wait(ms);
     }
     else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
