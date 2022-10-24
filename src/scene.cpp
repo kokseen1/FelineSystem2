@@ -9,7 +9,7 @@ SceneManager::SceneManager(MusicManager *mm, ImageManager *im, FileManager *fm) 
 };
 
 // Read a script from a memory buffer
-void SceneManager::loadScript(byte *buf, size_t sz, int userdata)
+void SceneManager::loadScript(byte *buf, size_t sz, std::string scriptName)
 {
     CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
 
@@ -52,12 +52,13 @@ void SceneManager::loadScript(byte *buf, size_t sz, int userdata)
     stringEntryCount = (stringTableBase - reinterpret_cast<byte *>(stringOffsetTable)) / sizeof(StringOffsetTable);
     currStringEntry = 0;
 
+    currScriptName = scriptName;
     parseNext();
 }
 
 void SceneManager::setScript(const std::string name)
 {
-    fileManager->fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadScript, 0);
+    fileManager->fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadScript, name);
 }
 
 void SceneManager::start()
@@ -124,12 +125,13 @@ void SceneManager::parseNext()
 {
     if (currScriptData.empty())
     {
-        std::cout << "Script not loaded!" << std::endl;
+        LOG << "Script not loaded!";
         return;
     }
 
     if (currStringEntry < stringEntryCount)
     {
+        auto scriptName = currScriptName;
         auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
 
         stringOffsetTable++;
@@ -152,7 +154,8 @@ void SceneManager::parseNext()
                 if (speakerCounter == 0)
                     imageManager->currSpeaker.clear();
 
-                imageManager->currText = std::string(&stringTable->StringStart);
+                std::string rawText(&stringTable->StringStart);
+                imageManager->currText = rawText;
                 imageManager->currText.erase(std::remove(imageManager->currText.begin(), imageManager->currText.end(), '['), imageManager->currText.end());
                 imageManager->currText.erase(std::remove(imageManager->currText.begin(), imageManager->currText.end(), ']'), imageManager->currText.end());
                 imageManager->displayAll();
@@ -166,6 +169,8 @@ void SceneManager::parseNext()
 
         case 0x30: // Perform any other command
             handleCommand(&stringTable->StringStart);
+            if (scriptName != currScriptName)
+                return;
             goto next;
 
         // Debug commands:

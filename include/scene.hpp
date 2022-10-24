@@ -28,6 +28,7 @@ private:
     MusicManager *musicManager = NULL;
     ImageManager *imageManager = NULL;
 
+    std::string currScriptName;
     std::vector<std::pair<std::string, std::string>> currChoices;
     std::vector<byte> currScriptData;
     StringOffsetTable *stringOffsetTable;
@@ -39,7 +40,7 @@ private:
 
     void handleCommand(const std::string&);
 
-    void loadScript(byte *, size_t, int);
+    void loadScript(byte *, size_t, std::string);
 
     void setScript(const std::string);
 
