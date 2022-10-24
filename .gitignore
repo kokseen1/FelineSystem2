@@ -5,5 +5,4 @@
 test.cpp
 build/objects/
 *.pyc
-*.int
 build/apps/assets*
