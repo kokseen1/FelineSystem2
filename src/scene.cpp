@@ -142,6 +142,11 @@ void SceneManager::parseNext()
         case 0x02: // Wait for input after message
         case 0x03: // Novel page break and wait for input after message
             // LOG << "BREAK";
+            if (autoMode != -1)
+            {
+                wait(100);
+                parseNext();
+            }
             break;
 
         case 0x20: // Display a message
@@ -188,6 +193,11 @@ void SceneManager::parseNext()
     }
 }
 
+void SceneManager::wait(const int duration)
+{
+    SDL_Delay(duration);
+}
+
 // Parse command and dispatch to respective handlers
 void SceneManager::handleCommand(const std::string &cmdString)
 {
@@ -199,7 +209,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     {
         const std::string &arg = matches[1].str();
         Uint32 ms = arg.empty() ? 100 : std::stoi(arg);
-        SDL_Delay(ms);
+        wait(ms);
     }
     else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -306,6 +316,19 @@ void SceneManager::handleCommand(const std::string &cmdString)
         }
     }
 
+    // Auto mode
+    else if (std::regex_search(cmdString, matches, std::regex("^auto (\\w+)")))
+    {
+        const std::string &autoStatus = matches[1].str();
+        if (autoStatus == "on")
+        {
+            autoMode = 0;
+        }
+        else if (autoStatus == "off")
+        {
+            autoMode = -1;
+        }
+    }
     // Non-capturing regex
 
     // Variable assignment

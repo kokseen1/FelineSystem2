@@ -28,6 +28,7 @@ private:
     MusicManager *musicManager = NULL;
     ImageManager *imageManager = NULL;
 
+    int autoMode = -1;
     std::string currScriptName;
     std::vector<std::pair<std::string, std::string>> currChoices;
     std::vector<byte> currScriptData;
@@ -38,7 +39,7 @@ private:
 
     int speakerCounter = 0;
 
-    void handleCommand(const std::string&);
+    void handleCommand(const std::string &);
 
     void loadScript(byte *, size_t, std::string);
 
@@ -54,4 +55,6 @@ public:
     void start();
 
     void selectChoice(int);
+
+    void wait(const int);
 };
