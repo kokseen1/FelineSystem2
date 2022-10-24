@@ -54,16 +54,28 @@ Token Lexer::get_next_token()
         return Token::Assign;
 
     case '<':
-        if (iss.get() == '<')
+        switch (iss.get())
+        {
+        case '<':
             return Token::Shl;
-        iss.unget();
-        return Token::Lt;
+        case '=':
+            return Token::Lte;
+        default:
+            iss.unget();
+            return Token::Lt;
+        }
 
     case '>':
-        if (iss.get() == '>')
+        switch (iss.get())
+        {
+        case '>':
             return Token::Shr;
-        iss.unget();
-        return Token::Gt;
+        case '=':
+            return Token::Gte;
+        default:
+            iss.unget();
+            return Token::Gt;
+        }
 
     case '+':
         if (iss.get() == '+')
@@ -273,9 +285,17 @@ double Parser::inequality_expr()
             p_lexer->advance();
             result = result > bitshift_expr();
             break;
+        case Token::Gte:
+            p_lexer->advance();
+            result = result >= bitshift_expr();
+            break;
         case Token::Lt:
             p_lexer->advance();
             result = result < bitshift_expr();
+            break;
+        case Token::Lte:
+            p_lexer->advance();
+            result = result <= bitshift_expr();
             break;
         default:
             return result;

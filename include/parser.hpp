@@ -25,6 +25,8 @@ enum class Token
 
     Lt = '<',
     Gt = '>',
+    Lte = '<=',
+    Gte = '>=',
 
     Eq = '==',
     Neq = '!=',
