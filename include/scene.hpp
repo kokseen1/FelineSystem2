@@ -42,6 +42,8 @@ private:
 
     void setScript(const std::string);
 
+    std::string sj2utf8(const std::string &);
+
 public:
     SceneManager(MusicManager *, ImageManager *, FileManager *);
 
