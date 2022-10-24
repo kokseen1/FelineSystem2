@@ -18,7 +18,6 @@
 
 #define SCRIPT_START "op"
 
-// #define DIALOGUE_ENABLE
 #define LOG_CMD
 
 class SceneManager
