@@ -9,8 +9,12 @@
 #include <string>
 #include <vector>
 
-#define CHANNEL_SOUND 0
+#define SOUND_CHANNELS 8
+#define CHANNEL_PCM SOUND_CHANNELS - 1
+
 #define MUSIC_EXT ".ogg"
+#define PCM_EXT ".ogg"
+#define SE_EXT ".ogg"
 
 class MusicManager
 {
@@ -20,17 +24,20 @@ public:
 
     void setMusic(const std::string);
 
-    void setSound(std::string);
+    void setPCM(const std::string &);
 
-    void playPcm(std::string);
+    void setSE(const std::string &, const int, const int);
+
+    void stopSound(const int);
 
 private:
     FileManager *fileManager = NULL;
 
+    SDL_RWops *soundOps[SOUND_CHANNELS] = {NULL};
+    Mix_Chunk *soundChunks[SOUND_CHANNELS] = {NULL};
+
     Mix_Music *music = NULL;
-    Mix_Chunk *soundChunk = NULL;
     SDL_RWops *musicOps = NULL;
-    SDL_RWops *soundOps = NULL;
     std::vector<byte> musicVec;
 
     void stopAndFreeMusic();
@@ -43,5 +50,5 @@ private:
 
     void playMusicFromMem(byte *, size_t, int);
 
-    void playSoundFromMem(byte *, size_t, int);
+    void playSoundFromMem(byte *, size_t, const std::pair<int, int>);
 };

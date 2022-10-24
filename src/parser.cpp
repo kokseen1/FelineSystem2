@@ -26,22 +26,49 @@ Token Lexer::get_next_token()
         // Multi character tokens
         // First check for first character match
         // Then check next character, otherwise call unget and return first token
+    case '|':
+        if (iss.get() == '|')
+            return Token::Or;
+        iss.unget();
+        return Token::Bor;
+
+    case '&':
+        if (iss.get() == '&')
+            return Token::And;
+        iss.unget();
+        return Token::Band;
+
     case '!':
         if (iss.get() == '=')
             return Token::Neq;
         iss.unget();
         // No other token that starts with !
         throw std::runtime_error(std::string("Invalid token: ") + c);
+
     case '=':
         if (iss.get() == '=')
             return Token::Eq;
         iss.unget();
         return Token::Assign;
+
+    case '<':
+        if (iss.get() == '<')
+            return Token::Shl;
+        iss.unget();
+        return Token::Lt;
+
+    case '>':
+        if (iss.get() == '>')
+            return Token::Shr;
+        iss.unget();
+        return Token::Gt;
+
     case '+':
         if (iss.get() == '+')
             return Token::Incr;
         iss.unget();
         return Token::Plus;
+
     case '-':
         if (iss.get() == '-')
             return Token::Decr;
@@ -49,11 +76,9 @@ Token Lexer::get_next_token()
         return Token::Minus;
 
         // Single character tokens
-    case '<':
-    case '>':
-    case '#':
     case '*':
     case '/':
+    case '#':
     case '(':
     case ')':
         buffer = c;
@@ -212,9 +237,31 @@ double Parser::add_expr()
     }
 }
 
+double Parser::bitshift_expr()
+{
+    int result = add_expr();
+
+    for (;;)
+    {
+        switch (p_lexer->get_current_token())
+        {
+        case Token::Shl:
+            p_lexer->advance();
+            result <<= static_cast<int>(add_expr());
+            break;
+        case Token::Shr:
+            p_lexer->advance();
+            result >>= static_cast<int>(add_expr());
+            break;
+        default:
+            return result;
+        }
+    }
+}
+
 double Parser::inequality_expr()
 {
-    auto result = add_expr();
+    auto result = bitshift_expr();
 
     for (;;)
     {
@@ -222,11 +269,11 @@ double Parser::inequality_expr()
         {
         case Token::Gt:
             p_lexer->advance();
-            result = result > add_expr();
+            result = result > bitshift_expr();
             break;
         case Token::Lt:
             p_lexer->advance();
-            result = result < add_expr();
+            result = result < bitshift_expr();
             break;
         default:
             return result;
@@ -263,10 +310,88 @@ double Parser::equality_expr()
     }
 }
 
+double Parser::band_expr()
+{
+    int result = equality_expr();
+
+    for (;;)
+    {
+        switch (p_lexer->get_current_token())
+        {
+        case Token::Band:
+            p_lexer->advance();
+            result &= static_cast<int>(equality_expr());
+            break;
+        default:
+            return result;
+        }
+    }
+}
+
+double Parser::bor_expr()
+{
+    int result = band_expr();
+
+    for (;;)
+    {
+        switch (p_lexer->get_current_token())
+        {
+        case Token::Bor:
+            p_lexer->advance();
+            result |= static_cast<int>(band_expr());
+            break;
+        default:
+            return result;
+        }
+    }
+}
+
+double Parser::and_expr()
+{
+    int result = bor_expr();
+    int result_rhs;
+
+    for (;;)
+    {
+        switch (p_lexer->get_current_token())
+        {
+        case Token::And:
+            p_lexer->advance();
+            // Evaluate separately to ensure function is called instead of short-circuiting
+            result_rhs = bor_expr();
+            result = result && result_rhs;
+            break;
+        default:
+            return result;
+        }
+    }
+}
+
+double Parser::or_expr()
+{
+    int result = and_expr();
+    int result_rhs;
+
+    for (;;)
+    {
+        switch (p_lexer->get_current_token())
+        {
+        case Token::Or:
+            p_lexer->advance();
+            // Evaluate separately to ensure function is called instead of short-circuiting
+            result_rhs = and_expr();
+            result = result || result_rhs;
+            break;
+        default:
+            return result;
+        }
+    }
+}
+
 double Parser::assign_expr()
 {
     Token t = p_lexer->get_current_token();
-    auto result = equality_expr();
+    auto result = or_expr();
 
     if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
     {
@@ -277,7 +402,7 @@ double Parser::assign_expr()
 
         // Evaluate RHS
         p_lexer->advance();
-        result = equality_expr();
+        result = or_expr();
         // std::cout << "SETVAR #" << last_var_name << "=" << result << std::endl;
         symbol_table[last_var_name] = result;
     }
@@ -291,7 +416,7 @@ double Parser::assign_expr()
 }
 
 // Evaluate a single string
-double Parser::parse(std::string &s)
+double Parser::parse(const std::string &s)
 {
     // Initialize the lexer with the string
     Lexer lexer = Lexer{s};

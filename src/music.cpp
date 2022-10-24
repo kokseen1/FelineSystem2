@@ -3,8 +3,6 @@
 
 #include <map>
 
-#define PCM_EXT ".ogg"
-
 // Initialize the audio player
 MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
 {
@@ -15,19 +13,25 @@ MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
     std::cout << "MusicManager initialized" << std::endl;
 }
 
-// Play a pcm file via its name
-void MusicManager::playPcm(std::string pcm)
+// Play a specified PCM asset
+// PCM will only use a fixed channel and never loop
+void MusicManager::setPCM(const std::string &asset)
 {
-    std::string fname = pcm + PCM_EXT;
-    Utils::lowercase(fname);
-    setSound(fname);
+    fileManager->fetchAssetAndProcess(asset + PCM_EXT, this, &MusicManager::playSoundFromMem, std::make_pair(CHANNEL_PCM, 0));
+}
+
+// Play a specified sound effect asset
+void MusicManager::setSE(const std::string &asset, const int channel, const int loops)
+{
+    fileManager->fetchAssetAndProcess(asset + SE_EXT, this, &MusicManager::playSoundFromMem, std::make_pair(channel, loops));
 }
 
 // Play a file buffer as music
 void MusicManager::playMusicFromMem(byte *buf, size_t sz, int userdata)
 {
     stopAndFreeMusic();
-    freeOps(musicOps);
+    if (musicOps != NULL)
+        freeOps(musicOps);
     musicVec.clear();
 
     musicVec.insert(musicVec.end(), buf, buf + sz);
@@ -38,23 +42,39 @@ void MusicManager::playMusicFromMem(byte *buf, size_t sz, int userdata)
 }
 
 // Play a file buffer as sound
-void MusicManager::playSoundFromMem(byte *buf, size_t sz, int userdata)
+void MusicManager::playSoundFromMem(byte *buf, size_t sz, const std::pair<int, int> channelLoops)
 {
-    if (soundChunk != NULL)
-    {
-        Mix_HaltChannel(CHANNEL_SOUND);
-        Mix_FreeChunk(soundChunk);
-    }
-    freeOps(soundOps);
+    const int &channel = channelLoops.first;
+    const int &loops = channelLoops.second;
 
-    soundOps = SDL_RWFromConstMem(buf, sz);
-    soundChunk = Mix_LoadWAV_RW(soundOps, 0);
-    Mix_PlayChannel(CHANNEL_SOUND, soundChunk, 0);
+    if (channel >= SOUND_CHANNELS)
+    {
+        LOG << "CHANNEL OUT OF BOUNDS!";
+        return;
+    }
+
+    stopSound(channel);
+
+    soundOps[channel] = SDL_RWFromConstMem(buf, sz);
+    soundChunks[channel] = Mix_LoadWAV_RW(soundOps[channel], 0);
+    Mix_PlayChannel(channel, soundChunks[channel], loops);
 }
-// Set the current sound file
-void MusicManager::setSound(std::string fpath)
+
+// Stops a sound and frees the channel
+void MusicManager::stopSound(const int channel)
 {
-    fileManager->fetchAssetAndProcess(fpath, this, &MusicManager::playSoundFromMem, 0);
+    if (soundChunks[channel] != NULL)
+    {
+        Mix_HaltChannel(channel);
+        Mix_FreeChunk(soundChunks[channel]);
+        soundChunks[channel] = NULL;
+    }
+
+    if (soundOps[channel] != NULL)
+    {
+        freeOps(soundOps[channel]);
+        soundOps[channel] = NULL;
+    }
 }
 
 // Set the current music file
@@ -91,11 +111,8 @@ void MusicManager::stopAndFreeMusic()
 // Free any existing music SDL_RWops
 void MusicManager::freeOps(SDL_RWops *ops)
 {
-    if (ops != NULL)
+    if (SDL_RWclose(ops) < 0)
     {
-        if (SDL_RWclose(ops) < 0)
-        {
-            std::cout << "Could not free RWops" << std::endl;
-        }
+        LOG << "Could not free RWops";
     }
 }

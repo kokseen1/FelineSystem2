@@ -24,6 +24,7 @@
 #define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
 
 #define KIF_DB ASSETS "kif.fs2"
+#define LOWERCASE_ASSETS
 
 typedef struct
 {
@@ -53,6 +54,9 @@ public:
     template <typename TClass, typename TUserdata>
     void fetchAssetAndProcess(const std::string &fname, TClass *classobj, FFAP_CB(cb), TUserdata userdata)
     {
+#ifdef LOWERCASE_ASSETS
+        Utils::lowercase(const_cast<std::string &>(fname));
+#endif
         auto got = kifDb.find(fname);
         if (got != kifDb.end())
         {
@@ -164,6 +168,11 @@ public:
 
         emscripten_fetch(&attr, fpath.c_str());
 #endif
+    }
+
+    inline bool inDb(const std::string &name)
+    {
+        return kifDb.find(name) != kifDb.end();
     }
 
 private:

@@ -115,6 +115,37 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
+void ImageManager::renderSpeaker(const std::string &text)
+{
+    if (text.empty())
+    {
+        return;
+    }
+
+    // Render text
+    SDL_Surface *surface = TTF_RenderText_Solid_Wrapped(font, text.c_str(), textColor, 0);
+    if (surface == NULL)
+    {
+        LOG << "TTF Surface failed!";
+        return;
+    }
+
+    SDL_Texture *ttfTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (ttfTexture == NULL)
+    {
+        LOG << "TTF texture failed!";
+        SDL_FreeSurface(surface);
+        return;
+    }
+
+    // Horizontally center text
+    SDL_Rect rect = {SPEAKER_XPOS, SPEAKER_YPOS, surface->w, surface->h};
+    SDL_RenderCopy(renderer, ttfTexture, NULL, &rect);
+
+    SDL_DestroyTexture(ttfTexture);
+    SDL_FreeSurface(surface);
+}
+
 void ImageManager::renderText(std::string text)
 {
     if (text.empty())
@@ -164,7 +195,7 @@ void ImageManager::renderText(std::string text)
     }
 
     // Horizontally center text
-    SDL_Rect rect = {(WINDOW_WIDTH - TEXTBOX_WIDTH) / 2, 450, surface->w, surface->h};
+    SDL_Rect rect = {TEXT_XPOS, TEXT_YPOS, surface->w, surface->h};
     SDL_RenderCopy(renderer, ttfTexture, NULL, &rect);
 
     SDL_DestroyTexture(ttfTexture);
@@ -192,6 +223,8 @@ void ImageManager::displayAll()
 
     renderText(currText);
 
+    renderSpeaker(currSpeaker);
+
     SDL_RenderPresent(renderer);
 }
 
@@ -206,12 +239,15 @@ void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
     switch (type)
     {
     case IMAGE_TYPE::IMAGE_CG:
+        // LOG << "CLEARING CG" << zIndex;
         currCgs[zIndex].names.clear();
         break;
     case IMAGE_TYPE::IMAGE_EG:
+        // LOG << "CLEARING EG" << zIndex;
         currEgs[zIndex].names.clear();
         break;
     case IMAGE_TYPE::IMAGE_BG:
+        // LOG << "CLEARING BG" << zIndex;
         currBgs[zIndex].names.clear();
         break;
     }
@@ -235,19 +271,27 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         return;
     }
 
+#ifdef LOWERCASE_ASSETS
+    Utils::lowercase(asset);
+#endif
     ImageData id{xShift, yShift};
     switch (type)
     {
 
     case IMAGE_TYPE::IMAGE_BG:
-        Utils::lowercase(asset);
-        id.names.push_back(asset);
-        currBgs[zIndex] = id;
+        if (fileManager->inDb(asset + IMAGE_EXT))
+        {
+            id.names.push_back(asset);
+            currBgs[zIndex] = id;
+        }
         break;
 
     case IMAGE_TYPE::IMAGE_EG:
-        id.names.push_back(asset);
-        currEgs[zIndex] = id;
+        if (fileManager->inDb(asset + IMAGE_EXT))
+        {
+            id.names.push_back(asset);
+            currEgs[zIndex] = id;
+        }
         break;
 
     case IMAGE_TYPE::IMAGE_CG:
@@ -268,11 +312,20 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         }
 
         std::string &cgBase = args[0];
-        id.names.push_back(cgBase + "_" + args[1]);
-        id.names.push_back(cgBase + "_" + Utils::zeroPad(args[3], 3));
-        id.names.push_back(cgBase + "_" + Utils::zeroPad(args[4], 4));
+        std::string cg1 = cgBase + "_" + args[1];
+        std::string cg2 = cgBase + "_" + Utils::zeroPad(args[3], 3);
+        std::string cg3 = cgBase + "_" + Utils::zeroPad(args[4], 4);
 
-        currCgs[zIndex] = id;
+        if (fileManager->inDb(cg1 + IMAGE_EXT))
+            id.names.push_back(cg1);
+        if (fileManager->inDb(cg2 + IMAGE_EXT))
+            id.names.push_back(cg2);
+        if (fileManager->inDb(cg3 + IMAGE_EXT))
+            id.names.push_back(cg3);
+
+        if (!id.names.empty())
+            currCgs[zIndex] = id;
+
         break;
     }
 
@@ -281,7 +334,8 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
 
     // LOG << "Queued: " << asset << " @ " << zIndex;
 
-    displayAll();
+    if (!id.names.empty())
+        displayAll();
 }
 
 // Decode a raw HG buffer and display the first frame

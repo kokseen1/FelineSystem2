@@ -19,7 +19,7 @@
 #define SCRIPT_START "op"
 
 // #define DIALOGUE_ENABLE
-// #define LOG_CMD
+#define LOG_CMD
 
 class SceneManager
 {
@@ -36,7 +36,9 @@ private:
     size_t stringEntryCount;
     size_t currStringEntry;
 
-    void handleCommand(std::string);
+    int speakerCounter = 0;
+
+    void handleCommand(const std::string&);
 
     void loadScript(byte *, size_t, int);
 

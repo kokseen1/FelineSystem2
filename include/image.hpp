@@ -19,10 +19,16 @@
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 576
 
-#define FONT_PATH ASSETS "font.ttf"
-#define FONT_SIZE 22
-
 #define TEXTBOX_WIDTH 650
+
+#define TEXT_XPOS (WINDOW_WIDTH - TEXTBOX_WIDTH) / 2
+#define TEXT_YPOS 450
+
+#define SPEAKER_XPOS TEXT_XPOS + 30
+#define SPEAKER_YPOS 430
+
+#define FONT_PATH ASSETS "font.ttf"
+#define FONT_SIZE 20
 
 #define Z_INDEX_MAX 10
 
@@ -47,6 +53,7 @@ class ImageManager
 
 public:
     std::string currText;
+    std::string currSpeaker;
 
     ImageManager(FileManager *);
 
@@ -84,4 +91,6 @@ private:
     void renderImages();
 
     void renderText(std::string);
+
+    void renderSpeaker(const std::string &);
 };
