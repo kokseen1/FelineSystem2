@@ -7,13 +7,15 @@ from catsys.crypt import (
     vcode_seed,
 )
 from catsys.mt19937 import mt_genrand
-import pathlib
+from pathlib import Path
 import sys, os
+import argparse
 
 NULL = b"\x00"
 KIF_SIGNATURE = b"KIF" + NULL
 KEY_FILENAME = b"__key__.dat"
 ENTRY_SIZE = 64 + 4 + 4
+OUT_FNAME = "kif.fs2"
 
 
 def parse_kif_header(f, raw=False):
@@ -39,7 +41,7 @@ def gen_file_key(seed):
     return mt_genrand(int.from_bytes(seed, "little")).to_bytes(4, "little")
 
 
-def dump_kif(kif_path: pathlib.Path, out, toc_seed):
+def dump_kif(kif_path: Path, out, toc_seed):
     bf = None
     num_entries = 0
 
@@ -78,9 +80,7 @@ def dump_kif(kif_path: pathlib.Path, out, toc_seed):
     return num_entries - 1 if bf else num_entries
 
 
-def dump_kifs(path_raw, dbpath):
-    game_dir = pathlib.Path(path_raw)
-
+def dump_kifs(game_dir: Path, db_path: Path):
     # Find game binary
     bin_paths = []
     for ext in ["exe", "bin"]:
@@ -105,7 +105,7 @@ def dump_kifs(path_raw, dbpath):
 
     total_dumped = 0
 
-    with open(dbpath, "wb") as out:
+    with open(db_path, "wb") as out:
         # Write NULL delimited index table
         for kif_path in kif_paths:
             encrypted = False
@@ -132,16 +132,31 @@ def dump_kifs(path_raw, dbpath):
         for kif_idx, kif_path in enumerate(kif_paths):
             total_dumped += dump_kif(kif_path, out, toc_seed)
 
-    print(f"Dumped {total_dumped} entries to {dbpath}")
+    print(f"Dumped {total_dumped} entries to {db_path}")
 
 
 def main():
-    if len(sys.argv) < 2:
-        print(f"Usage: {os.path.basename(__file__)} GAME_DIR")
-        return
+    parser = argparse.ArgumentParser(description="Dump KIF archive entries")
 
-    dbpath = sys.argv[2] if len(sys.argv) > 2 else "kif.fs2"
-    dump_kifs(sys.argv[1], dbpath)
+    # Required args
+    parser.add_argument("game_dir", help="Path to the game directory containing .int files", type=str)
+
+    # Optional args
+    parser.add_argument("out_dir", nargs="?", help="Path of output db file", type=str)
+
+    args = parser.parse_args()
+
+    game_dir_path = Path(args.game_dir)
+
+    if not args.out_dir:
+        out_db_path = game_dir_path 
+    else:
+        out_db_path = Path(args.out_dir)
+
+    if out_db_path.is_dir():
+        out_db_path /= OUT_FNAME
+
+    dump_kifs(game_dir_path, out_db_path)
 
 
 if __name__ == "__main__":
