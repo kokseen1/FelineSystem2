@@ -132,14 +132,16 @@ def dump_kifs(game_dir: Path, db_path: Path):
         for kif_idx, kif_path in enumerate(kif_paths):
             total_dumped += dump_kif(kif_path, out, toc_seed)
 
-    print(f"Dumped {total_dumped} entries to {db_path}")
+    print(f"Dumped {total_dumped} entries to {db_path.resolve()}")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Dump KIF archive entries")
 
     # Required args
-    parser.add_argument("game_dir", help="Path to the game directory containing .int files", type=str)
+    parser.add_argument(
+        "game_dir", help="Path to the game directory containing .int files", type=str
+    )
 
     # Optional args
     parser.add_argument("out_dir", nargs="?", help="Path of output db file", type=str)
@@ -149,7 +151,7 @@ def main():
     game_dir_path = Path(args.game_dir)
 
     if not args.out_dir:
-        out_db_path = game_dir_path 
+        out_db_path = game_dir_path
     else:
         out_db_path = Path(args.out_dir)
 
