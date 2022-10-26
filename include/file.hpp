@@ -158,12 +158,14 @@ public:
 #ifdef __EMSCRIPTEN__
 
             delete fetch->userData;
+            emscripten_fetch_close(fetch);
         };
 
         attr.onerror = [](emscripten_fetch_t *fetch)
         {
-            std::cout << fetch->statusText << ": " << fetch->url << std::endl;
+            LOG << fetch->statusText << ": " << fetch->url;
             delete fetch->userData;
+            emscripten_fetch_close(fetch);
         };
 
         emscripten_fetch(&attr, fpath.c_str());
