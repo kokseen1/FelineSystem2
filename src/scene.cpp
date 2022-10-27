@@ -253,7 +253,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     }
 
     // Display images
-    else if (std::regex_search(cmdString, matches, std::regex("^(bg|cg|eg)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^a-z][^%\\s]*)(?: ([^a-z][^%\\s]*)(?: (\\d+)(?: (\\d+))?)?)?)?)?)?")))
+    else if (std::regex_search(cmdString, matches, std::regex("^(bg|cg|eg|fw)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^a-z][^%\\s]*)(?: ([^a-z][^%\\s]*)(?: (\\d+)(?: (\\d+))?)?)?)?)?)?")))
     {
         // bg 0 BG15_d 0 0 0
         // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
@@ -266,6 +266,8 @@ void SceneManager::handleCommand(const std::string &cmdString)
             type = IMAGE_TYPE::IMAGE_CG;
         else if (typeStr == "eg")
             type = IMAGE_TYPE::IMAGE_EG;
+        else if (typeStr == "fw")
+            type = IMAGE_TYPE::IMAGE_FW;
 
         const std::string &zIndexStr = matches[2].str();
         if (zIndexStr.empty())

@@ -46,6 +46,7 @@ enum class IMAGE_TYPE
     IMAGE_EG,
     IMAGE_BG,
     IMAGE_CG,
+    IMAGE_FW,
 };
 
 typedef struct
@@ -86,6 +87,7 @@ private:
     ImageData currCgs[Z_INDEX_MAX];
     ImageData currBgs[Z_INDEX_MAX];
     ImageData currEgs[Z_INDEX_MAX];
+    ImageData currFws[Z_INDEX_MAX];
 
     std::map<std::string, TextureData> textureDataCache;
 

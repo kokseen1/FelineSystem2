@@ -224,6 +224,9 @@ void ImageManager::displayAll()
     for (auto &imageData : currEgs)
         renderImage(imageData);
 
+    for (auto &imageData : currFws)
+        renderImage(imageData);
+
     // Render message window
     renderMessageWindow();
     renderMessage(currText);
@@ -233,6 +236,7 @@ void ImageManager::displayAll()
     SDL_RenderPresent(renderer);
 }
 
+// Clear image of type at specified z index
 void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
 {
     if (zIndex >= Z_INDEX_MAX)
@@ -254,6 +258,9 @@ void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
     case IMAGE_TYPE::IMAGE_BG:
         // LOG << "CLEARING BG" << zIndex;
         currBgs[zIndex].names.clear();
+        break;
+    case IMAGE_TYPE::IMAGE_FW:
+        currFws[zIndex].names.clear();
         break;
     }
 }
@@ -299,6 +306,10 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         }
         break;
 
+    case IMAGE_TYPE::IMAGE_FW:
+        // Attempt to match CS2 offsets for FW images
+        id.xShift += 90;
+        id.yShift += 160;
     case IMAGE_TYPE::IMAGE_CG:
         std::stringstream ss(asset);
         std::vector<std::string> args;
@@ -329,7 +340,17 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
             id.names.push_back(cg3);
 
         if (!id.names.empty())
-            currCgs[zIndex] = id;
+        {
+            switch (type)
+            {
+            case IMAGE_TYPE::IMAGE_CG:
+                currCgs[zIndex] = id;
+                break;
+            case IMAGE_TYPE::IMAGE_FW:
+                currFws[zIndex] = id;
+                break;
+            }
+        }
 
         break;
     }
