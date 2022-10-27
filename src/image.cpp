@@ -7,16 +7,16 @@
 #include <sstream>
 #include <vector>
 
-// Create SDL window and renderer
 ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
 {
+    // Create SDL window and renderer
     window = SDL_CreateWindow("FelineSystem2",
                               SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                               WINDOW_WIDTH,
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 50);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     if (TTF_Init() == -1)
@@ -30,13 +30,11 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
         throw std::runtime_error("Cannot find font!");
     }
 
-    // Fetch and cache message window assets
-    // fileManager->fetchFileAndProcess(ASSETS "sys_mwnd", this, &ImageManager::processImage, std::pair<std::string, int>("sys_mwnd_42", 42));
-    // fileManager->fetchFileAndProcess(ASSETS "sys_mwnd", this, &ImageManager::processImage, std::pair<std::string, int>("sys_mwnd_43", 43));
+    // Decode and cache message window assets
     processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>("sys_mwnd_42", 42));
     processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>("sys_mwnd_43", 43));
 
-    std::cout << "ImageManager initialized" << std::endl;
+    LOG << "ImageManager initialized";
 }
 
 // Render a texture onto the renderer at given position
@@ -146,7 +144,7 @@ void ImageManager::renderSpeaker(const std::string &text)
     SDL_FreeSurface(surface);
 }
 
-void ImageManager::renderText(std::string text)
+void ImageManager::renderMessage(std::string text)
 {
     if (text.empty())
     {
@@ -221,7 +219,7 @@ void ImageManager::displayAll()
 
     renderImages();
 
-    renderText(currText);
+    renderMessage(currText);
 
     renderSpeaker(currSpeaker);
 
