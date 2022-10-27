@@ -15,6 +15,7 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
                               WINDOW_WIDTH,
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
+
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -42,21 +43,21 @@ void ImageManager::renderTexture(SDL_Texture *texture, int xpos, int ypos)
 {
     SDL_Rect DestR = {xpos, ypos};
     SDL_QueryTexture(texture, NULL, NULL, &DestR.w, &DestR.h);
-    SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, SDL_FLIP_VERTICAL);
+    SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);
 }
 
 // Render assets specified by ImageData and display the image
 // Will first attempt to retrieve textures from cache
 // Otherwise, asset file will be fetched
 // Aysnchronously render and display every asset available even when some are not
-void ImageManager::renderImage(ImageData imageData)
+void ImageManager::renderImage(const ImageData &imageData)
 {
     for (int i = 0; i < imageData.names.size(); i++)
     {
         auto &name = imageData.names[i];
         if (name.empty())
         {
-            std::cout << "Skipping empty name" << std::endl;
+            LOG << "Skipping empty name";
             continue;
         }
 
@@ -113,6 +114,7 @@ SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
     return texture;
 }
 
+// Render the current speaker name
 void ImageManager::renderSpeaker(const std::string &text)
 {
     if (text.empty())
@@ -128,8 +130,8 @@ void ImageManager::renderSpeaker(const std::string &text)
         return;
     }
 
-    SDL_Texture *ttfTexture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (ttfTexture == NULL)
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (texture == NULL)
     {
         LOG << "TTF texture failed!";
         SDL_FreeSurface(surface);
@@ -138,42 +140,49 @@ void ImageManager::renderSpeaker(const std::string &text)
 
     // Horizontally center text
     SDL_Rect rect = {SPEAKER_XPOS, SPEAKER_YPOS, surface->w, surface->h};
-    SDL_RenderCopy(renderer, ttfTexture, NULL, &rect);
+    SDL_RenderCopy(renderer, texture, NULL, &rect);
 
-    SDL_DestroyTexture(ttfTexture);
+    SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
 }
 
-void ImageManager::renderMessage(std::string text)
+// Retrieve and render message window textures
+void ImageManager::renderMessageWindow()
 {
-    if (text.empty())
-    {
-        return;
-    }
-
+    // Message window bg
     auto got = textureDataCache.find("sys_mwnd_43");
     if (got != textureDataCache.end())
     {
-        auto textureData = got->second;
-        auto texture = textureData.first;
+        auto &textureData = got->second;
+        auto &texture = textureData.first;
         if (texture != NULL)
         {
             auto &stdinfo = textureData.second;
             SDL_SetTextureAlphaMod(texture, 120);
-            renderTexture(texture, stdinfo.OffsetX, WINDOW_HEIGHT - stdinfo.Height);
+            renderTexture(texture, (WINDOW_WIDTH - stdinfo.Width) / 2, WINDOW_HEIGHT - stdinfo.Height);
         }
     }
 
+    // Message window deco
     got = textureDataCache.find("sys_mwnd_42");
     if (got != textureDataCache.end())
     {
-        auto textureData = got->second;
-        auto texture = textureData.first;
+        auto &textureData = got->second;
+        auto &texture = textureData.first;
         if (texture != NULL)
         {
             auto &stdinfo = textureData.second;
-            renderTexture(texture, stdinfo.OffsetX, WINDOW_HEIGHT - stdinfo.Height);
+            renderTexture(texture, (WINDOW_WIDTH - stdinfo.Width) / 2, WINDOW_HEIGHT - stdinfo.Height);
         }
+    }
+}
+
+// Render text onto the message window
+void ImageManager::renderMessage(const std::string &text)
+{
+    if (text.empty())
+    {
+        return;
     }
 
     // Render text
@@ -184,8 +193,8 @@ void ImageManager::renderMessage(std::string text)
         return;
     }
 
-    SDL_Texture *ttfTexture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (ttfTexture == NULL)
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (texture == NULL)
     {
         LOG << "TTF texture failed!";
         SDL_FreeSurface(surface);
@@ -194,15 +203,18 @@ void ImageManager::renderMessage(std::string text)
 
     // Horizontally center text
     SDL_Rect rect = {TEXT_XPOS, TEXT_YPOS, surface->w, surface->h};
-    SDL_RenderCopy(renderer, ttfTexture, NULL, &rect);
+    SDL_RenderCopy(renderer, texture, NULL, &rect);
 
-    SDL_DestroyTexture(ttfTexture);
+    SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
 }
 
-// Render images in order of z-index
-void ImageManager::renderImages()
+void ImageManager::displayAll()
 {
+    // Clear render canvas
+    SDL_RenderClear(renderer);
+
+    // Render images in order of z-index
     for (auto &imageData : currBgs)
         renderImage(imageData);
 
@@ -211,18 +223,13 @@ void ImageManager::renderImages()
 
     for (auto &imageData : currEgs)
         renderImage(imageData);
-}
 
-void ImageManager::displayAll()
-{
-    SDL_RenderClear(renderer);
-
-    renderImages();
-
+    // Render message window
+    renderMessageWindow();
     renderMessage(currText);
-
     renderSpeaker(currSpeaker);
 
+    // Update screen
     SDL_RenderPresent(renderer);
 }
 
@@ -230,7 +237,7 @@ void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
 {
     if (zIndex >= Z_INDEX_MAX)
     {
-        std::cout << "Attempted to clear at out of bounds z-index!" << std::endl;
+        LOG << "Attempted to clear at out of bounds z-index!";
         return;
     }
 
@@ -265,7 +272,7 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
 {
     if (zIndex >= Z_INDEX_MAX)
     {
-        std::cout << "Attempted set image at out of bounds z-index!" << std::endl;
+        LOG << "Attempted set image at out of bounds z-index!";
         return;
     }
 
@@ -305,7 +312,7 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
 
         if (args.size() < 5)
         {
-            std::cout << "Invalid CG args for '" << asset << "'" << std::endl;
+            LOG << "Invalid CG args for '" << asset << "'";
             return;
         }
 
@@ -327,19 +334,14 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         break;
     }
 
-    // Used for synchronization
-    // std::cout << SDL_GetTicks() << std::endl;
-
-    // LOG << "Queued: " << asset << " @ " << zIndex;
-
     if (!id.names.empty())
         displayAll();
 }
 
-// Decode a raw HG buffer and display the first frame
+// Decode a raw HG buffer and display the specified frame
 void ImageManager::processImage(byte *buf, size_t sz, std::pair<std::string, int> nameIdx)
 {
-    auto name = nameIdx.first;
+    auto &name = nameIdx.first;
     auto frameIdx = nameIdx.second;
 
     HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);

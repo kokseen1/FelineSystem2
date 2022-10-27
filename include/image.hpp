@@ -16,19 +16,28 @@
 #define IMAGE_EXT ".hg3"
 #define IMAGE_SIGNATURE "HG-3"
 
+// Flip mode when rendering image assets
+#define RENDERER_FLIP_MODE SDL_FLIP_VERTICAL
+
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 576
 
-#define TEXTBOX_WIDTH 650
-
-#define TEXT_XPOS (WINDOW_WIDTH - TEXTBOX_WIDTH) / 2
-#define TEXT_YPOS 450
-
-#define SPEAKER_XPOS TEXT_XPOS + 30
-#define SPEAKER_YPOS 430
+// #define WINDOW_WIDTH 1280
+// #define WINDOW_HEIGHT 720
 
 #define FONT_PATH ASSETS "font.ttf"
 #define FONT_SIZE 20
+
+// Determines length before wrapping text
+#define TEXTBOX_WIDTH 650
+
+// Centered on window based on width
+#define TEXT_XPOS (WINDOW_WIDTH - TEXTBOX_WIDTH) / 2
+#define TEXT_YPOS WINDOW_HEIGHT - 120
+
+// Relative to text position
+#define SPEAKER_XPOS TEXT_XPOS + 30
+#define SPEAKER_YPOS TEXT_YPOS - 25
 
 #define Z_INDEX_MAX 10
 
@@ -86,11 +95,11 @@ private:
 
     void processImage(byte *, size_t, std::pair<std::string, int>);
 
-    void renderImage(ImageData);
+    void renderImage(const ImageData &);
 
-    void renderImages();
+    void renderMessageWindow();
 
-    void renderText(std::string);
+    void renderMessage(const std::string &);
 
     void renderSpeaker(const std::string &);
 };
