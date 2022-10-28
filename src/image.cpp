@@ -247,25 +247,26 @@ void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
 
     switch (type)
     {
-    case IMAGE_TYPE::IMAGE_CG:
+    case IMAGE_TYPE::CG:
         // LOG << "CLEARING CG" << zIndex;
         currCgs[zIndex].names.clear();
         break;
-    case IMAGE_TYPE::IMAGE_EG:
+    case IMAGE_TYPE::EG:
         // LOG << "CLEARING EG" << zIndex;
         currEgs[zIndex].names.clear();
         break;
-    case IMAGE_TYPE::IMAGE_BG:
+    case IMAGE_TYPE::BG:
         // LOG << "CLEARING BG" << zIndex;
         currBgs[zIndex].names.clear();
         break;
-    case IMAGE_TYPE::IMAGE_FW:
+    case IMAGE_TYPE::FW:
         currFws[zIndex].names.clear();
         break;
     }
 }
 
-void ImageManager::clearAllImage(IMAGE_TYPE type)
+// Clear all layers of specified image type
+void ImageManager::clearImageType(IMAGE_TYPE type)
 {
     for (int i = 0; i < Z_INDEX_MAX; i++)
     {
@@ -290,7 +291,7 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
     switch (type)
     {
 
-    case IMAGE_TYPE::IMAGE_BG:
+    case IMAGE_TYPE::BG:
         if (fileManager->inDb(asset + IMAGE_EXT))
         {
             id.names.push_back(asset);
@@ -298,7 +299,7 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         }
         break;
 
-    case IMAGE_TYPE::IMAGE_EG:
+    case IMAGE_TYPE::EG:
         if (fileManager->inDb(asset + IMAGE_EXT))
         {
             id.names.push_back(asset);
@@ -306,11 +307,11 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         }
         break;
 
-    case IMAGE_TYPE::IMAGE_FW:
+    case IMAGE_TYPE::FW:
         // Attempt to match CS2 offsets for FW images
         id.xShift += 90;
         id.yShift += 160;
-    case IMAGE_TYPE::IMAGE_CG:
+    case IMAGE_TYPE::CG:
         std::stringstream ss(asset);
         std::vector<std::string> args;
 
@@ -343,10 +344,10 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         {
             switch (type)
             {
-            case IMAGE_TYPE::IMAGE_CG:
+            case IMAGE_TYPE::CG:
                 currCgs[zIndex] = id;
                 break;
-            case IMAGE_TYPE::IMAGE_FW:
+            case IMAGE_TYPE::FW:
                 currFws[zIndex] = id;
                 break;
             }

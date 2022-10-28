@@ -258,15 +258,19 @@ void SceneManager::handleCommand(const std::string &cmdString)
         // bg 0 BG15_d 0 0 0
         // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
 
+        // Get image type enum based on identifier
         auto it = imageManager->imageTypes.find(matches[1].str());
         if (it == imageManager->imageTypes.end())
+        {
+            LOG << "Unknown image type identifier!";
             return;
-        const IMAGE_TYPE type = it->second;
+        }
+        const IMAGE_TYPE imageType = it->second;
 
         const std::string &zIndexStr = matches[2].str();
         if (zIndexStr.empty())
         {
-            imageManager->clearAllImage(type);
+            imageManager->clearImageType(imageType);
             return;
         }
 
@@ -274,7 +278,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
         const std::string &asset = matches[3].str();
         if (asset.empty() || asset == "0")
         {
-            imageManager->clearZIndex(type, zIndex);
+            imageManager->clearZIndex(imageType, zIndex);
             return;
         }
 
@@ -284,7 +288,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
         int xShift = xShiftStr.empty() ? 0 : parser.parse(xShiftStr);
         int yShift = yShiftStr.empty() ? 0 : parser.parse(yShiftStr);
 
-        imageManager->setImage(type, zIndex, asset, xShift, yShift);
+        imageManager->setImage(imageType, zIndex, asset, xShift, yShift);
     }
 
     // Conditional statement

@@ -44,10 +44,10 @@
 
 enum class IMAGE_TYPE
 {
-    IMAGE_EG,
-    IMAGE_BG,
-    IMAGE_CG,
-    IMAGE_FW,
+    BG,
+    CG,
+    EG,
+    FW,
 };
 
 typedef struct
@@ -66,18 +66,19 @@ public:
     std::string currText;
     std::string currSpeaker;
 
+    // Map of image type identifiers to their respective enums
     const std::unordered_map<std::string, IMAGE_TYPE> imageTypes = {
-        {"bg", IMAGE_TYPE::IMAGE_BG},
-        {"cg", IMAGE_TYPE::IMAGE_CG},
-        {"eg", IMAGE_TYPE::IMAGE_EG},
-        {"fw", IMAGE_TYPE::IMAGE_FW},
+        {"bg", IMAGE_TYPE::BG},
+        {"cg", IMAGE_TYPE::CG},
+        {"eg", IMAGE_TYPE::EG},
+        {"fw", IMAGE_TYPE::FW},
     };
 
     ImageManager(FileManager *);
 
     void setImage(IMAGE_TYPE, int, std::string, int, int);
 
-    void clearAllImage(IMAGE_TYPE);
+    void clearImageType(IMAGE_TYPE);
 
     void clearZIndex(IMAGE_TYPE, int);
 
