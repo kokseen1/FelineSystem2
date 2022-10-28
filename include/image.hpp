@@ -76,6 +76,8 @@ public:
 
     ImageManager(FileManager *);
 
+    ImageData getImageData(IMAGE_TYPE, int);
+
     void setImage(IMAGE_TYPE, int, std::string, int, int);
 
     void clearImageType(IMAGE_TYPE);

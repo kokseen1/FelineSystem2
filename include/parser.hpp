@@ -8,6 +8,7 @@ enum class Token
     Number = 0,
 
     // Descending order of precedence
+    Prev = '@',
     Lp = '(',
     Rp = ')',
     Id = '#',
@@ -47,11 +48,12 @@ class Lexer;
 class Parser
 {
 public:
-    double parse(const std::string &);
+    double parse(const std::string &, const int = 0);
 
     void set_lexer_buffer(std::string &);
 
 private:
+    int prevValue = 0;
     std::string last_var_name; // TODO: Might have better alternative
     Lexer *p_lexer = NULL;
     std::map<std::string, double> symbol_table{};

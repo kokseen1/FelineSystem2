@@ -274,6 +274,28 @@ void ImageManager::clearImageType(IMAGE_TYPE type)
     }
 }
 
+// Get ImageData of specified image type at z-index
+ImageData ImageManager::getImageData(IMAGE_TYPE type, int zIndex)
+{
+    if (zIndex >= Z_INDEX_MAX)
+    {
+        LOG << "Attempted get image at out of bounds z-index!";
+        return {};
+    }
+
+    switch (type)
+    {
+    case IMAGE_TYPE::BG:
+        return currBgs[zIndex];
+    case IMAGE_TYPE::CG:
+        return currCgs[zIndex];
+    case IMAGE_TYPE::EG:
+        return currEgs[zIndex];
+    case IMAGE_TYPE::FW:
+        return currFws[zIndex];
+    }
+}
+
 // Parses image arguments into ImageData to be displayed
 // Names of assets must be inserted in ascending z-index
 void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int xShift, int yShift)

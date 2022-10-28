@@ -95,6 +95,7 @@ Token Lexer::get_next_token()
     case '#':
     case '(':
     case ')':
+    case '@':
         buffer = c;
         return Token(c);
     }
@@ -165,6 +166,9 @@ double Parser::primary()
                 return result;
             }
         }
+    case Token::Prev:
+        p_lexer->advance();
+        return prevValue;
     case Token::Number:
         buffer = p_lexer->get_curr_buffer();
         // std::cout << "NUM " << buffer << std::endl;
@@ -438,11 +442,13 @@ double Parser::assign_expr()
 }
 
 // Evaluate a single string
-double Parser::parse(const std::string &s)
+double Parser::parse(const std::string &s, const int prev)
 {
     // Initialize the lexer with the string
     Lexer lexer = Lexer{s};
     p_lexer = &lexer;
+
+    prevValue = prev;
 
     // Begin with expression of least precedence
     double result = assign_expr();

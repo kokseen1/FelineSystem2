@@ -282,11 +282,16 @@ void SceneManager::handleCommand(const std::string &cmdString)
             return;
         }
 
+        // Support for @ symbol referring to previous value
+        const auto &imageData = imageManager->getImageData(imageType, zIndex);
+        auto prevXShift = imageData.xShift;
+        auto prevYShift = imageData.yShift;
+
         auto xShiftStr = matches[4].str();
         auto yShiftStr = matches[5].str();
 
-        int xShift = xShiftStr.empty() ? 0 : parser.parse(xShiftStr);
-        int yShift = yShiftStr.empty() ? 0 : parser.parse(yShiftStr);
+        int xShift = xShiftStr.empty() ? 0 : parser.parse(xShiftStr, prevXShift);
+        int yShift = yShiftStr.empty() ? 0 : parser.parse(yShiftStr, prevYShift);
 
         imageManager->setImage(imageType, zIndex, asset, xShift, yShift);
     }
