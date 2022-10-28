@@ -11,6 +11,7 @@
 #include <cstring>
 #include <iostream>
 #include <map>
+#include <unordered_map>
 #include <utility>
 
 #define IMAGE_EXT ".hg3"
@@ -64,6 +65,13 @@ class ImageManager
 public:
     std::string currText;
     std::string currSpeaker;
+
+    const std::unordered_map<std::string, IMAGE_TYPE> imageTypes = {
+        {"bg", IMAGE_TYPE::IMAGE_BG},
+        {"cg", IMAGE_TYPE::IMAGE_CG},
+        {"eg", IMAGE_TYPE::IMAGE_EG},
+        {"fw", IMAGE_TYPE::IMAGE_FW},
+    };
 
     ImageManager(FileManager *);
 

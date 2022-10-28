@@ -258,16 +258,10 @@ void SceneManager::handleCommand(const std::string &cmdString)
         // bg 0 BG15_d 0 0 0
         // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
 
-        IMAGE_TYPE type;
-        const std::string &typeStr = matches[1].str();
-        if (typeStr == "bg")
-            type = IMAGE_TYPE::IMAGE_BG;
-        else if (typeStr == "cg")
-            type = IMAGE_TYPE::IMAGE_CG;
-        else if (typeStr == "eg")
-            type = IMAGE_TYPE::IMAGE_EG;
-        else if (typeStr == "fw")
-            type = IMAGE_TYPE::IMAGE_FW;
+        auto it = imageManager->imageTypes.find(matches[1].str());
+        if (it == imageManager->imageTypes.end())
+            return;
+        const IMAGE_TYPE type = it->second;
 
         const std::string &zIndexStr = matches[2].str();
         if (zIndexStr.empty())
