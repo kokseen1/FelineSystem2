@@ -224,11 +224,12 @@ void ImageManager::displayAll()
     for (auto &imageData : currEgs)
         renderImage(imageData);
 
+    // Render message window
+    renderMessageWindow();
+
     for (auto &imageData : currFws)
         renderImage(imageData);
 
-    // Render message window
-    renderMessageWindow();
     renderMessage(currText);
     renderSpeaker(currSpeaker);
 

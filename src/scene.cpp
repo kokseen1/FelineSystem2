@@ -121,6 +121,18 @@ std::string SceneManager::sj2utf8(const std::string &input)
     return output;
 }
 
+// Removes formatting symbols from text 
+std::string SceneManager::cleanText(const std::string &rawText)
+{
+    std::string text = std::regex_replace(rawText, std::regex("\\[(.*?)\\]"), "$1");
+    text = std::regex_replace(text, std::regex("\\\\fn"), "");
+    text = std::regex_replace(text, std::regex("\\\\fs"), "");
+    text = std::regex_replace(text, std::regex("\\\\"), "");
+    text = std::regex_replace(text, std::regex("@"), "");
+
+    return text;
+}
+
 void SceneManager::parseNext()
 {
     if (currScriptData.empty())
@@ -159,16 +171,13 @@ void SceneManager::parseNext()
                 if (speakerCounter == 0)
                     imageManager->currSpeaker.clear();
 
-                std::string rawText(&stringTable->StringStart);
-                imageManager->currText = rawText;
-                imageManager->currText.erase(std::remove(imageManager->currText.begin(), imageManager->currText.end(), '['), imageManager->currText.end());
-                imageManager->currText.erase(std::remove(imageManager->currText.begin(), imageManager->currText.end(), ']'), imageManager->currText.end());
+                imageManager->currText = cleanText(std::string(&stringTable->StringStart));
                 imageManager->displayAll();
                 speakerCounter--;
             }
             goto next;
         case 0x21: // Set speaker of the message
-            imageManager->currSpeaker = std::string(&stringTable->StringStart);
+            imageManager->currSpeaker = cleanText(std::string(&stringTable->StringStart));
             speakerCounter = 1;
             goto next;
 
