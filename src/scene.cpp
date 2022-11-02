@@ -8,15 +8,15 @@ SceneManager::SceneManager(MusicManager *mm, ImageManager *im, FileManager *fm) 
     fileManager->init(this);
 };
 
-// Read a script from a memory buffer
-void SceneManager::loadScript(byte *buf, size_t sz, std::string scriptName)
+// Parse a raw CST file from a memory buffer and store the uncompressed script
+void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptName)
 {
     CSTHeader *scriptHeader = reinterpret_cast<CSTHeader *>(buf);
 
     // Verify signature
     if (strncmp(scriptHeader->FileSignature, SCRIPT_SIGNATURE, sizeof(scriptHeader->FileSignature)) != 0)
     {
-        std::cout << "Invalid CST file signature!" << std::endl;
+        LOG << "Invalid CST file signature!";
         return;
     }
 
@@ -30,17 +30,15 @@ void SceneManager::loadScript(byte *buf, size_t sz, std::string scriptName)
     }
     else
     {
-        auto scriptDataDecompressed = Utils::zlibUncompress(scriptHeader->DecompressedSize, scriptDataRaw, scriptHeader->CompressedSize);
-        if (scriptDataDecompressed.empty())
+        currScriptData = Utils::zlibUncompress(scriptHeader->DecompressedSize, scriptDataRaw, scriptHeader->CompressedSize);
+        if (currScriptData.empty())
         {
-            std::cout << "Script uncompress error" << std::endl;
+            LOG << "Script uncompress error";
             return;
         }
-        currScriptData = scriptDataDecompressed;
     }
 
     // Init script data
-
     ScriptDataHeader *scriptDataHeader = reinterpret_cast<ScriptDataHeader *>(currScriptData.data());
     byte *tablesStart = reinterpret_cast<byte *>(scriptDataHeader + 1);
 
@@ -48,17 +46,33 @@ void SceneManager::loadScript(byte *buf, size_t sz, std::string scriptName)
     stringOffsetTable = reinterpret_cast<StringOffsetTable *>(tablesStart + scriptDataHeader->StringOffsetTableOffset);
     stringTableBase = tablesStart + scriptDataHeader->StringTableOffset;
 
-    // Calculate entry count
-    stringEntryCount = (stringTableBase - reinterpret_cast<byte *>(stringOffsetTable)) / sizeof(StringOffsetTable);
-    currStringEntry = 0;
-
+    // Store loaded script name
     currScriptName = scriptName;
+}
+
+// Load a script from a raw buffer and parse it from the start
+void SceneManager::loadScriptStart(byte *buf, size_t sz, const std::string scriptName)
+{
+    loadScript(buf, sz, scriptName);
     parseNext();
 }
 
+void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData saveData)
+{
+    loadScript(buf, sz, saveData.scriptName);
+    stringOffsetTable = reinterpret_cast<StringOffsetTable *>(stringTableBase - saveData.offsetFromBase);
+    parseNext();
+}
+
+void SceneManager::setScriptOffset(const SaveData saveData)
+{
+    fileManager->fetchAssetAndProcess(saveData.scriptName + SCRIPT_EXT, this, &SceneManager::loadScriptOffset, saveData);
+}
+
+// Fetch the specified script and begin parsing
 void SceneManager::setScript(const std::string name)
 {
-    fileManager->fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadScript, name);
+    fileManager->fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadScriptStart, name);
 }
 
 void SceneManager::start()
@@ -121,7 +135,7 @@ std::string SceneManager::sj2utf8(const std::string &input)
     return output;
 }
 
-// Removes formatting symbols from text 
+// Removes formatting symbols from text
 std::string SceneManager::cleanText(const std::string &rawText)
 {
     std::string text = std::regex_replace(rawText, std::regex("\\[(.*?)\\]"), "$1");
@@ -133,6 +147,7 @@ std::string SceneManager::cleanText(const std::string &rawText)
     return text;
 }
 
+// Parse the next line in the script
 void SceneManager::parseNext()
 {
     if (currScriptData.empty())
@@ -141,64 +156,67 @@ void SceneManager::parseNext()
         return;
     }
 
-    if (currStringEntry < stringEntryCount)
+    // Check if pointer exceeded end of script
+    if (reinterpret_cast<byte *>(stringOffsetTable) >= stringTableBase)
     {
-        auto scriptName = currScriptName;
-        auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
+        LOG << "End of script!";
+        return;
+    }
 
-        stringOffsetTable++;
-        currStringEntry++;
+    // Parse script
+    const std::string scriptName = currScriptName;
+    auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
 
-        switch (stringTable->Type)
+    LOG << stringOffsetTable << "/" << std::hex << (void *)stringTableBase;
+
+    stringOffsetTable++;
+
+    switch (stringTable->Type)
+    {
+    case 0x02: // Wait for input after message
+    case 0x03: // Novel page break and wait for input after message
+        // LOG << "BREAK";
+        if (autoMode != -1)
         {
-        case 0x02: // Wait for input after message
-        case 0x03: // Novel page break and wait for input after message
-            // LOG << "BREAK";
-            if (autoMode != -1)
-            {
-                wait(100);
-                parseNext();
-            }
-            break;
-
-        case 0x20: // Display a message
-            if (stringTable->StringStart == '\0')
-            {
-                LOG << "Empty text!";
-            }
-            else
-            {
-                if (speakerCounter == 0)
-                    imageManager->currSpeaker.clear();
-
-                imageManager->currText = cleanText(std::string(&stringTable->StringStart));
-                imageManager->displayAll();
-                speakerCounter--;
-            }
-            goto next;
-        case 0x21: // Set speaker of the message
-            imageManager->currSpeaker = cleanText(std::string(&stringTable->StringStart));
-            speakerCounter = 1;
-            goto next;
-
-        case 0x30: // Perform any other command
-            handleCommand(&stringTable->StringStart);
-            if (scriptName != currScriptName)
-                return;
-            goto next;
-
-        // Debug commands:
-        case 0xF0: // Sets the name of the source script file
-        case 0xF1: // Marks the current line number in the source script file (as a string)
-
-        next:
-            // Might want to avoid recursion
+            wait(100);
             parseNext();
         }
-    }
-    else
-    {
-        std::cout << "End of script!" << std::endl;
+        break;
+
+    case 0x20: // Display a message
+        if (stringTable->StringStart == '\0')
+        {
+            LOG << "Empty text!";
+        }
+        else
+        {
+            if (speakerCounter == 0)
+                imageManager->currSpeaker.clear();
+
+            imageManager->currText = cleanText(std::string(&stringTable->StringStart));
+            imageManager->displayAll();
+            speakerCounter--;
+        }
+        goto next;
+
+    case 0x21: // Set speaker of the message
+        imageManager->currSpeaker = cleanText(std::string(&stringTable->StringStart));
+        speakerCounter = 1;
+        goto next;
+
+    case 0x30: // Perform any other command
+        handleCommand(&stringTable->StringStart);
+        if (scriptName != currScriptName)
+            return;
+        goto next;
+
+    // Debug commands:
+    case 0xF0: // Sets the name of the source script file
+    case 0xF1: // Marks the current line number in the source script file (as a string)
+
+    next:
+        // Might want to avoid recursion
+        parseNext();
     }
 }
 
@@ -370,4 +388,22 @@ void SceneManager::selectChoice(int idx)
     {
         LOG << "Selected choice out of bounds!";
     }
+}
+
+void SceneManager::saveState(const int saveSlot)
+{
+    saveData[saveSlot].scriptName = currScriptName;
+    saveData[saveSlot].offsetFromBase = reinterpret_cast<byte *>(stringTableBase - reinterpret_cast<byte *>(stringOffsetTable));
+}
+
+void SceneManager::loadState(const int saveSlot)
+{
+    auto &loadData = saveData[saveSlot];
+    if (loadData.scriptName.empty())
+    {
+        LOG << "Empty savedata!";
+        return;
+    }
+
+    setScriptOffset(loadData);
 }
