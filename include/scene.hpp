@@ -20,30 +20,50 @@
 
 #define LOG_CMD
 
+typedef struct
+{
+    std::string scriptName;
+    byte *offsetFromBase;
+} SaveData;
+
 class SceneManager
 {
 private:
-    Parser parser;
+    // Pointers to other manager classes
     FileManager *fileManager = NULL;
     MusicManager *musicManager = NULL;
     ImageManager *imageManager = NULL;
 
+    // Recursive-descent parser for expressions
+    Parser parser;
+
     int autoMode = -1;
+    int speakerCounter = 0;
+
     std::string currScriptName;
+
+    // Vector of <script name, prompt> pairs
     std::vector<std::pair<std::string, std::string>> currChoices;
+
+    // Vector containing uncompressed script data to be traversed
     std::vector<byte> currScriptData;
+
     StringOffsetTable *stringOffsetTable;
     byte *stringTableBase;
-    size_t stringEntryCount;
-    size_t currStringEntry;
 
-    int speakerCounter = 0;
+    SaveData saveData[10];
 
     void handleCommand(const std::string &);
 
-    void loadScript(byte *, size_t, std::string);
+    void loadScript(byte *, size_t, const std::string&);
+
+    void loadScriptStart(byte *, size_t, const std::string);
 
     void setScript(const std::string);
+
+    void loadScriptOffset(byte *, size_t, const SaveData);
+
+    void setScriptOffset(const SaveData);
 
     std::string cleanText(const std::string &);
 
@@ -59,4 +79,8 @@ public:
     void selectChoice(int);
 
     void wait(const int);
+    
+    void saveState(const int);
+
+    void loadState(const int);
 };
