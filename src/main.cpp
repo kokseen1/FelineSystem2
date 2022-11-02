@@ -47,13 +47,39 @@ EM_BOOL mouse_callback(int eventType, const EmscriptenMouseEvent *e, void *userD
 // Returning 0 signals that the event was not consumed by the code, and will allow the event to pass on and bubble up normally.
 EM_BOOL key_callback(int eventType, const EmscriptenKeyboardEvent *e, void *userData)
 {
-    if (eventType == EMSCRIPTEN_EVENT_KEYPRESS && (e->which >= 49 && e->which <= 57))
+    // Handle text skip
+    if (eventType == EMSCRIPTEN_EVENT_KEYDOWN && e->ctrlKey)
     {
-        sceneManager.selectChoice(e->which - 49);
+        sceneManager.parseNext();
+        return 0;
     }
-    // if (eventType == EMSCRIPTEN_EVENT_KEYPRESS && (!strcmp(e->key, "k")))
-    // LOG << "choice";
-    if (eventType == EMSCRIPTEN_EVENT_KEYPRESS && (!strcmp(e->key, "f") || e->which == 102))
+
+    // Handle number row shortcuts (1 - 9)
+    if (eventType == EMSCRIPTEN_EVENT_KEYDOWN && (e->which >= 49 && e->which <= 57))
+    {
+        int keyIdx = e->which - 49;
+        LOG << keyIdx << " pressed";
+
+        if (e->altKey && e->shiftKey)
+        {
+            return 1;
+        }
+        else if (e->altKey)
+        {
+            sceneManager.saveState(keyIdx);
+        }
+        else if (e->shiftKey)
+        {
+            sceneManager.loadState(keyIdx);
+        }
+        else
+        {
+            sceneManager.selectChoice(keyIdx);
+        }
+    }
+
+    // Toggle fullscreen
+    if (eventType == EMSCRIPTEN_EVENT_KEYDOWN && (!strcmp(e->key, "f") || e->which == 102))
     {
         EmscriptenFullscreenChangeEvent fsce;
         EMSCRIPTEN_RESULT ret = emscripten_get_fullscreen_status(&fsce);
@@ -89,7 +115,8 @@ int main(int argc, char **argv)
 
 #ifdef __EMSCRIPTEN__
     EMSCRIPTEN_RESULT ret = emscripten_set_click_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, mouse_callback);
-    ret = emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, key_callback);
+    // ret = emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, key_callback);
+    ret = emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, key_callback);
     ret = emscripten_set_wheel_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, 1, wheel_callback);
 
     // emscripten_set_main_loop(nextTrack, 0, 1);
