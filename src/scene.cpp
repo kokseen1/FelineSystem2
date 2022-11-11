@@ -167,7 +167,7 @@ void SceneManager::parseNext()
     const std::string scriptName = currScriptName;
     auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
 
-    LOG << stringOffsetTable << "/" << std::hex << (void *)stringTableBase;
+    // LOG << stringOffsetTable << "/" << std::hex << (void *)stringTableBase;
 
     stringOffsetTable++;
 
@@ -194,7 +194,7 @@ void SceneManager::parseNext()
                 imageManager->currSpeaker.clear();
 
             imageManager->currText = cleanText(std::string(&stringTable->StringStart));
-            imageManager->displayAll();
+            // imageManager->displayAll();
             speakerCounter--;
         }
         goto next;

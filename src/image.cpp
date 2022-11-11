@@ -9,6 +9,11 @@
 
 ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
 {
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    {
+        throw std::runtime_error("Unable to initialize SDL");
+    }
+
     // Create SDL window and renderer
     window = SDL_CreateWindow("FelineSystem2",
                               SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -16,9 +21,14 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
 
+    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(const_cast<byte *>(logo), 64, 64, 32, 64 * 4, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+    SDL_SetWindowIcon(window, surface);
+    SDL_FreeSurface(surface);
+
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_RenderSetLogicalSize(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     if (TTF_Init() == -1)
     {
@@ -36,6 +46,42 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
     processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>("sys_mwnd_43", 43));
 
     LOG << "ImageManager initialized";
+}
+
+void ImageManager::toggle_fullscreen()
+{
+    // #ifdef __EMSCRIPTEN__
+    //     EmscriptenFullscreenChangeEvent fsce;
+    //     EMSCRIPTEN_RESULT ret = emscripten_get_fullscreen_status(&fsce);
+    //     if (!fsce.isFullscreen)
+    //     {
+    //         printf("Requesting fullscreen..\n");
+    //         ret = emscripten_request_fullscreen("#canvas", 1);
+    //     }
+    //     else
+    //     {
+    //         printf("Exiting fullscreen..\n");
+    //         ret = emscripten_exit_fullscreen();
+    //         ret = emscripten_get_fullscreen_status(&fsce);
+    //         if (fsce.isFullscreen)
+    //         {
+    //             fprintf(stderr, "Fullscreen exit did not work!\n");
+    //         }
+    //     }
+    // #else
+    // SDL fullscreen
+    static int isFullscreen = 0;
+    switch (isFullscreen)
+    {
+    case 0:
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        break;
+    case 1:
+        SDL_SetWindowFullscreen(window, 0);
+        break;
+    }
+    isFullscreen ^= 1;
+    // #endif
 }
 
 // Render a texture onto the renderer at given position
@@ -123,7 +169,7 @@ void ImageManager::renderSpeaker(const std::string &text)
     }
 
     // Render text
-    SDL_Surface *surface = TTF_RenderText_Solid_Wrapped(font, text.c_str(), textColor, 0);
+    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(font, text.c_str(), textColor, 0);
     if (surface == NULL)
     {
         LOG << "TTF Surface failed!";
@@ -186,7 +232,7 @@ void ImageManager::renderMessage(const std::string &text)
     }
 
     // Render text
-    SDL_Surface *surface = TTF_RenderText_Solid_Wrapped(font, text.c_str(), textColor, TEXTBOX_WIDTH);
+    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(font, text.c_str(), textColor, TEXTBOX_WIDTH);
     if (surface == NULL)
     {
         LOG << "TTF Surface failed!";
@@ -379,8 +425,8 @@ void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int 
         break;
     }
 
-    if (!id.names.empty())
-        displayAll();
+    // if (!id.names.empty())
+    // displayAll();
 }
 
 // Decode a raw HG buffer and display the specified frame
@@ -421,5 +467,5 @@ void ImageManager::processImage(byte *buf, size_t sz, std::pair<std::string, int
 
     LOG << "Cached: " << name << "[" << frameIdx << "]";
 
-    displayAll();
+    // displayAll();
 }
