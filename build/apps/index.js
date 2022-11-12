@@ -6965,6 +6965,34 @@ var ASM_CONSTS = {
       return 0;
     }
 
+  function fillFullscreenChangeEventData(eventStruct) {
+      var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+      var isFullscreen = !!fullscreenElement;
+      // Assigning a boolean to HEAP32 with expected type coercion.
+      /** @suppress{checkTypes} */
+      HEAP32[((eventStruct)>>2)] = isFullscreen;
+      HEAP32[(((eventStruct)+(4))>>2)] = JSEvents.fullscreenEnabled();
+      // If transitioning to fullscreen, report info about the element that is now fullscreen.
+      // If transitioning to windowed mode, report info about the element that just was fullscreen.
+      var reportedElement = isFullscreen ? fullscreenElement : JSEvents.previousFullscreenElement;
+      var nodeName = JSEvents.getNodeNameForTarget(reportedElement);
+      var id = (reportedElement && reportedElement.id) ? reportedElement.id : '';
+      stringToUTF8(nodeName, eventStruct + 8, 128);
+      stringToUTF8(id, eventStruct + 136, 128);
+      HEAP32[(((eventStruct)+(264))>>2)] = reportedElement ? reportedElement.clientWidth : 0;
+      HEAP32[(((eventStruct)+(268))>>2)] = reportedElement ? reportedElement.clientHeight : 0;
+      HEAP32[(((eventStruct)+(272))>>2)] = screen.width;
+      HEAP32[(((eventStruct)+(276))>>2)] = screen.height;
+      if (isFullscreen) {
+        JSEvents.previousFullscreenElement = fullscreenElement;
+      }
+    }
+  function _emscripten_get_fullscreen_status(fullscreenStatus) {
+      if (!JSEvents.fullscreenEnabled()) return -1;
+      fillFullscreenChangeEventData(fullscreenStatus);
+      return 0;
+    }
+
   function fillGamepadEventData(eventStruct, e) {
       HEAPF64[((eventStruct)>>3)] = e.timestamp;
       for (var i = 0; i < e.axes.length; ++i) {
@@ -8543,6 +8571,18 @@ var ASM_CONSTS = {
   
       return JSEvents_requestFullscreen(target, strategy);
     }
+  function _emscripten_request_fullscreen(target, deferUntilInEventHandler) {
+      var strategy = {
+        // These options perform no added logic, but just bare request fullscreen.
+        scaleMode: 0,
+        canvasResolutionScaleMode: 0,
+        filteringMode: 0,
+        deferUntilInEventHandler: deferUntilInEventHandler,
+        canvasResizedCallbackTargetThread: 2
+      };
+      return doRequestFullscreen(target, strategy);
+    }
+
   function _emscripten_request_fullscreen_strategy(target, deferUntilInEventHandler, fullscreenStrategy) {
       var strategy = {
         scaleMode: HEAP32[((fullscreenStrategy)>>2)],
@@ -8735,28 +8775,6 @@ var ASM_CONSTS = {
       return 0;
     }
 
-  function fillFullscreenChangeEventData(eventStruct) {
-      var fullscreenElement = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-      var isFullscreen = !!fullscreenElement;
-      // Assigning a boolean to HEAP32 with expected type coercion.
-      /** @suppress{checkTypes} */
-      HEAP32[((eventStruct)>>2)] = isFullscreen;
-      HEAP32[(((eventStruct)+(4))>>2)] = JSEvents.fullscreenEnabled();
-      // If transitioning to fullscreen, report info about the element that is now fullscreen.
-      // If transitioning to windowed mode, report info about the element that just was fullscreen.
-      var reportedElement = isFullscreen ? fullscreenElement : JSEvents.previousFullscreenElement;
-      var nodeName = JSEvents.getNodeNameForTarget(reportedElement);
-      var id = (reportedElement && reportedElement.id) ? reportedElement.id : '';
-      stringToUTF8(nodeName, eventStruct + 8, 128);
-      stringToUTF8(id, eventStruct + 136, 128);
-      HEAP32[(((eventStruct)+(264))>>2)] = reportedElement ? reportedElement.clientWidth : 0;
-      HEAP32[(((eventStruct)+(268))>>2)] = reportedElement ? reportedElement.clientHeight : 0;
-      HEAP32[(((eventStruct)+(272))>>2)] = screen.width;
-      HEAP32[(((eventStruct)+(276))>>2)] = screen.height;
-      if (isFullscreen) {
-        JSEvents.previousFullscreenElement = fullscreenElement;
-      }
-    }
   function registerFullscreenChangeEventCallback(target, userData, useCapture, callbackfunc, eventTypeId, eventTypeString, targetThread) {
       if (!JSEvents.fullscreenChangeEvent) JSEvents.fullscreenChangeEvent = _malloc( 280 );
   
@@ -10913,6 +10931,7 @@ var asmLibraryArg = {
   "emscripten_exit_pointerlock": _emscripten_exit_pointerlock,
   "emscripten_get_device_pixel_ratio": _emscripten_get_device_pixel_ratio,
   "emscripten_get_element_css_size": _emscripten_get_element_css_size,
+  "emscripten_get_fullscreen_status": _emscripten_get_fullscreen_status,
   "emscripten_get_gamepad_status": _emscripten_get_gamepad_status,
   "emscripten_get_heap_max": _emscripten_get_heap_max,
   "emscripten_get_now": _emscripten_get_now,
@@ -11082,6 +11101,7 @@ var asmLibraryArg = {
   "emscripten_has_asyncify": _emscripten_has_asyncify,
   "emscripten_is_main_browser_thread": _emscripten_is_main_browser_thread,
   "emscripten_memcpy_big": _emscripten_memcpy_big,
+  "emscripten_request_fullscreen": _emscripten_request_fullscreen,
   "emscripten_request_fullscreen_strategy": _emscripten_request_fullscreen_strategy,
   "emscripten_request_pointerlock": _emscripten_request_pointerlock,
   "emscripten_resize_heap": _emscripten_resize_heap,

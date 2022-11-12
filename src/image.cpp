@@ -132,25 +132,20 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
 
 void ImageManager::toggle_fullscreen()
 {
-    // #ifdef __EMSCRIPTEN__
-    //     EmscriptenFullscreenChangeEvent fsce;
-    //     EMSCRIPTEN_RESULT ret = emscripten_get_fullscreen_status(&fsce);
-    //     if (!fsce.isFullscreen)
-    //     {
-    //         printf("Requesting fullscreen..\n");
-    //         ret = emscripten_request_fullscreen("#canvas", 1);
-    //     }
-    //     else
-    //     {
-    //         printf("Exiting fullscreen..\n");
-    //         ret = emscripten_exit_fullscreen();
-    //         ret = emscripten_get_fullscreen_status(&fsce);
-    //         if (fsce.isFullscreen)
-    //         {
-    //             fprintf(stderr, "Fullscreen exit did not work!\n");
-    //         }
-    //     }
-    // #else
+#ifdef __EMSCRIPTEN__
+    // Much better for mobile
+    EmscriptenFullscreenChangeEvent fsce;
+    EMSCRIPTEN_RESULT ret = emscripten_get_fullscreen_status(&fsce);
+    if (!fsce.isFullscreen)
+    {
+        ret = emscripten_request_fullscreen("#canvas", 1);
+    }
+    else
+    {
+        ret = emscripten_exit_fullscreen();
+        ret = emscripten_get_fullscreen_status(&fsce);
+    }
+#else
     // SDL fullscreen
     static int isFullscreen = 0;
     switch (isFullscreen)
@@ -163,7 +158,7 @@ void ImageManager::toggle_fullscreen()
         break;
     }
     isFullscreen ^= 1;
-    // #endif
+#endif
 }
 
 // Set the SDL window icon using an array of pixels
