@@ -10,7 +10,7 @@ MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
     {
         std::cout << Mix_GetError() << std::endl;
     }
-    std::cout << "MusicManager initialized" << std::endl;
+    LOG << "MusicManager initialized";
 }
 
 // Play a specified PCM asset
