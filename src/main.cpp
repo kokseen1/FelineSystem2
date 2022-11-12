@@ -26,6 +26,9 @@ void main_loop()
 
     static SDL_Event event;
 
+    // Render the canvas
+    imageManager.render();
+
     while (SDL_PollEvent(&event))
     {
         switch (event.type)
@@ -84,7 +87,6 @@ void main_loop()
         default:
             break;
         }
-        imageManager.displayAll();
     }
 }
 

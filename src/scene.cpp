@@ -194,7 +194,6 @@ void SceneManager::parseNext()
                 imageManager->currSpeaker.clear();
 
             imageManager->currText = cleanText(std::string(&stringTable->StringStart));
-            // imageManager->displayAll();
             speakerCounter--;
         }
         goto next;
@@ -280,19 +279,27 @@ void SceneManager::handleCommand(const std::string &cmdString)
     }
 
     // Display images
-    else if (std::regex_search(cmdString, matches, std::regex("^(bg|cg|eg|fw)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^a-z][^%\\s]*)(?: ([^a-z][^%\\s]*)(?: (\\d+)(?: (\\d+))?)?)?)?)?)?")))
+    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|cg|fw)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^a-z][^%\\s]*)(?: ([^a-z][^%\\s]*)(?: (\\d+)(?: (\\d+))?)?)?)?)?)?")))
     {
         // bg 0 BG15_d 0 0 0
         // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
 
         // Get image type enum based on identifier
-        auto it = imageManager->imageTypes.find(matches[1].str());
-        if (it == imageManager->imageTypes.end())
+        IMAGE_TYPE imageType;
+        const auto &t = matches[1].str();
+        if (t == "bg")
+            imageType = IMAGE_TYPE::BG;
+        else if (t == "eg")
+            imageType = IMAGE_TYPE::EG;
+        else if (t == "cg")
+            imageType = IMAGE_TYPE::CG;
+        else if (t == "fw")
+            imageType = IMAGE_TYPE::FW;
+        else
         {
             LOG << "Unknown image type identifier!";
             return;
         }
-        const IMAGE_TYPE imageType = it->second;
 
         const std::string &zIndexStr = matches[2].str();
         if (zIndexStr.empty())

@@ -7,6 +7,65 @@
 #include <sstream>
 #include <vector>
 
+static std::map<std::string, TextureData> textureCache;
+
+Image::Image(std::string n, int x, int y) : textureName{n}, xShift{x}, yShift{y}
+{
+}
+
+void Image::clear()
+{
+    textureName.clear();
+}
+
+// Render image onto the given renderer
+void Image::render(SDL_Renderer *renderer)
+{
+    if (textureName.empty())
+        // Image is inactive
+        return;
+
+    if (textureData == NULL)
+    {
+        // Look for texture in cache
+        auto got = textureCache.find(textureName);
+        if (got == textureCache.end())
+            return;
+
+        textureData = &got->second;
+    }
+
+    auto texture = textureData->first;
+    if (texture == NULL)
+    {
+        LOG << "NULL texture in cache";
+        return;
+    }
+
+    // Calculate shift
+    auto &stdinfo = textureData->second;
+    auto xPos = stdinfo.OffsetX - stdinfo.BaseX + xShift;
+    auto yPos = stdinfo.OffsetY - stdinfo.BaseY + yShift;
+
+    // Render onto canvas
+    SDL_Rect DestR{xPos, yPos, static_cast<int>(stdinfo.Width), static_cast<int>(stdinfo.Height)};
+    SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);
+}
+
+void Cg::render(SDL_Renderer *renderer)
+{
+    base.render(renderer);
+    part1.render(renderer);
+    part2.render(renderer);
+}
+
+void Cg::clear()
+{
+    base.clear();
+    part1.clear();
+    part2.clear();
+}
+
 ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
 {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -63,8 +122,10 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
     }
 
     // Decode and cache message window assets
-    processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>("sys_mwnd_42", 42));
-    processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>("sys_mwnd_43", 43));
+    processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>(MWND, 43));
+    processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>(MWND_DECO, 42));
+    if (textureCache[MWND].first != NULL)
+        SDL_SetTextureAlphaMod(textureCache[MWND].first, 120);
 
     LOG << "ImageManager initialized";
 }
@@ -120,61 +181,6 @@ void ImageManager::setWindowIcon(SDL_Window *window)
     SDL_FreeSurface(surface);
 }
 
-// Render a texture onto the renderer at given position
-void ImageManager::renderTexture(SDL_Texture *texture, int xpos, int ypos)
-{
-    SDL_Rect DestR = {xpos, ypos};
-    SDL_QueryTexture(texture, NULL, NULL, &DestR.w, &DestR.h);
-    SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);
-}
-
-// Render assets specified by ImageData and display the image
-// Will first attempt to retrieve textures from cache
-// Otherwise, asset file will be fetched
-// Aysnchronously render and display every asset available even when some are not
-void ImageManager::renderImage(const ImageData &imageData)
-{
-    for (int i = 0; i < imageData.names.size(); i++)
-    {
-        auto &name = imageData.names[i];
-        if (name.empty())
-        {
-            LOG << "Skipping empty name";
-            continue;
-        }
-
-        // Attempt to retrieve texture from cache
-        auto got = textureDataCache.find(name);
-        if (got != textureDataCache.end())
-        {
-            auto textureData = got->second;
-            auto texture = textureData.first;
-            if (texture == NULL)
-            {
-                // LOG << "Missing: " << name;
-                continue;
-            }
-
-            // LOG << "Render: " << name;
-
-            auto &stdinfo = textureData.second;
-            auto xPos = stdinfo.OffsetX - stdinfo.BaseX + imageData.xShift;
-            auto yPos = stdinfo.OffsetY - stdinfo.BaseY + imageData.yShift;
-
-            renderTexture(texture, xPos, yPos);
-        }
-        else
-        {
-            // Fetch file if not in cache
-            // Set empty entry in cache to signify that request has been made
-            textureDataCache.insert({name, std::make_pair(static_cast<SDL_Texture *>(NULL), Stdinfo{})});
-
-            // Just handle the first frame for now
-            fileManager->fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, std::pair<std::string, int>(name, 0));
-        }
-    }
-}
-
 // Returns a pointer to a texture from a given frame
 // Caller is responsible for freeing the texture
 SDL_Texture *ImageManager::getTextureFromFrame(HGDecoder::Frame frame)
@@ -228,37 +234,6 @@ void ImageManager::renderSpeaker(const std::string &text)
     SDL_FreeSurface(surface);
 }
 
-// Retrieve and render message window textures
-void ImageManager::renderMessageWindow()
-{
-    // Message window bg
-    auto got = textureDataCache.find("sys_mwnd_43");
-    if (got != textureDataCache.end())
-    {
-        auto &textureData = got->second;
-        auto &texture = textureData.first;
-        if (texture != NULL)
-        {
-            auto &stdinfo = textureData.second;
-            SDL_SetTextureAlphaMod(texture, 120);
-            renderTexture(texture, (WINDOW_WIDTH - stdinfo.Width) / 2, WINDOW_HEIGHT - stdinfo.Height);
-        }
-    }
-
-    // Message window deco
-    got = textureDataCache.find("sys_mwnd_42");
-    if (got != textureDataCache.end())
-    {
-        auto &textureData = got->second;
-        auto &texture = textureData.first;
-        if (texture != NULL)
-        {
-            auto &stdinfo = textureData.second;
-            renderTexture(texture, (WINDOW_WIDTH - stdinfo.Width) / 2, WINDOW_HEIGHT - stdinfo.Height);
-        }
-    }
-}
-
 // Render text onto the message window
 void ImageManager::renderMessage(const std::string &text)
 {
@@ -291,26 +266,27 @@ void ImageManager::renderMessage(const std::string &text)
     SDL_FreeSurface(surface);
 }
 
-void ImageManager::displayAll()
+// Render images in order of type precedence and z-index
+void ImageManager::render()
 {
     // Clear render canvas
     SDL_RenderClear(renderer);
 
-    // Render images in order of z-index
-    for (auto &imageData : currBgs)
-        renderImage(imageData);
+    for (auto &bg : currBgs)
+        bg.render(renderer);
 
-    for (auto &imageData : currCgs)
-        renderImage(imageData);
+    for (auto &cg : currCgs)
+        cg.render(renderer);
 
-    for (auto &imageData : currEgs)
-        renderImage(imageData);
+    for (auto &eg : currEgs)
+        eg.render(renderer);
 
     // Render message window
-    renderMessageWindow();
+    mwnd.render(renderer);
+    mwndDeco.render(renderer);
 
-    for (auto &imageData : currFws)
-        renderImage(imageData);
+    for (auto &fw : currFws)
+        fw.render(renderer);
 
     renderMessage(currText);
     renderSpeaker(currSpeaker);
@@ -322,28 +298,33 @@ void ImageManager::displayAll()
 // Clear image of type at specified z index
 void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
 {
-    if (zIndex >= Z_INDEX_MAX)
-    {
-        LOG << "Attempted to clear at out of bounds z-index!";
-        return;
-    }
-
     switch (type)
     {
-    case IMAGE_TYPE::CG:
-        // LOG << "CLEARING CG" << zIndex;
-        currCgs[zIndex].names.clear();
-        break;
-    case IMAGE_TYPE::EG:
-        // LOG << "CLEARING EG" << zIndex;
-        currEgs[zIndex].names.clear();
-        break;
     case IMAGE_TYPE::BG:
-        // LOG << "CLEARING BG" << zIndex;
-        currBgs[zIndex].names.clear();
+        if (zIndex >= currBgs.size())
+            return;
+        currBgs[zIndex].clear();
         break;
+
+    case IMAGE_TYPE::EG:
+        if (zIndex >= currEgs.size())
+            return;
+        currEgs[zIndex].clear();
+        break;
+
+    case IMAGE_TYPE::CG:
+        if (zIndex >= currCgs.size())
+            return;
+        currCgs[zIndex].clear();
+        break;
+
     case IMAGE_TYPE::FW:
-        currFws[zIndex].names.clear();
+        if (zIndex >= currFws.size())
+            return;
+        currFws[zIndex].clear();
+        break;
+
+    default:
         break;
     }
 }
@@ -351,121 +332,204 @@ void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
 // Clear all layers of specified image type
 void ImageManager::clearImageType(IMAGE_TYPE type)
 {
-    for (int i = 0; i < Z_INDEX_MAX; i++)
+    switch (type)
     {
-        clearZIndex(type, i);
+    case IMAGE_TYPE::BG:
+        for (int i = 0; i < currBgs.size(); i++)
+            currBgs[i].clear();
+        break;
+
+    case IMAGE_TYPE::EG:
+        for (int i = 0; i < currEgs.size(); i++)
+            currEgs[i].clear();
+        break;
+
+    case IMAGE_TYPE::CG:
+        for (int i = 0; i < currCgs.size(); i++)
+            currCgs[i].clear();
+        break;
+
+    case IMAGE_TYPE::FW:
+        for (int i = 0; i < currFws.size(); i++)
+            currFws[i].clear();
+        break;
+
+    default:
+        break;
     }
 }
 
 // Get ImageData of specified image type at z-index
 ImageData ImageManager::getImageData(IMAGE_TYPE type, int zIndex)
 {
-    if (zIndex >= Z_INDEX_MAX)
-    {
-        LOG << "Attempted get image at out of bounds z-index!";
-        return {};
-    }
-
     switch (type)
     {
     case IMAGE_TYPE::BG:
-        return currBgs[zIndex];
-    case IMAGE_TYPE::CG:
-        return currCgs[zIndex];
+        return ImageData{};
     case IMAGE_TYPE::EG:
-        return currEgs[zIndex];
+        return ImageData{};
+    case IMAGE_TYPE::CG:
+        return ImageData{};
     case IMAGE_TYPE::FW:
-        return currFws[zIndex];
+        return ImageData{};
     }
 }
 
+// Parse comma separated asset names
+std::vector<std::string> ImageManager::getAssetArgs(const std::string &asset)
+{
+    std::stringstream ss(asset);
+    std::vector<std::string> args;
+
+    while (ss.good())
+    {
+        std::string arg;
+        getline(ss, arg, ',');
+        args.push_back(arg);
+    }
+
+    return args;
+}
 // Parses image arguments into ImageData to be displayed
 // Names of assets must be inserted in ascending z-index
 void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int xShift, int yShift)
 {
-    if (zIndex >= Z_INDEX_MAX)
-    {
-        LOG << "Attempted set image at out of bounds z-index!";
-        return;
-    }
 
 #ifdef LOWERCASE_ASSETS
+    // Convert names to lowercase
     Utils::lowercase(asset);
 #endif
-    ImageData id{xShift, yShift};
+
+    std::vector<std::string> assetsToFetch;
+
     switch (type)
     {
 
     case IMAGE_TYPE::BG:
-        if (fileManager->inDb(asset + IMAGE_EXT))
-        {
-            id.names.push_back(asset);
-            currBgs[zIndex] = id;
-        }
+        if (zIndex >= currBgs.size())
+            return;
+        if (!fileManager->inDB(asset + IMAGE_EXT))
+            return;
+
+        currBgs[zIndex] = {asset, xShift, yShift};
+        assetsToFetch.push_back(asset);
         break;
 
     case IMAGE_TYPE::EG:
-        if (fileManager->inDb(asset + IMAGE_EXT))
-        {
-            id.names.push_back(asset);
-            currEgs[zIndex] = id;
-        }
+        if (zIndex >= currEgs.size())
+            return;
+        if (!fileManager->inDB(asset + IMAGE_EXT))
+            return;
+
+        currEgs[zIndex] = {asset, xShift, yShift};
+        assetsToFetch.push_back(asset);
         break;
 
-    case IMAGE_TYPE::FW:
-        // Attempt to match CS2 offsets for FW images
-        id.xShift += 90;
-        id.yShift += 160;
     case IMAGE_TYPE::CG:
-        std::stringstream ss(asset);
-        std::vector<std::string> args;
+    {
+        if (zIndex >= currCgs.size())
+            return;
 
-        while (ss.good())
-        {
-            std::string arg;
-            getline(ss, arg, ',');
-            args.push_back(arg);
-        }
-
+        auto args = getAssetArgs(asset);
         if (args.size() < 5)
         {
             LOG << "Invalid CG args for '" << asset << "'";
             return;
         }
 
-        std::string &cgBase = args[0];
-        std::string cg1 = cgBase + "_" + args[1];
-        std::string cg2 = cgBase + "_" + Utils::zeroPad(args[3], 3);
-        std::string cg3 = cgBase + "_" + Utils::zeroPad(args[4], 4);
+        const std::string &baseRaw = args[0];
+        const std::string &baseName = baseRaw + "_" + args[1];
+        const std::string &part1Name = baseRaw + "_" + Utils::zeroPad(args[3], 3);
+        const std::string &part2Name = baseRaw + "_" + Utils::zeroPad(args[4], 4);
 
-        if (fileManager->inDb(cg1 + IMAGE_EXT))
-            id.names.push_back(cg1);
-        if (fileManager->inDb(cg2 + IMAGE_EXT))
-            id.names.push_back(cg2);
-        if (fileManager->inDb(cg3 + IMAGE_EXT))
-            id.names.push_back(cg3);
+        Cg &cg = currCgs[zIndex];
+        cg.clear();
 
-        if (!id.names.empty())
+        if (fileManager->inDB(baseName + IMAGE_EXT))
         {
-            switch (type)
-            {
-            case IMAGE_TYPE::CG:
-                currCgs[zIndex] = id;
-                break;
-            case IMAGE_TYPE::FW:
-                currFws[zIndex] = id;
-                break;
-            }
+            cg.base = Image{baseName, xShift, yShift};
+            assetsToFetch.push_back(baseName);
         }
 
-        break;
+        if (fileManager->inDB(part1Name + IMAGE_EXT))
+        {
+            cg.part1 = Image{part1Name, xShift, yShift};
+            assetsToFetch.push_back(part1Name);
+        }
+
+        if (fileManager->inDB(part2Name + IMAGE_EXT))
+        {
+            cg.part2 = Image{part2Name, xShift, yShift};
+            assetsToFetch.push_back(part2Name);
+        }
+    }
+    break;
+
+    case IMAGE_TYPE::FW:
+    {
+        if (zIndex >= currFws.size())
+            return;
+
+        // Attempt to match CS2 offsets for FW images
+        xShift += 90;
+        yShift += 160;
+
+        // Assume same behaviour as CG
+
+        auto args = getAssetArgs(asset);
+        if (args.size() < 5)
+        {
+            LOG << "Invalid FW args for '" << asset << "'";
+            return;
+        }
+
+        const std::string &baseRaw = args[0];
+        const std::string &baseName = baseRaw + "_" + args[1];
+        const std::string &part1Name = baseRaw + "_" + Utils::zeroPad(args[3], 3);
+        const std::string &part2Name = baseRaw + "_" + Utils::zeroPad(args[4], 4);
+
+        Fw &fw = currFws[zIndex];
+        fw.clear();
+
+        if (fileManager->inDB(baseName + IMAGE_EXT))
+        {
+            fw.base = Image{baseName, xShift, yShift};
+            assetsToFetch.push_back(baseName);
+        }
+
+        if (fileManager->inDB(part1Name + IMAGE_EXT))
+        {
+            fw.part1 = Image{part1Name, xShift, yShift};
+            assetsToFetch.push_back(part1Name);
+        }
+
+        if (fileManager->inDB(part2Name + IMAGE_EXT))
+        {
+            fw.part2 = Image{part2Name, xShift, yShift};
+            assetsToFetch.push_back(part2Name);
+        }
     }
 
-    // if (!id.names.empty())
-    // displayAll();
+    break;
+    }
+
+    // Fetch and cache required assets
+    for (auto &name : assetsToFetch)
+    {
+        // Prevent fetching already cached images
+        auto pos = textureCache.find(name);
+        if (pos != textureCache.end())
+            continue;
+
+        // Initialize cache entry with NULL (more efficient but prevents failed fetches from retrying)
+        // textureCache[name];
+
+        // Assume frame 0 for all images
+        fileManager->fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, std::make_pair(name, 0));
+    }
 }
 
-// Decode a raw HG buffer and display the specified frame
+// Decode a raw HG buffer and cache the texture
 void ImageManager::processImage(byte *buf, size_t sz, std::pair<std::string, int> nameIdx)
 {
     auto &name = nameIdx.first;
@@ -476,13 +540,13 @@ void ImageManager::processImage(byte *buf, size_t sz, std::pair<std::string, int
     // Verify signature
     if (strncmp(hgHeader->FileSignature, IMAGE_SIGNATURE, sizeof(hgHeader->FileSignature)) != 0)
     {
-        LOG << "Invalid image file signature!";
+        LOG << "Invalid image file signature for " << name;
         return;
     }
 
     // Retrieve frames
     FrameHeader *frameHeader = reinterpret_cast<FrameHeader *>(hgHeader + 1);
-    std::vector<HGDecoder::Frame> frames = HGDecoder::getFrames(frameHeader);
+    const auto &frames = HGDecoder::getFrames(frameHeader);
     if (frames.empty())
     {
         LOG << "No frames found";
@@ -499,9 +563,7 @@ void ImageManager::processImage(byte *buf, size_t sz, std::pair<std::string, int
     SDL_Texture *texture = getTextureFromFrame(frame);
 
     // Store texture in cache
-    textureDataCache[name] = std::make_pair(texture, *frame.Stdinfo);
+    textureCache[name] = std::make_pair(texture, *frame.Stdinfo);
 
     LOG << "Cached: " << name << "[" << frameIdx << "]";
-
-    // displayAll();
 }

@@ -13,6 +13,7 @@
 #include <map>
 #include <unordered_map>
 #include <utility>
+#include <array>
 
 #define IMAGE_EXT ".hg3"
 #define IMAGE_SIGNATURE "HG-3"
@@ -29,18 +30,28 @@
 #define FONT_PATH ASSETS "font.ttf"
 #define FONT_SIZE 20
 
+#define MWND "sys_mwnd_43"
+#define MWND_DECO "sys_mwnd_42"
+
+// Fixed position of message window
+#define MWND_XSHIFT 100
+#define MWND_YSHIFT 422
+
 // Determines length before wrapping text
 #define TEXTBOX_WIDTH 650
 
-// Centered on window based on width
-#define TEXT_XPOS (WINDOW_WIDTH - TEXTBOX_WIDTH) / 2
+// Text is relative to center of window based on width
+#define TEXT_XPOS (WINDOW_WIDTH - TEXTBOX_WIDTH) / 2 + 50
 #define TEXT_YPOS WINDOW_HEIGHT - 120
 
-// Relative to text position
+// Speaker name is relative to text position
 #define SPEAKER_XPOS TEXT_XPOS + 30
 #define SPEAKER_YPOS TEXT_YPOS - 25
 
-#define Z_INDEX_MAX 10
+#define MAX_BG 10
+#define MAX_EG 10
+#define MAX_CG 10
+#define MAX_FW 10
 
 enum class IMAGE_TYPE
 {
@@ -59,20 +70,59 @@ typedef struct
 
 typedef std::pair<SDL_Texture *, Stdinfo> TextureData;
 
+class Image
+{
+public:
+    Image(){};
+
+    Image(std::string, int, int);
+
+    void render(SDL_Renderer *);
+
+    void clear();
+
+private:
+    TextureData *textureData = NULL;
+
+    std::string textureName;
+
+    // Additional offset applied on top of base position
+    int xShift = 0;
+    int yShift = 0;
+};
+
+class Bg : public Image
+{
+    using Image::Image;
+};
+
+class Eg : public Image
+{
+    using Image::Image;
+};
+
+class Cg
+{
+public:
+    void render(SDL_Renderer *);
+
+    void clear();
+
+    Image base;
+    Image part1;
+    Image part2;
+};
+
+class Fw : public Cg
+{
+};
+
 class ImageManager
 {
 
 public:
     std::string currText;
     std::string currSpeaker;
-
-    // Map of image type identifiers to their respective enums
-    const std::unordered_map<std::string, IMAGE_TYPE> imageTypes = {
-        {"bg", IMAGE_TYPE::BG},
-        {"cg", IMAGE_TYPE::CG},
-        {"eg", IMAGE_TYPE::EG},
-        {"fw", IMAGE_TYPE::FW},
-    };
 
     ImageManager(FileManager *);
 
@@ -84,7 +134,7 @@ public:
 
     void clearZIndex(IMAGE_TYPE, int);
 
-    void displayAll();
+    void render();
 
     void toggle_fullscreen();
 
@@ -94,16 +144,20 @@ private:
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
 
+    Image mwnd = {MWND, MWND_XSHIFT, MWND_YSHIFT};
+    Image mwndDeco = {MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
+
     TTF_Font *font = NULL;
 
     SDL_Color textColor = {255, 255, 255, 0};
 
-    ImageData currCgs[Z_INDEX_MAX];
-    ImageData currBgs[Z_INDEX_MAX];
-    ImageData currEgs[Z_INDEX_MAX];
-    ImageData currFws[Z_INDEX_MAX];
+    // Arrays to simulate the current canvas with layers
+    std::array<Bg, MAX_BG> currBgs;
+    std::array<Eg, MAX_EG> currEgs;
+    std::array<Cg, MAX_CG> currCgs;
+    std::array<Fw, MAX_FW> currFws;
 
-    std::map<std::string, TextureData> textureDataCache;
+    std::vector<std::string> getAssetArgs(const std::string &);
 
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
 
@@ -111,13 +165,9 @@ private:
 
     void setLogo();
 
-    void renderTexture(SDL_Texture *, int, int);
-
     void processImage(byte *, size_t, std::pair<std::string, int>);
 
     void renderImage(const ImageData &);
-
-    void renderMessageWindow();
 
     void renderMessage(const std::string &);
 

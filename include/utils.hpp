@@ -56,7 +56,10 @@ namespace Utils
         }
     };
 
-    std::string zeroPad(std::string, size_t);
+    inline std::string zeroPad(const std::string str, const size_t len)
+    {
+        return std::string(len - std::min(len, str.length()), '0') + str;
+    }
 
     std::vector<byte> zlibUncompress(uint32, byte *, uint32 &);
 

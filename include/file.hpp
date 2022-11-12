@@ -131,6 +131,14 @@ public:
         attr.onsuccess = [](emscripten_fetch_t *fetch)
         {
             LOG << "Fetched: " << fetch->url << " Size: " << fetch->numBytes;
+            if (fetch->numBytes == 0)
+            {
+                LOG << "Fetch failed!";
+                delete fetch->userData;
+                emscripten_fetch_close(fetch);
+                return;
+            }
+
             auto buf = reinterpret_cast<const byte *>(fetch->data);
             std::vector<byte> bufVec(buf, buf + fetch->numBytes);
 
@@ -172,7 +180,8 @@ public:
 #endif
     }
 
-    inline bool inDb(const std::string &name)
+    // Return true if asset is in database
+    inline bool inDB(const std::string &name)
     {
         return kifDb.find(name) != kifDb.end();
     }
