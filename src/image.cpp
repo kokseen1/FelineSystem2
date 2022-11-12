@@ -21,9 +21,7 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
 
-    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(const_cast<byte *>(logo), 64, 64, 32, 64 * 4, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
-    SDL_SetWindowIcon(window, surface);
-    SDL_FreeSurface(surface);
+    setWindowIcon(window);
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
@@ -82,6 +80,15 @@ void ImageManager::toggle_fullscreen()
     }
     isFullscreen ^= 1;
     // #endif
+}
+
+// Set the SDL window icon using an array of pixels
+void ImageManager::setWindowIcon(SDL_Window *window)
+{
+#include <logo.h>
+    SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(logo, 64, 64, 32, 64 * 4, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+    SDL_SetWindowIcon(window, surface);
+    SDL_FreeSurface(surface);
 }
 
 // Render a texture onto the renderer at given position
