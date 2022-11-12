@@ -11,7 +11,12 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
 {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-        throw std::runtime_error("Unable to initialize SDL");
+        throw std::runtime_error("Could not initialize SDL");
+    }
+
+    if (TTF_Init() == -1)
+    {
+        throw std::runtime_error("Could not init TTF");
     }
 
     // Create SDL window and renderer
@@ -20,23 +25,41 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
                               WINDOW_WIDTH,
                               WINDOW_HEIGHT,
                               SDL_WINDOW_SHOWN);
+    if (window == NULL)
+    {
+        throw std::runtime_error("Could not create SDL window");
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (renderer == NULL)
+    {
+        throw std::runtime_error("Could not create SDL renderer");
+    }
 
     setWindowIcon(window);
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_RenderSetLogicalSize(renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
-
-    if (TTF_Init() == -1)
+    // Background color when rendering transparent textures
+    if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0) < 0)
     {
-        LOG << "Failed to init TTF";
+        throw std::runtime_error("Could not set render draw color");
+    }
+
+    // Blending for RenderCopy
+    if (SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND) < 0)
+    {
+        throw std::runtime_error("Could not set render draw blend mode");
+    }
+
+    // For scaling in fullscreen
+    if (SDL_RenderSetLogicalSize(renderer, WINDOW_WIDTH, WINDOW_HEIGHT) < 0)
+    {
+        throw std::runtime_error("Could not set logical size");
     }
 
     font = TTF_OpenFont(FONT_PATH, FONT_SIZE);
     if (font == NULL)
     {
-        throw std::runtime_error("Cannot find font!");
+        throw std::runtime_error("Could not open font");
     }
 
     // Decode and cache message window assets
@@ -87,6 +110,12 @@ void ImageManager::setWindowIcon(SDL_Window *window)
 {
 #include <logo.h>
     SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(logo, 64, 64, 32, 64 * 4, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+    if (surface == NULL)
+    {
+        LOG << "Could not create surface from logo";
+        return;
+    }
+
     SDL_SetWindowIcon(window, surface);
     SDL_FreeSurface(surface);
 }

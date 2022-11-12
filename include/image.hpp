@@ -94,7 +94,8 @@ private:
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
 
-    TTF_Font *font;
+    TTF_Font *font = NULL;
+
     SDL_Color textColor = {255, 255, 255, 0};
 
     ImageData currCgs[Z_INDEX_MAX];
