@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #define LOG Utils::Log()
 
@@ -49,7 +50,12 @@ namespace Utils
 #endif
 #ifdef __EMSCRIPTEN__
             ss << "`)";
-            emscripten_run_script(ss.str().c_str());
+
+            // Sanitize string
+            auto str = ss.str();
+            std::replace(str.begin() + 13, str.end() - 3, '`', '\'');
+
+            emscripten_run_script(str.c_str());
 #else
             std::cout << ss.str() << std::endl;
 #endif
