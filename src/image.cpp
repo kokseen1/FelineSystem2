@@ -125,7 +125,7 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
     processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>(MWND, 43));
     processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>(MWND_DECO, 42));
     if (textureCache[MWND].first != NULL)
-        SDL_SetTextureAlphaMod(textureCache[MWND].first, 120);
+        SDL_SetTextureAlphaMod(textureCache[MWND].first, MWND_ALPHA);
 
     LOG << "ImageManager initialized";
 }
@@ -206,7 +206,7 @@ void ImageManager::renderSpeaker(const std::string &text)
     }
 
     // Render text
-    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(font, text.c_str(), textColor, 0);
+    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(font, ("[ " + text + " ]" ).c_str(), textColor, 0);
     if (surface == NULL)
     {
         LOG << "TTF Surface failed!";

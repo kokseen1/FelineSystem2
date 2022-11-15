@@ -32,6 +32,7 @@
 
 #define MWND "sys_mwnd_43"
 #define MWND_DECO "sys_mwnd_42"
+#define MWND_ALPHA 130
 
 // Fixed position of message window
 #define MWND_XSHIFT 100
@@ -45,7 +46,7 @@
 #define TEXT_YPOS WINDOW_HEIGHT - 120
 
 // Speaker name is relative to text position
-#define SPEAKER_XPOS TEXT_XPOS + 30
+#define SPEAKER_XPOS TEXT_XPOS
 #define SPEAKER_YPOS TEXT_YPOS - 25
 
 #define MAX_BG 10
