@@ -10,6 +10,12 @@ MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
     {
         std::cout << Mix_GetError() << std::endl;
     }
+
+    // Set fixed volume for channels
+    Mix_VolumeMusic(MUSIC_VOLUME);
+    Mix_Volume(-1, SE_VOLUME);
+    Mix_Volume(CHANNEL_PCM, PCM_VOLUME);
+
     LOG << "MusicManager initialized";
 }
 

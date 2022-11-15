@@ -12,6 +12,10 @@
 #define SOUND_CHANNELS 8
 #define CHANNEL_PCM SOUND_CHANNELS - 1
 
+#define MUSIC_VOLUME 60
+#define SE_VOLUME 50
+#define PCM_VOLUME SDL_MIX_MAXVOLUME
+
 #define MUSIC_EXT ".ogg"
 #define PCM_EXT ".ogg"
 #define SE_EXT ".ogg"
