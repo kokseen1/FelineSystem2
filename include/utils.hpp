@@ -74,4 +74,6 @@ namespace Utils
         for (auto &c : s)
             c = tolower(c);
     }
+
+    std::string getCookie(const std::string &);
 }
