@@ -23,7 +23,9 @@
 // Macro for function signature of callbacks passed to FFAP function
 #define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
 
+// Custom database of asset names and offsets
 #define KIF_DB ASSETS "kif.fs2"
+
 #define LOWERCASE_ASSETS
 
 typedef struct

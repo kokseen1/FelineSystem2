@@ -5,7 +5,6 @@
 
 SceneManager::SceneManager(MusicManager *mm, ImageManager *im, FileManager *fm) : musicManager{mm}, imageManager{im}, fileManager{fm}
 {
-    fileManager->init(this);
 };
 
 // Parse a raw CST file from a memory buffer and store the uncompressed script
@@ -70,14 +69,15 @@ void SceneManager::setScriptOffset(const SaveData saveData)
 }
 
 // Fetch the specified script and begin parsing
-void SceneManager::setScript(const std::string name)
+void SceneManager::setScript(const std::string& name)
 {
     fileManager->fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadScriptStart, name);
 }
 
+// Fetch and parse entrypoint script
 void SceneManager::start()
 {
-    setScript(SCRIPT_START);
+    setScript(SCRIPT_ENTRYPOINT);
 }
 
 std::string SceneManager::sj2utf8(const std::string &input)

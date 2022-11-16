@@ -16,7 +16,7 @@
 #define SCRIPT_EXT ".cst"
 #define SCRIPT_SIGNATURE "CatScene"
 
-#define SCRIPT_START "op"
+#define SCRIPT_ENTRYPOINT "op"
 #define WAIT_DEFAULT_DELAY 100
 
 #define LOG_CMD
@@ -66,7 +66,7 @@ private:
 
     void loadScriptStart(byte *, size_t, const std::string);
 
-    void setScript(const std::string);
+    void setScript(const std::string&);
 
     void loadScriptOffset(byte *, size_t, const SaveData);
 
