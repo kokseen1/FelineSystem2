@@ -48,20 +48,20 @@ void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptNam
 
     // Store loaded script name
     currScriptName = scriptName;
+
+    parseScript = true;
 }
 
 // Load a script from a raw buffer and parse it from the start
 void SceneManager::loadScriptStart(byte *buf, size_t sz, const std::string scriptName)
 {
     loadScript(buf, sz, scriptName);
-    parseNext();
 }
 
 void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData saveData)
 {
     loadScript(buf, sz, saveData.scriptName);
     stringOffsetTable = reinterpret_cast<StringOffsetTable *>(stringTableBase - saveData.offsetFromBase);
-    parseNext();
 }
 
 void SceneManager::setScriptOffset(const SaveData saveData)
@@ -147,8 +147,19 @@ std::string SceneManager::cleanText(const std::string &rawText)
     return text;
 }
 
-// Parse the next line in the script
-void SceneManager::parseNext()
+// Parsing of the script called from main loop
+// Called every event loop as delays need to be async
+void SceneManager::tickScript()
+{
+    // Keep parsing lines until reaching a break or wait
+    while (parseScript && SDL_GetTicks64() >= targetTicks)
+    {
+        parseLine();
+    }
+}
+
+// Parse the current line of the script
+void SceneManager::parseLine()
 {
     if (currScriptData.empty())
     {
@@ -164,10 +175,7 @@ void SceneManager::parseNext()
     }
 
     // Parse script
-    const std::string scriptName = currScriptName;
     auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
-
-    // LOG << stringOffsetTable << "/" << std::hex << (void *)stringTableBase;
 
     stringOffsetTable++;
 
@@ -175,12 +183,14 @@ void SceneManager::parseNext()
     {
     case 0x02: // Wait for input after message
     case 0x03: // Novel page break and wait for input after message
-        // LOG << "BREAK";
-        if (autoMode != -1)
+        if (autoMode > -1)
         {
-            wait(100);
-            parseNext();
+            // TODO: Support various auto mode speeds
+            setDelay(100);
+            break;
         }
+
+        parseScript = false;
         break;
 
     case 0x20: // Display a message
@@ -196,28 +206,95 @@ void SceneManager::parseNext()
             imageManager->currText = cleanText(std::string(&stringTable->StringStart));
             speakerCounter--;
         }
-        goto next;
+        break;
 
     case 0x21: // Set speaker of the message
         imageManager->currSpeaker = cleanText(std::string(&stringTable->StringStart));
         speakerCounter = 1;
-        goto next;
+        break;
 
     case 0x30: // Perform any other command
         handleCommand(&stringTable->StringStart);
-        if (scriptName != currScriptName)
-            return;
-        goto next;
+        break;
 
     // Debug commands:
     case 0xF0: // Sets the name of the source script file
     case 0xF1: // Marks the current line number in the source script file (as a string)
-
-    next:
-        // Might want to avoid recursion
-        parseNext();
+        break;
     }
 }
+
+// Parse the next line in the script
+// void SceneManager::parseNext()
+// {
+//     if (currScriptData.empty())
+//     {
+//         LOG << "Script not loaded!";
+//         return;
+//     }
+
+//     // Check if pointer exceeded end of script
+//     if (reinterpret_cast<byte *>(stringOffsetTable) >= stringTableBase)
+//     {
+//         LOG << "End of script!";
+//         return;
+//     }
+
+//     // Parse script
+//     const std::string scriptName = currScriptName;
+//     auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
+
+//     // LOG << stringOffsetTable << "/" << std::hex << (void *)stringTableBase;
+
+//     stringOffsetTable++;
+
+//     switch (stringTable->Type)
+//     {
+//     case 0x02: // Wait for input after message
+//     case 0x03: // Novel page break and wait for input after message
+//         // LOG << "BREAK";
+//         if (autoMode != -1)
+//         {
+//             wait(100);
+//             parseNext();
+//         }
+//         break;
+
+//     case 0x20: // Display a message
+//         if (stringTable->StringStart == '\0')
+//         {
+//             LOG << "Empty text!";
+//         }
+//         else
+//         {
+//             if (speakerCounter == 0)
+//                 imageManager->currSpeaker.clear();
+
+//             imageManager->currText = cleanText(std::string(&stringTable->StringStart));
+//             speakerCounter--;
+//         }
+//         goto next;
+
+//     case 0x21: // Set speaker of the message
+//         imageManager->currSpeaker = cleanText(std::string(&stringTable->StringStart));
+//         speakerCounter = 1;
+//         goto next;
+
+//     case 0x30: // Perform any other command
+//         handleCommand(&stringTable->StringStart);
+//         if (scriptName != currScriptName)
+//             return;
+//         goto next;
+
+//     // Debug commands:
+//     case 0xF0: // Sets the name of the source script file
+//     case 0xF1: // Marks the current line number in the source script file (as a string)
+
+//     next:
+//         // Might want to avoid recursion
+//         parseNext();
+//     }
+// }
 
 void SceneManager::wait(const int duration)
 {
@@ -236,8 +313,8 @@ void SceneManager::handleCommand(const std::string &cmdString)
     if (std::regex_search(cmdString, matches, std::regex("^wait(?: (\\d+))")))
     {
         const std::string &arg = matches[1].str();
-        Uint32 ms = arg.empty() ? 1 : std::stoi(arg);
-        wait(ms);
+        Uint32 ms = arg.empty() ? WAIT_DEFAULT_DELAY : std::stoi(arg);
+        setDelay(ms);
     }
     else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -360,15 +437,11 @@ void SceneManager::handleCommand(const std::string &cmdString)
     // Auto mode
     else if (std::regex_search(cmdString, matches, std::regex("^auto (\\w+)")))
     {
-        const std::string &autoStatus = matches[1].str();
-        if (autoStatus == "on")
-        {
+        const std::string &status = matches[1].str();
+        if (status == "on")
             autoMode = 0;
-        }
-        else if (autoStatus == "off")
-        {
+        else if (status == "off")
             autoMode = -1;
-        }
     }
     // Non-capturing regex
 

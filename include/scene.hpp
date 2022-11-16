@@ -17,6 +17,7 @@
 #define SCRIPT_SIGNATURE "CatScene"
 
 #define SCRIPT_START "op"
+#define WAIT_DEFAULT_DELAY 100
 
 #define LOG_CMD
 
@@ -37,7 +38,11 @@ private:
     // Recursive-descent parser for expressions
     Parser parser;
 
+    bool parseScript = false;
+    Uint64 targetTicks = 0;
+
     int autoMode = -1;
+
     int speakerCounter = 0;
 
     std::string currScriptName;
@@ -53,9 +58,11 @@ private:
 
     SaveData saveData[10];
 
+    void setDelay(Uint64 delay) { targetTicks = SDL_GetTicks64() + delay; }
+
     void handleCommand(const std::string &);
 
-    void loadScript(byte *, size_t, const std::string&);
+    void loadScript(byte *, size_t, const std::string &);
 
     void loadScriptStart(byte *, size_t, const std::string);
 
@@ -65,6 +72,8 @@ private:
 
     void setScriptOffset(const SaveData);
 
+    void parseLine();
+
     std::string cleanText(const std::string &);
 
     std::string sj2utf8(const std::string &);
@@ -72,7 +81,15 @@ private:
 public:
     SceneManager(MusicManager *, ImageManager *, FileManager *);
 
-    void parseNext();
+    void parse()
+    {
+        targetTicks = 0;
+        parseScript = true;
+    }
+
+    void tickScript();
+
+    // void parseNext();
 
     void start();
 

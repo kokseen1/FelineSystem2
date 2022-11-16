@@ -24,10 +24,9 @@ void main_loop()
     static ImageManager imageManager(&fileManager);
     static SceneManager sceneManager(&musicManager, &imageManager, &fileManager);
 
-    static SDL_Event event;
+    SDL_Event event;
 
-    // Render the canvas
-    imageManager.render();
+    sceneManager.tickScript();
 
     while (SDL_PollEvent(&event))
     {
@@ -37,18 +36,18 @@ void main_loop()
             break;
 
         case SDL_MOUSEWHEEL:
-            sceneManager.parseNext();
+            sceneManager.parse();
             break;
 
         case SDL_MOUSEBUTTONDOWN:
-            sceneManager.parseNext();
+            sceneManager.parse();
             break;
 
         case SDL_KEYDOWN:
             switch (event.key.keysym.sym)
             {
             case SDLK_LCTRL:
-                sceneManager.parseNext();
+                sceneManager.parse();
                 break;
 
             case SDLK_f:
@@ -88,6 +87,9 @@ void main_loop()
             break;
         }
     }
+
+    // Render the canvas
+    imageManager.render();
 }
 
 int main(int argc, char **argv)
