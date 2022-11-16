@@ -72,7 +72,7 @@ private:
 
     void setScriptOffset(const SaveData);
 
-    void parseLine();
+    int parseLine();
 
     std::string cleanText(const std::string &);
 

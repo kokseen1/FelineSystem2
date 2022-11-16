@@ -3,9 +3,7 @@
 
 #include <algorithm>
 
-SceneManager::SceneManager(MusicManager *mm, ImageManager *im, FileManager *fm) : musicManager{mm}, imageManager{im}, fileManager{fm}
-{
-};
+SceneManager::SceneManager(MusicManager *mm, ImageManager *im, FileManager *fm) : musicManager{mm}, imageManager{im}, fileManager{fm} {};
 
 // Parse a raw CST file from a memory buffer and store the uncompressed script
 void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptName)
@@ -48,6 +46,7 @@ void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptNam
     // Store loaded script name
     currScriptName = scriptName;
 
+    // Allow ticker to start parsing
     parseScript = true;
 }
 
@@ -69,7 +68,7 @@ void SceneManager::setScriptOffset(const SaveData saveData)
 }
 
 // Fetch the specified script and begin parsing
-void SceneManager::setScript(const std::string& name)
+void SceneManager::setScript(const std::string &name)
 {
     fileManager->fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadScriptStart, name);
 }
@@ -154,24 +153,27 @@ void SceneManager::tickScript()
     // Keep parsing lines until reaching a break or wait
     while (parseScript && SDL_GetTicks64() >= targetTicks)
     {
-        parseLine();
+        // Check for failed parsing and break out of blocking loop
+        if (parseLine() != 0)
+            break;
     }
 }
 
 // Parse the current line of the script
-void SceneManager::parseLine()
+// Return 0 on success
+int SceneManager::parseLine()
 {
     if (currScriptData.empty())
     {
         LOG << "Script not loaded!";
-        return;
+        return 1;
     }
 
     // Check if pointer exceeded end of script
     if (reinterpret_cast<byte *>(stringOffsetTable) >= stringTableBase)
     {
         LOG << "End of script!";
-        return;
+        return 1;
     }
 
     // Parse script
@@ -183,14 +185,18 @@ void SceneManager::parseLine()
     {
     case 0x02: // Wait for input after message
     case 0x03: // Novel page break and wait for input after message
-        if (autoMode > -1)
+        switch (autoMode)
         {
+        case -1:
+            // Auto off
+            parseScript = false;
+            break;
+        case 0:
+        default:
             // TODO: Support various auto mode speeds
             setDelay(100);
             break;
         }
-
-        parseScript = false;
         break;
 
     case 0x20: // Display a message
@@ -222,6 +228,8 @@ void SceneManager::parseLine()
     case 0xF1: // Marks the current line number in the source script file (as a string)
         break;
     }
+
+    return 0;
 }
 
 // Parse the next line in the script
