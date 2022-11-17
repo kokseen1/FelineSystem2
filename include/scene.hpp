@@ -53,10 +53,9 @@ private:
     // Vector containing uncompressed script data to be traversed
     std::vector<byte> currScriptData;
 
+    StringOffsetTable *prevStringOffsetTable;
     StringOffsetTable *stringOffsetTable;
     byte *stringTableBase;
-
-    SaveData saveData[10];
 
     void setDelay(Uint64 delay) { targetTicks = SDL_GetTicks64() + delay; }
 
@@ -66,11 +65,11 @@ private:
 
     void loadScriptStart(byte *, size_t, const std::string);
 
-    void setScript(const std::string&);
+    void setScript(const std::string &);
 
     void loadScriptOffset(byte *, size_t, const SaveData);
 
-    void setScriptOffset(const SaveData);
+    void setScriptOffset(const SaveData&);
 
     int parseLine();
 
@@ -96,7 +95,7 @@ public:
     void selectChoice(int);
 
     void wait(const int);
-    
+
     void saveState(const int);
 
     void loadState(const int);

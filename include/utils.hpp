@@ -7,6 +7,9 @@
 #endif
 #include <stdio.h>
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -75,5 +78,15 @@ namespace Utils
             c = tolower(c);
     }
 
+#ifdef __EMSCRIPTEN__
+    std::string getLocalStorage(const std::string &);
+
+    void setLocalStorage(const std::string &, const std::string &);
+    
     std::string getCookie(const std::string &);
+#endif
+
+    void save(const std::string &, const json &);
+
+    json load(const std::string &);
 }

@@ -1,6 +1,9 @@
 #include <scene.hpp>
 #include <convtable.hpp>
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 #include <algorithm>
 
 SceneManager::SceneManager(MusicManager *mm, ImageManager *im, FileManager *fm) : musicManager{mm}, imageManager{im}, fileManager{fm} {};
@@ -62,7 +65,8 @@ void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData saveDat
     stringOffsetTable = reinterpret_cast<StringOffsetTable *>(stringTableBase - saveData.offsetFromBase);
 }
 
-void SceneManager::setScriptOffset(const SaveData saveData)
+// Fetch and load script and offset specified in SaveData
+void SceneManager::setScriptOffset(const SaveData &saveData)
 {
     fileManager->fetchAssetAndProcess(saveData.scriptName + SCRIPT_EXT, this, &SceneManager::loadScriptOffset, saveData);
 }
@@ -150,9 +154,17 @@ std::string SceneManager::cleanText(const std::string &rawText)
 // Called every event loop as delays need to be async
 void SceneManager::tickScript()
 {
+    bool offsetSaved = false;
+
     // Keep parsing lines until reaching a break or wait
     while (parseScript && SDL_GetTicks64() >= targetTicks)
     {
+        if (offsetSaved == false)
+        {
+            prevStringOffsetTable = stringOffsetTable;
+            offsetSaved = true;
+        }
+
         // Check for failed parsing and break out of blocking loop
         if (parseLine() != 0)
             break;
@@ -480,18 +492,32 @@ void SceneManager::selectChoice(int idx)
 
 void SceneManager::saveState(const int saveSlot)
 {
-    saveData[saveSlot].scriptName = currScriptName;
-    saveData[saveSlot].offsetFromBase = reinterpret_cast<byte *>(stringTableBase - reinterpret_cast<byte *>(stringOffsetTable));
+    json saveDataJson;
+    saveDataJson["vars"] = json(parser.getSymbolTable());
+    saveDataJson["scriptName"] = currScriptName;
+    saveDataJson["offsetFromBase"] = stringTableBase - reinterpret_cast<byte *>(prevStringOffsetTable);
+
+    Utils::save(std::to_string(saveSlot), saveDataJson);
 }
 
 void SceneManager::loadState(const int saveSlot)
 {
-    auto &loadData = saveData[saveSlot];
-    if (loadData.scriptName.empty())
+    const auto &saveDataJson = Utils::load(std::to_string(saveSlot));
+    SaveData saveData;
+
+    try
     {
-        LOG << "Empty savedata!";
-        return;
+        saveData.scriptName = saveDataJson.at("scriptName");
+        saveData.offsetFromBase = reinterpret_cast<byte *>(saveDataJson.at("offsetFromBase").get<Uint64>());
+    }
+    catch (const json::type_error &e)
+    {
+        LOG << "No save data on slot " << saveSlot;
+    }
+    catch (const json::out_of_range &e)
+    {
+        LOG << "Invalid save data on slot " << saveSlot;
     }
 
-    setScriptOffset(loadData);
+    setScriptOffset(saveData);
 }

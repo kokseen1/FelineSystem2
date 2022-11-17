@@ -52,6 +52,8 @@ public:
 
     void set_lexer_buffer(std::string &);
 
+    std::map<std::string, double>& getSymbolTable();
+
 private:
     int prevValue = 0;
     std::string last_var_name; // TODO: Might have better alternative
