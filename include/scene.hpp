@@ -69,7 +69,7 @@ private:
 
     void loadScriptOffset(byte *, size_t, const SaveData);
 
-    void setScriptOffset(const SaveData&);
+    void setScriptOffset(const SaveData &);
 
     int parseLine();
 
@@ -93,8 +93,6 @@ public:
     void start();
 
     void selectChoice(int);
-
-    void wait(const int);
 
     void saveState(const int);
 
