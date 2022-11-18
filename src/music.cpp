@@ -118,6 +118,8 @@ void MusicManager::loadDump(const json &j)
     for (int i = 0; i < soundChunks.size(); i++)
         stopSound(i);
 
+    stopAndFreeMusic();
+
     if (j.contains(KEY_MUSIC) && j[KEY_MUSIC].contains(KEY_NAME))
     {
         setMusic(j[KEY_MUSIC][KEY_NAME]);
