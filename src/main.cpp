@@ -62,10 +62,8 @@ void main_loop()
             case SDLK_7:
             case SDLK_8:
             case SDLK_9:
+                // Ensure compatibility with mobile browsers
                 if (SDL_GetModState() & KMOD_ALT && SDL_GetModState() & KMOD_SHIFT)
-                    break;
-
-                if (SDL_GetModState() & KMOD_ALT)
                     sceneManager->saveState(event.key.keysym.sym - SDLK_1);
                 else if (SDL_GetModState() & KMOD_SHIFT)
                     sceneManager->loadState(event.key.keysym.sym - SDLK_1);
