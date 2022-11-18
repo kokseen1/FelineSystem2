@@ -144,6 +144,7 @@ std::string SceneManager::cleanText(const std::string &rawText)
     std::string text = std::regex_replace(sj2utf8(rawText), std::regex("\\[(.*?)\\]"), "$1");
     text = std::regex_replace(text, std::regex("¥fn"), "");
     text = std::regex_replace(text, std::regex("¥fs"), " ");
+    text = std::regex_replace(text, std::regex("¥n"), " ");
     text = std::regex_replace(text, std::regex("¥@"), "");
     // text = std::regex_replace(text, std::regex("\\\\fn"), "");
     // text = std::regex_replace(text, std::regex("\\\\fs"), "");
