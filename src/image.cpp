@@ -291,7 +291,7 @@ void ImageManager::render()
 }
 
 // Clear image of type at specified z index
-void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
+void ImageManager::clearZIndex(const IMAGE_TYPE type, const int zIndex)
 {
     switch (type)
     {
@@ -325,7 +325,7 @@ void ImageManager::clearZIndex(IMAGE_TYPE type, int zIndex)
 }
 
 // Clear all layers of specified image type
-void ImageManager::clearImageType(IMAGE_TYPE type)
+void ImageManager::clearImageType(const IMAGE_TYPE type)
 {
     switch (type)
     {
@@ -355,8 +355,8 @@ void ImageManager::clearImageType(IMAGE_TYPE type)
 }
 
 // Get reference to specified image type at z-index
-// Reference to base image for CG/FW 
-const Image &ImageManager::getImage(IMAGE_TYPE type, int zIndex)
+// Reference to base image for CG/FW
+const Image &ImageManager::getImage(const IMAGE_TYPE type, const int zIndex)
 {
     switch (type)
     {
@@ -398,9 +398,10 @@ std::vector<std::string> ImageManager::getAssetArgs(const std::string &asset)
 
     return args;
 }
+
 // Parses image arguments into ImageData to be displayed
 // Names of assets must be inserted in ascending z-index
-void ImageManager::setImage(IMAGE_TYPE type, int zIndex, std::string asset, int xShift, int yShift)
+void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string asset, int xShift, int yShift)
 {
 
 #ifdef LOWERCASE_ASSETS

@@ -127,13 +127,13 @@ public:
 
     ImageManager(FileManager *);
 
-    const Image& getImage(IMAGE_TYPE, int);
+    const Image& getImage(const IMAGE_TYPE, const int);
 
-    void setImage(IMAGE_TYPE, int, std::string, int, int);
+    void setImage(const IMAGE_TYPE, const int, std::string, int, int);
 
-    void clearImageType(IMAGE_TYPE);
+    void clearImageType(const IMAGE_TYPE);
 
-    void clearZIndex(IMAGE_TYPE, int);
+    void clearZIndex(const IMAGE_TYPE, const int);
 
     void render();
 
