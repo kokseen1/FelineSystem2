@@ -24,6 +24,16 @@ void from_json(const json &j, Image &i)
     j.at(KEY_YSHIFT).get_to(i.yShift);
 }
 
+void to_json(json &j, const Fw &i)
+{
+    j = json{
+        {KEY_NAME, i.assetRaw},
+        // Assume base is always valid in a valid CG/FW
+        // Undo hardcoded offset for FW
+        {KEY_XSHIFT, i.base.xShift - FW_XSHIFT},
+        {KEY_YSHIFT, i.base.yShift - FW_YSHIFT}};
+}
+
 void to_json(json &j, const Cg &i)
 {
     j = json{
@@ -621,8 +631,8 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
             return;
 
         // Attempt to match CS2 offsets for FW images
-        xShift += 90;
-        yShift += 160;
+        xShift += FW_XSHIFT;
+        yShift += FW_YSHIFT;
 
         // Assume same behaviour as CG
 

@@ -54,6 +54,9 @@
 #define MAX_CG 10
 #define MAX_FW 10
 
+#define FW_XSHIFT 90
+#define FW_YSHIFT 160
+
 #define KEY_BG "bg"
 #define KEY_EG "eg"
 #define KEY_CG "cg"
