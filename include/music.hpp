@@ -46,8 +46,8 @@ public:
 private:
     FileManager *fileManager = NULL;
 
-    std::array<SDL_RWops *, SOUND_CHANNELS> soundOps;
-    std::array<Mix_Chunk *, SOUND_CHANNELS> soundChunks;
+    std::array<SDL_RWops *, SOUND_CHANNELS> soundOps{};
+    std::array<Mix_Chunk *, SOUND_CHANNELS> soundChunks{};
 
     Mix_Music *music = NULL;
     SDL_RWops *musicOps = NULL;

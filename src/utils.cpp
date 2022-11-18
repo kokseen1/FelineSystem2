@@ -71,8 +71,20 @@ namespace Utils
 #ifdef __EMSCRIPTEN__
         setLocalStorage(name, data.dump());
 #else
+        json j;
+
         std::ifstream ifs(SAVEDATA_FILENAME);
-        json j = json::parse(ifs);
+        if (ifs.is_open())
+        {
+            try
+            {
+                j = json::parse(ifs);
+            }
+            catch (const json::parse_error &e)
+            {
+                // Invalid savedata file, ignore and create a new one
+            }
+        }
         j[name] = data;
         std::ofstream ofs(SAVEDATA_FILENAME);
         ofs << j;
@@ -82,18 +94,23 @@ namespace Utils
     // Platform specific load
     json load(const std::string &name)
     {
-#ifdef __EMSCRIPTEN__
-        const std::string &dataRaw = getLocalStorage(name);
-        if (dataRaw.empty())
+        try
         {
-            // Non existent save data
+#ifdef __EMSCRIPTEN__
+            const std::string &dataRaw = getLocalStorage(name);
+            return json::parse(dataRaw);
+#else
+            std::ifstream ifs(SAVEDATA_FILENAME);
+            return json::parse(ifs).at(name);
+#endif
+        }
+        catch (const json::parse_error &e)
+        {
             return {};
         }
-        return json::parse(dataRaw);
-#else
-        std::ifstream ifs(SAVEDATA_FILENAME);
-        json j = json::parse(ifs);
-        return j.at(name);
-#endif
+        catch (const json::out_of_range &e)
+        {
+            return {};
+        }
     }
 }
