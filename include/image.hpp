@@ -54,6 +54,14 @@
 #define MAX_CG 10
 #define MAX_FW 10
 
+#define KEY_BG "bg"
+#define KEY_EG "eg"
+#define KEY_CG "cg"
+#define KEY_FW "fw"
+#define KEY_NAME "name"
+#define KEY_XSHIFT "x"
+#define KEY_YSHIFT "y"
+
 enum class IMAGE_TYPE
 {
     BG,
@@ -84,9 +92,13 @@ public:
 
     Image(std::string, int, int);
 
+    bool isActive() { return !textureName.empty(); }
+
     void render(SDL_Renderer *);
 
     void clear();
+
+    const json dump();
 
 private:
     TextureData *textureData = NULL;
@@ -109,9 +121,15 @@ public:
 
     void clear();
 
+    bool isActive() { return !assetRaw.empty(); }
+
+    const json dump();
+
     Image base;
     Image part1;
     Image part2;
+
+    std::string assetRaw;
 };
 
 class Fw : public Cg
@@ -127,7 +145,13 @@ public:
 
     ImageManager(FileManager *);
 
-    const Image& getImage(const IMAGE_TYPE, const int);
+    void clearCanvas();
+
+    void loadDump(const json &);
+
+    const json dump();
+
+    const Image &getImage(const IMAGE_TYPE, const int);
 
     void setImage(const IMAGE_TYPE, const int, std::string, int, int);
 

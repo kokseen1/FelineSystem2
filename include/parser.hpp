@@ -2,6 +2,8 @@
 #include <string>
 #include <map>
 
+typedef std::map<std::string, double> SymbolTable;
+
 enum class Token
 {
     Eof = -1,
@@ -52,13 +54,17 @@ public:
 
     void set_lexer_buffer(std::string &);
 
-    std::map<std::string, double>& getSymbolTable();
+    // Replace the existing symbol table with a new one
+    void setSymbolTable(const SymbolTable &symbolTable) { symbol_table = symbolTable; }
+
+    // Return a reference to the symbol table map object
+    const SymbolTable &getSymbolTable() { return symbol_table; }
 
 private:
     int prevValue = 0;
     std::string last_var_name; // TODO: Might have better alternative
     Lexer *p_lexer = NULL;
-    std::map<std::string, double> symbol_table{};
+    SymbolTable symbol_table{};
 
     double primary();
     double unary_expr();

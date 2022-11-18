@@ -5,6 +5,8 @@
 #include <zlib.h>
 #include <string.h>
 
+#include <fstream>
+
 namespace Utils
 {
     // Uncompress a buffer and return it as a vector
@@ -68,6 +70,12 @@ namespace Utils
     {
 #ifdef __EMSCRIPTEN__
         setLocalStorage(name, data.dump());
+#else
+        std::ifstream ifs(SAVEDATA_FILENAME);
+        json j = json::parse(ifs);
+        j[name] = data;
+        std::ofstream ofs(SAVEDATA_FILENAME);
+        ofs << j;
 #endif
     }
 
@@ -82,6 +90,10 @@ namespace Utils
             return {};
         }
         return json::parse(dataRaw);
+#else
+        std::ifstream ifs(SAVEDATA_FILENAME);
+        json j = json::parse(ifs);
+        return j.at(name);
 #endif
     }
 }

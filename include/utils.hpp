@@ -16,6 +16,8 @@ using json = nlohmann::json;
 #include <vector>
 #include <algorithm>
 
+#define SAVEDATA_FILENAME "savedata.json"
+
 #define LOG Utils::Log()
 
 #define LOGGING_ENABLE
@@ -82,7 +84,7 @@ namespace Utils
     std::string getLocalStorage(const std::string &);
 
     void setLocalStorage(const std::string &, const std::string &);
-    
+
     std::string getCookie(const std::string &);
 #endif
 

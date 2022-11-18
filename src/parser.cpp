@@ -127,12 +127,6 @@ void Lexer::advance()
     }
 }
 
-// Return a reference to the symbol table map
-std::map<std::string, double> &Parser::getSymbolTable()
-{
-    return symbol_table;
-}
-
 void Parser::set_lexer_buffer(std::string &buffer)
 {
     p_lexer->buffer = buffer;

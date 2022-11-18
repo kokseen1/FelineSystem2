@@ -9,6 +9,38 @@
 
 static std::map<std::string, TextureData> textureCache;
 
+void to_json(json &j, const Image &i)
+{
+    j = json{
+        {KEY_NAME, i.textureName},
+        {KEY_XSHIFT, i.xShift},
+        {KEY_YSHIFT, i.yShift}};
+}
+
+void from_json(const json &j, Image &i)
+{
+    j.at(KEY_NAME).get_to(i.textureName);
+    j.at(KEY_XSHIFT).get_to(i.xShift);
+    j.at(KEY_YSHIFT).get_to(i.yShift);
+}
+
+void to_json(json &j, const Cg &i)
+{
+    j = json{
+        {KEY_NAME, i.assetRaw},
+        // Assume base is always valid in a valid CG
+        {KEY_XSHIFT, i.base.xShift},
+        {KEY_YSHIFT, i.base.yShift}};
+}
+
+void from_json(const json &j, Cg &i)
+{
+    j.at(KEY_NAME).get_to(i.assetRaw);
+    // Assume base is always valid in a valid CG
+    j.at(KEY_XSHIFT).get_to(i.base.xShift);
+    j.at(KEY_YSHIFT).get_to(i.base.yShift);
+}
+
 Image::Image(std::string n, int x, int y) : textureName{n}, xShift{x}, yShift{y}
 {
 }
@@ -21,7 +53,7 @@ void Image::clear()
 // Render image onto the given renderer
 void Image::render(SDL_Renderer *renderer)
 {
-    if (textureName.empty())
+    if (!isActive())
         // Image is inactive
         return;
 
@@ -52,6 +84,12 @@ void Image::render(SDL_Renderer *renderer)
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);
 }
 
+const json Image::dump()
+{
+    auto &j = *this;
+    return j;
+}
+
 void Cg::render(SDL_Renderer *renderer)
 {
     base.render(renderer);
@@ -61,9 +99,109 @@ void Cg::render(SDL_Renderer *renderer)
 
 void Cg::clear()
 {
+    assetRaw.clear();
+
     base.clear();
     part1.clear();
     part2.clear();
+}
+
+const json Cg::dump()
+{
+    auto &j = *this;
+    return j;
+}
+
+// Clear the entire canvas
+void ImageManager::clearCanvas()
+{
+    clearImageType(IMAGE_TYPE::BG);
+    clearImageType(IMAGE_TYPE::EG);
+    clearImageType(IMAGE_TYPE::CG);
+    clearImageType(IMAGE_TYPE::FW);
+}
+
+// Load a json object of dumped image data
+// Throws json::out_of_range if key is missing
+void ImageManager::loadDump(const json &j)
+{
+    clearCanvas();
+
+    if (j.contains(KEY_BG))
+    {
+        for (auto &e : j[KEY_BG].items())
+        {
+            const auto &idx = std::stoi(e.key());
+            auto bg = e.value().get<Bg>();
+            setImage(IMAGE_TYPE::BG, idx, bg.textureName, bg.xShift, bg.yShift);
+        }
+    }
+
+    if (j.contains(KEY_EG))
+    {
+        for (auto &e : j[KEY_EG].items())
+        {
+            const auto &idx = std::stoi(e.key());
+            auto eg = e.value().get<Eg>();
+            setImage(IMAGE_TYPE::EG, idx, eg.textureName, eg.xShift, eg.yShift);
+        }
+    }
+
+    if (j.contains(KEY_CG))
+    {
+        for (auto &e : j[KEY_CG].items())
+        {
+            const auto &idx = std::stoi(e.key());
+            auto cg = e.value().get<Cg>();
+            setImage(IMAGE_TYPE::CG, idx, cg.assetRaw, cg.base.xShift, cg.base.yShift);
+        }
+    }
+
+    if (j.contains(KEY_FW))
+    {
+        for (auto &e : j[KEY_FW].items())
+        {
+            const auto &idx = std::stoi(e.key());
+            auto fw = e.value().get<Fw>();
+            setImage(IMAGE_TYPE::FW, idx, fw.assetRaw, fw.base.xShift, fw.base.yShift);
+        }
+    }
+}
+
+// Dump all images currently on the canvas to a json object
+const json ImageManager::dump()
+{
+    json j;
+
+    for (int i = 0; i < currBgs.size(); i++)
+    {
+        if (!currBgs[i].isActive())
+            continue;
+        j[KEY_BG][std::to_string(i)] = currBgs[i].dump();
+    }
+
+    for (int i = 0; i < currEgs.size(); i++)
+    {
+        if (!currEgs[i].isActive())
+            continue;
+        j[KEY_EG][std::to_string(i)] = currEgs[i].dump();
+    }
+
+    for (int i = 0; i < currCgs.size(); i++)
+    {
+        if (!currCgs[i].isActive())
+            continue;
+        j[KEY_CG][std::to_string(i)] = currCgs[i].dump();
+    }
+
+    for (int i = 0; i < currFws.size(); i++)
+    {
+        if (!currFws[i].isActive())
+            continue;
+        j[KEY_FW][std::to_string(i)] = currFws[i].dump();
+    }
+
+    return j;
 }
 
 ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
@@ -454,6 +592,9 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         Cg &cg = currCgs[zIndex];
         cg.clear();
 
+        // Store raw asset identifier
+        cg.assetRaw = asset;
+
         if (fileManager->inDB(baseName + IMAGE_EXT))
         {
             cg.base = Image{baseName, xShift, yShift};
@@ -499,6 +640,8 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
         Fw &fw = currFws[zIndex];
         fw.clear();
+
+        fw.assetRaw = asset;
 
         if (fileManager->inDB(baseName + IMAGE_EXT))
         {

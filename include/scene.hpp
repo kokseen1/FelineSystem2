@@ -19,6 +19,15 @@
 #define SCRIPT_ENTRYPOINT "op"
 #define WAIT_DEFAULT_DELAY 100
 
+#define KEY_SCENE "scene"
+#define KEY_IMAGE "image"
+#define KEY_AUDIO "audio"
+#define KEY_TEXT "text"
+#define KEY_SPEAKER "speaker"
+#define KEY_SYMBOL_TABLE "var"
+#define KEY_SCRIPT_NAME "name"
+#define KEY_OFFSET "offset"
+
 #define LOG_CMD
 
 typedef struct

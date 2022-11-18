@@ -8,7 +8,7 @@ MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
 {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)
     {
-        std::cout << Mix_GetError() << std::endl;
+        LOG << Mix_GetError();
     }
 
     // Set fixed volume for channels
@@ -33,7 +33,7 @@ void MusicManager::setSE(const std::string &asset, const int channel, const int 
 }
 
 // Play a file buffer as music
-void MusicManager::playMusicFromMem(byte *buf, size_t sz, int userdata)
+void MusicManager::playMusicFromMem(byte *buf, size_t sz, const std::string name)
 {
     stopAndFreeMusic();
     if (musicOps != NULL)
@@ -45,6 +45,8 @@ void MusicManager::playMusicFromMem(byte *buf, size_t sz, int userdata)
     music = Mix_LoadMUS_RW(musicOps, 0);
 
     Mix_PlayMusic(music, -1);
+
+    currMusic = name;
 }
 
 // Play a file buffer as sound
@@ -55,7 +57,7 @@ void MusicManager::playSoundFromMem(byte *buf, size_t sz, const std::pair<int, i
 
     if (channel >= SOUND_CHANNELS)
     {
-        LOG << "CHANNEL OUT OF BOUNDS!";
+        LOG << "Channel out of bounds!";
         return;
     }
 
@@ -87,21 +89,7 @@ void MusicManager::stopSound(const int channel)
 void MusicManager::setMusic(const std::string name)
 {
     auto fpath = name + MUSIC_EXT;
-    fileManager->fetchAssetAndProcess(fpath, this, &MusicManager::playMusicFromMem, 0);
-}
-
-// Play a local file via filename
-void MusicManager::playMusicFromFile(const std::string fpath)
-{
-    stopAndFreeMusic();
-    music = Mix_LoadMUS(fpath.c_str());
-    if (music == NULL)
-    {
-        std::cout << "Could not play " << fpath << std::endl;
-        return;
-    }
-
-    Mix_PlayMusic(music, -1);
+    fileManager->fetchAssetAndProcess(fpath, this, &MusicManager::playMusicFromMem, name);
 }
 
 // Stop and free any existing music
@@ -112,6 +100,7 @@ void MusicManager::stopAndFreeMusic()
         Mix_HaltMusic();
         Mix_FreeMusic(music);
     }
+    currMusic.clear();
 }
 
 // Free any existing music SDL_RWops
@@ -121,4 +110,30 @@ void MusicManager::freeOps(SDL_RWops *ops)
     {
         LOG << "Could not free RWops";
     }
+}
+
+void MusicManager::loadDump(const json &j)
+{
+    // Stop all SE
+    for (int i = 0; i < soundChunks.size(); i++)
+        stopSound(i);
+
+    if (j.contains(KEY_MUSIC) && j[KEY_MUSIC].contains(KEY_NAME))
+    {
+        setMusic(j[KEY_MUSIC][KEY_NAME]);
+    }
+}
+
+const json MusicManager::dump()
+{
+    json j;
+
+    // TODO: dump (looping) SE
+
+    if (!currMusic.empty())
+    {
+        j[KEY_MUSIC][KEY_NAME] = currMusic;
+    }
+
+    return j;
 }

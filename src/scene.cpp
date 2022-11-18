@@ -141,12 +141,13 @@ std::string SceneManager::sj2utf8(const std::string &input)
 // Removes formatting symbols from text
 std::string SceneManager::cleanText(const std::string &rawText)
 {
-    std::string text = std::regex_replace(rawText, std::regex("\\[(.*?)\\]"), "$1");
-    text = std::regex_replace(text, std::regex("\\\\fn"), "");
-    text = std::regex_replace(text, std::regex("\\\\fs"), "");
-    text = std::regex_replace(text, std::regex("\\\\"), "");
-    text = std::regex_replace(text, std::regex("@"), "");
-
+    std::string text = std::regex_replace(sj2utf8(rawText), std::regex("\\[(.*?)\\]"), "$1");
+    text = std::regex_replace(text, std::regex("¥fn"), "");
+    text = std::regex_replace(text, std::regex("¥@"), "");
+    // text = std::regex_replace(text, std::regex("\\\\fn"), "");
+    // text = std::regex_replace(text, std::regex("\\\\fs"), "");
+    // text = std::regex_replace(text, std::regex("\\\\"), "");
+    // text = std::regex_replace(text, std::regex("@"), "");
     return text;
 }
 
@@ -409,32 +410,44 @@ void SceneManager::selectChoice(int idx)
 
 void SceneManager::saveState(const int saveSlot)
 {
-    json saveDataJson;
-    saveDataJson["vars"] = json(parser.getSymbolTable());
-    saveDataJson["scriptName"] = currScriptName;
-    saveDataJson["offsetFromBase"] = stringTableBase - reinterpret_cast<byte *>(stringOffsetTable);
+    json j;
+    j[KEY_IMAGE] = imageManager->dump();
+    j[KEY_AUDIO] = musicManager->dump();
+    j[KEY_TEXT] = imageManager->currText;
+    j[KEY_SPEAKER] = imageManager->currSpeaker;
 
-    Utils::save(std::to_string(saveSlot), saveDataJson);
+    json &jScene = j[KEY_SCENE];
+    jScene[KEY_SYMBOL_TABLE] = json(parser.getSymbolTable());
+    jScene[KEY_SCRIPT_NAME] = currScriptName;
+    jScene[KEY_OFFSET] = stringTableBase - reinterpret_cast<byte *>(stringOffsetTable);
+
+    Utils::save(std::to_string(saveSlot), j);
 }
 
 void SceneManager::loadState(const int saveSlot)
 {
-    const auto &saveDataJson = Utils::load(std::to_string(saveSlot));
-    SaveData saveData;
+    const auto &j = Utils::load(std::to_string(saveSlot));
+    if (j.empty())
+    {
+        LOG << "No save data on slot " << saveSlot;
+        return;
+    }
 
     try
     {
-        saveData.scriptName = saveDataJson.at("scriptName");
-        saveData.offsetFromBase = reinterpret_cast<byte *>(saveDataJson.at("offsetFromBase").get<Uint64>());
-    }
-    catch (const json::type_error &e)
-    {
-        LOG << "No save data on slot " << saveSlot;
+        const json &jScene = j.at(KEY_SCENE);
+        const json &jImage = j.at(KEY_IMAGE);
+        const json &jAudio = j.at(KEY_AUDIO);
+
+        setScriptOffset({jScene.at(KEY_SCRIPT_NAME), reinterpret_cast<byte *>(jScene.at(KEY_OFFSET).get<Uint64>())});
+        parser.setSymbolTable(jScene.at(KEY_SYMBOL_TABLE).get<SymbolTable>());
+        imageManager->currText = j.at(KEY_TEXT);
+        imageManager->currSpeaker = j.at(KEY_SPEAKER);
+        imageManager->loadDump(jImage);
+        musicManager->loadDump(jAudio);
     }
     catch (const json::out_of_range &e)
     {
         LOG << "Invalid save data on slot " << saveSlot;
     }
-
-    setScriptOffset(saveData);
 }

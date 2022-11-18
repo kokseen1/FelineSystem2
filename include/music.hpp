@@ -20,6 +20,11 @@
 #define PCM_EXT ".ogg"
 #define SE_EXT ".ogg"
 
+#define KEY_MUSIC "music"
+#define KEY_SE "se"
+#define KEY_LOOPS "loops"
+#define KEY_NAME "name"
+
 class MusicManager
 {
 
@@ -34,15 +39,21 @@ public:
 
     void stopSound(const int);
 
+    void loadDump(const json &);
+
+    const json dump();
+
 private:
     FileManager *fileManager = NULL;
 
-    SDL_RWops *soundOps[SOUND_CHANNELS] = {NULL};
-    Mix_Chunk *soundChunks[SOUND_CHANNELS] = {NULL};
+    std::array<SDL_RWops *, SOUND_CHANNELS> soundOps;
+    std::array<Mix_Chunk *, SOUND_CHANNELS> soundChunks;
 
     Mix_Music *music = NULL;
     SDL_RWops *musicOps = NULL;
     std::vector<byte> musicVec;
+
+    std::string currMusic;
 
     void stopAndFreeMusic();
 
@@ -50,9 +61,7 @@ private:
 
     void freeBuf();
 
-    void playMusicFromFile(const std::string);
-
-    void playMusicFromMem(byte *, size_t, int);
+    void playMusicFromMem(byte *, size_t, const std::string);
 
     void playSoundFromMem(byte *, size_t, const std::pair<int, int>);
 };
