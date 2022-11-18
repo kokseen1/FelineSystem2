@@ -53,7 +53,7 @@ private:
     // Vector containing uncompressed script data to be traversed
     std::vector<byte> currScriptData;
 
-    StringOffsetTable *prevStringOffsetTable;
+    // StringOffsetTable *prevStringOffsetTable;
     StringOffsetTable *stringOffsetTable;
     byte *stringTableBase;
 

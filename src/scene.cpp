@@ -48,15 +48,15 @@ void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptNam
 
     // Store loaded script name
     currScriptName = scriptName;
-
-    // Allow ticker to start parsing
-    parseScript = true;
 }
 
 // Load a script from a raw buffer and parse it from the start
 void SceneManager::loadScriptStart(byte *buf, size_t sz, const std::string scriptName)
 {
     loadScript(buf, sz, scriptName);
+
+    // Allow ticker to start parsing
+    parseScript = true;
 }
 
 void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData saveData)
@@ -155,8 +155,8 @@ std::string SceneManager::cleanText(const std::string &rawText)
 void SceneManager::tickScript()
 {
     // Save previous state only when advancing not by timer
-    if (parseScript && targetTicks == 0)
-        prevStringOffsetTable = stringOffsetTable;
+    // if (parseScript && targetTicks == 0)
+    //     prevStringOffsetTable = stringOffsetTable;
 
     // Keep parsing lines until reaching a break or wait
     while (parseScript && SDL_GetTicks64() >= targetTicks)
@@ -331,9 +331,9 @@ void SceneManager::handleCommand(const std::string &cmdString)
         }
 
         // Support for @ symbol referring to previous value
-        const auto &imageData = imageManager->getImageData(imageType, zIndex);
-        auto prevXShift = imageData.xShift;
-        auto prevYShift = imageData.yShift;
+        const auto &image = imageManager->getImage(imageType, zIndex);
+        auto prevXShift = image.xShift;
+        auto prevYShift = image.yShift;
 
         auto xShiftStr = matches[4].str();
         auto yShiftStr = matches[5].str();
@@ -412,7 +412,7 @@ void SceneManager::saveState(const int saveSlot)
     json saveDataJson;
     saveDataJson["vars"] = json(parser.getSymbolTable());
     saveDataJson["scriptName"] = currScriptName;
-    saveDataJson["offsetFromBase"] = stringTableBase - reinterpret_cast<byte *>(prevStringOffsetTable);
+    saveDataJson["offsetFromBase"] = stringTableBase - reinterpret_cast<byte *>(stringOffsetTable);
 
     Utils::save(std::to_string(saveSlot), saveDataJson);
 }

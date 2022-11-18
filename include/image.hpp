@@ -74,6 +74,12 @@ typedef std::pair<SDL_Texture *, Stdinfo> TextureData;
 class Image
 {
 public:
+    std::string textureName;
+
+    // Additional offset applied on top of base position
+    int xShift = 0;
+    int yShift = 0;
+
     Image(){};
 
     Image(std::string, int, int);
@@ -84,12 +90,6 @@ public:
 
 private:
     TextureData *textureData = NULL;
-
-    std::string textureName;
-
-    // Additional offset applied on top of base position
-    int xShift = 0;
-    int yShift = 0;
 };
 
 class Bg : public Image
@@ -127,7 +127,7 @@ public:
 
     ImageManager(FileManager *);
 
-    ImageData getImageData(IMAGE_TYPE, int);
+    const Image& getImage(IMAGE_TYPE, int);
 
     void setImage(IMAGE_TYPE, int, std::string, int, int);
 

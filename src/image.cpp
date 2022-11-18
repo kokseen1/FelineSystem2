@@ -206,7 +206,7 @@ void ImageManager::renderSpeaker(const std::string &text)
     }
 
     // Render text
-    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(font, ("[ " + text + " ]" ).c_str(), textColor, 0);
+    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(font, ("[ " + text + " ]").c_str(), textColor, 0);
     if (surface == NULL)
     {
         LOG << "TTF Surface failed!";
@@ -354,19 +354,32 @@ void ImageManager::clearImageType(IMAGE_TYPE type)
     }
 }
 
-// Get ImageData of specified image type at z-index
-ImageData ImageManager::getImageData(IMAGE_TYPE type, int zIndex)
+// Get reference to specified image type at z-index
+// Reference to base image for CG/FW 
+const Image &ImageManager::getImage(IMAGE_TYPE type, int zIndex)
 {
     switch (type)
     {
     case IMAGE_TYPE::BG:
-        return ImageData{};
+        if (zIndex >= currBgs.size())
+            return {};
+        return currBgs[zIndex];
+
     case IMAGE_TYPE::EG:
-        return ImageData{};
+        if (zIndex >= currEgs.size())
+            return {};
+        return currEgs[zIndex];
+
+    // Assume that any valid CG/FW must always contain a valid base
     case IMAGE_TYPE::CG:
-        return ImageData{};
+        if (zIndex >= currCgs.size())
+            return {};
+        return currCgs[zIndex].base;
+
     case IMAGE_TYPE::FW:
-        return ImageData{};
+        if (zIndex >= currFws.size())
+            return {};
+        return currFws[zIndex].base;
     }
 }
 
