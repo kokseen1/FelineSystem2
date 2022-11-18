@@ -116,6 +116,12 @@ void Cg::clear()
     part2.clear();
 }
 
+const json Fw::dump()
+{
+    auto &j = *this;
+    return j;
+}
+
 const json Cg::dump()
 {
     auto &j = *this;

@@ -137,6 +137,8 @@ public:
 
 class Fw : public Cg
 {
+public:
+    const json dump();
 };
 
 class ImageManager
