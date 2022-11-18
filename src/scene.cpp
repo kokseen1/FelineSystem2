@@ -154,17 +154,13 @@ std::string SceneManager::cleanText(const std::string &rawText)
 // Called every event loop as delays need to be async
 void SceneManager::tickScript()
 {
-    bool offsetSaved = false;
+    // Save previous state only when advancing not by timer
+    if (parseScript && targetTicks == 0)
+        prevStringOffsetTable = stringOffsetTable;
 
     // Keep parsing lines until reaching a break or wait
     while (parseScript && SDL_GetTicks64() >= targetTicks)
     {
-        if (offsetSaved == false)
-        {
-            prevStringOffsetTable = stringOffsetTable;
-            offsetSaved = true;
-        }
-
         // Check for failed parsing and break out of blocking loop
         if (parseLine() != 0)
             break;
