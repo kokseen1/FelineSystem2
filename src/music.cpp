@@ -99,6 +99,7 @@ void MusicManager::stopAndFreeMusic()
     {
         Mix_HaltMusic();
         Mix_FreeMusic(music);
+        music = NULL;
     }
     currMusic.clear();
 }
