@@ -366,7 +366,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     // Choice options
     else if (std::regex_match(cmdString, matches, std::regex("^(\\d+) (\\w+) (.+)")))
     {
-        currChoices.push_back(std::make_pair(matches[2].str(), matches[3].str()));
+        currChoices.push_back(std::make_pair(cleanText(matches[2].str()), cleanText(matches[3].str())));
 
         for (int i = 0; i < currChoices.size(); i++)
         {
