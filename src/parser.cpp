@@ -115,7 +115,10 @@ Token Lexer::get_next_token()
         return Token::Number;
     }
 
-    throw std::runtime_error(std::string("Invalid token: ") + c);
+    // IGNORE ALL UNSUPPORTED TOKENS
+    return Token::Eof;
+
+    // throw std::runtime_error(std::string("Invalid token: ") + c);
 }
 
 void Lexer::advance()
