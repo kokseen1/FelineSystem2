@@ -6,6 +6,18 @@ using json = nlohmann::json;
 
 #include <algorithm>
 
+void to_json(json &j, const std::vector<Choice> &choices)
+{
+    for (const auto &c : choices)
+        j[c.scriptName] = c.prompt;
+}
+
+void from_json(const json &j, std::vector<Choice> &choices)
+{
+    for (auto &el : j.items())
+        choices.push_back({el.key(), el.value()});
+}
+
 SceneManager::SceneManager(AudioManager *mm, ImageManager *im, FileManager *fm) : audioManager{mm}, imageManager{im}, fileManager{fm} {};
 
 // Parse a raw CST file from a memory buffer and store the uncompressed script
@@ -166,7 +178,10 @@ void SceneManager::tickScript()
     {
         // Check for failed parsing and break out of blocking loop
         if (parseLine() != 0)
+        {
+            parseScript = false;
             break;
+        }
     }
 }
 
@@ -363,15 +378,17 @@ void SceneManager::handleCommand(const std::string &cmdString)
         setScript(matches[1].str());
     }
 
+    // Non-capturing regex
+    // Indicates start of choices
+    else if (std::regex_search(cmdString, std::regex("^fselect")))
+    {
+        currChoices.clear();
+    }
+
     // Choice options
     else if (std::regex_match(cmdString, matches, std::regex("^(\\d+) (\\w+) (.+)")))
     {
-        currChoices.push_back(std::make_pair(cleanText(matches[2].str()), cleanText(matches[3].str())));
-
-        for (int i = 0; i < currChoices.size(); i++)
-        {
-            std::cout << "[" << i + 1 << "] " << currChoices[i].second << std::endl;
-        }
+        currChoices.push_back({cleanText(matches[2].str()), cleanText(matches[3].str())});
     }
 
     // Auto mode
@@ -383,17 +400,12 @@ void SceneManager::handleCommand(const std::string &cmdString)
         else if (status == "off")
             autoMode = -1;
     }
-    // Non-capturing regex
 
+    // Non-capturing regex
     // Variable assignment
     else if (std::regex_match(cmdString, std::regex("^#.+")))
     {
         parser.parse(cmdString);
-    }
-    else if (std::regex_search(cmdString, std::regex("^fselect")))
-    {
-        LOG << "FSELECT";
-        currChoices.clear();
     }
 }
 
@@ -401,7 +413,7 @@ void SceneManager::selectChoice(int idx)
 {
     if (idx < currChoices.size())
     {
-        setScript(currChoices[idx].first);
+        setScript(currChoices[idx].scriptName);
         currChoices.clear();
     }
     else
@@ -422,6 +434,10 @@ void SceneManager::saveState(const int saveSlot)
     jScene[KEY_SYMBOL_TABLE] = json(parser.getSymbolTable());
     jScene[KEY_SCRIPT_NAME] = currScriptName;
     jScene[KEY_OFFSET] = stringTableBase - reinterpret_cast<byte *>(stringOffsetTable);
+
+    const json &jChoice(currChoices);
+    if (!jChoice.empty())
+        jScene[KEY_CHOICE] = jChoice;
 
     Utils::save(std::to_string(saveSlot), j);
 }
@@ -447,6 +463,12 @@ void SceneManager::loadState(const int saveSlot)
         imageManager->currSpeaker = j.at(KEY_SPEAKER);
         imageManager->loadDump(jImage);
         audioManager->loadDump(jAudio);
+
+        currChoices.clear();
+        if (jScene.contains(KEY_CHOICE))
+        {
+            currChoices = jScene.at(KEY_CHOICE);
+        }
     }
     catch (const json::out_of_range &e)
     {

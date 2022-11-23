@@ -97,6 +97,7 @@ int main(int argc, char **argv)
     sceneManager = new SceneManager(audioManager, imageManager, fileManager);
 
     fileManager->init(sceneManager);
+    imageManager->init(sceneManager);
 
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(main_loop, -1, 1);

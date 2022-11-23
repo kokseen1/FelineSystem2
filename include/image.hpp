@@ -2,6 +2,7 @@
 
 #include <hgdecoder.hpp>
 #include <file.hpp>
+#include <scene.hpp>
 
 #include <asmodean.h>
 #include <SDL2/SDL.h>
@@ -150,6 +151,8 @@ public:
 
     ImageManager(FileManager *);
 
+    void init(SceneManager *sm) { sceneManager = sm; }
+
     void clearCanvas();
 
     void loadDump(const json &);
@@ -170,6 +173,7 @@ public:
 
 private:
     FileManager *fileManager = NULL;
+    SceneManager *sceneManager = NULL;
 
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;

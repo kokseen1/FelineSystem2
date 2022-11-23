@@ -27,14 +27,23 @@
 #define KEY_SYMBOL_TABLE "var"
 #define KEY_SCRIPT_NAME "name"
 #define KEY_OFFSET "offset"
+#define KEY_CHOICE "choice"
 
 #define LOG_CMD
 
 typedef struct
 {
     std::string scriptName;
+    std::string prompt;
+} Choice;
+
+typedef struct
+{
+    std::string scriptName;
     byte *offsetFromBase;
 } SaveData;
+
+class ImageManager;
 
 class SceneManager
 {
@@ -56,8 +65,6 @@ private:
 
     std::string currScriptName;
 
-    // Vector of <script name, prompt> pairs
-    std::vector<std::pair<std::string, std::string>> currChoices;
 
     // Vector containing uncompressed script data to be traversed
     std::vector<byte> currScriptData;
@@ -87,6 +94,9 @@ private:
     std::string sj2utf8(const std::string &);
 
 public:
+    // Vector of Choice structs
+    std::vector<Choice> currChoices;
+
     SceneManager(AudioManager *, ImageManager *, FileManager *);
 
     void parse()

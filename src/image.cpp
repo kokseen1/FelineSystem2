@@ -440,6 +440,10 @@ void ImageManager::render()
     renderMessage(currText);
     renderSpeaker(currSpeaker);
 
+    // TODO: Render choice textures
+    for (int i = 0; i < sceneManager->currChoices.size(); i++)
+        std::cout << "[" << i + 1 << "] " << sceneManager->currChoices[i].prompt << std::endl;
+
     // Update screen
     SDL_RenderPresent(renderer);
 }
