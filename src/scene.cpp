@@ -151,6 +151,7 @@ std::string SceneManager::sj2utf8(const std::string &input)
 }
 
 // Removes formatting symbols from text
+// TODO: Move to utils
 std::string SceneManager::cleanText(const std::string &rawText)
 {
     std::string text = std::regex_replace(sj2utf8(rawText), std::regex("\\[(.*?)\\]"), "$1");
