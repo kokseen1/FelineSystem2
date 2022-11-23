@@ -1,4 +1,4 @@
-#include <music.hpp>
+#include <audio.hpp>
 #include <image.hpp>
 #include <scene.hpp>
 #include <file.hpp>
@@ -17,7 +17,7 @@
 #include <iomanip>
 
 static FileManager *fileManager = NULL;
-static MusicManager *musicManager = NULL;
+static AudioManager *audioManager = NULL;
 static ImageManager *imageManager = NULL;
 static SceneManager *sceneManager = NULL;
 
@@ -92,9 +92,9 @@ void main_loop()
 int main(int argc, char **argv)
 {
     fileManager = new FileManager;
-    musicManager = new MusicManager(fileManager);
+    audioManager = new AudioManager(fileManager);
     imageManager = new ImageManager(fileManager);
-    sceneManager = new SceneManager(musicManager, imageManager, fileManager);
+    sceneManager = new SceneManager(audioManager, imageManager, fileManager);
 
     fileManager->init(sceneManager);
 

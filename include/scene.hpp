@@ -2,7 +2,7 @@
 
 #include <cstformat.h>
 #include <utils.hpp>
-#include <music.hpp>
+#include <audio.hpp>
 #include <image.hpp>
 #include <parser.hpp>
 #include <file.hpp>
@@ -41,7 +41,7 @@ class SceneManager
 private:
     // Pointers to other manager classes
     FileManager *fileManager = NULL;
-    MusicManager *musicManager = NULL;
+    AudioManager *audioManager = NULL;
     ImageManager *imageManager = NULL;
 
     // Recursive-descent parser for expressions
@@ -87,7 +87,7 @@ private:
     std::string sj2utf8(const std::string &);
 
 public:
-    SceneManager(MusicManager *, ImageManager *, FileManager *);
+    SceneManager(AudioManager *, ImageManager *, FileManager *);
 
     void parse()
     {

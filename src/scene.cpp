@@ -6,7 +6,7 @@ using json = nlohmann::json;
 
 #include <algorithm>
 
-SceneManager::SceneManager(MusicManager *mm, ImageManager *im, FileManager *fm) : musicManager{mm}, imageManager{im}, fileManager{fm} {};
+SceneManager::SceneManager(AudioManager *mm, ImageManager *im, FileManager *fm) : audioManager{mm}, imageManager{im}, fileManager{fm} {};
 
 // Parse a raw CST file from a memory buffer and store the uncompressed script
 void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptName)
@@ -262,11 +262,11 @@ void SceneManager::handleCommand(const std::string &cmdString)
 #ifdef LOWERCASE_ASSETS
         Utils::lowercase(asset);
 #endif
-        musicManager->setPCM(asset);
+        audioManager->setPCM(asset);
     }
     else if (std::regex_search(cmdString, matches, std::regex("^bgm (\\d+) (\\S+)")))
     {
-        musicManager->setMusic(matches[2].str());
+        audioManager->setMusic(matches[2].str());
     }
     else if (std::regex_search(cmdString, matches, std::regex("^se (\\d) ([\\w\\d]+)(?: ([\\w\\d]+))?")))
     {
@@ -279,7 +279,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
         {
             if (asset == "end")
             {
-                musicManager->stopSound(channel);
+                audioManager->stopSound(channel);
                 return;
             }
 
@@ -292,7 +292,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
 #ifdef LOWERCASE_ASSETS
         Utils::lowercase(asset);
 #endif
-        musicManager->setSE(asset, channel, loop);
+        audioManager->setSE(asset, channel, loop);
     }
 
     // Display images
@@ -414,7 +414,7 @@ void SceneManager::saveState(const int saveSlot)
 {
     json j;
     j[KEY_IMAGE] = imageManager->dump();
-    j[KEY_AUDIO] = musicManager->dump();
+    j[KEY_AUDIO] = audioManager->dump();
     j[KEY_TEXT] = imageManager->currText;
     j[KEY_SPEAKER] = imageManager->currSpeaker;
 
@@ -446,7 +446,7 @@ void SceneManager::loadState(const int saveSlot)
         imageManager->currText = j.at(KEY_TEXT);
         imageManager->currSpeaker = j.at(KEY_SPEAKER);
         imageManager->loadDump(jImage);
-        musicManager->loadDump(jAudio);
+        audioManager->loadDump(jAudio);
     }
     catch (const json::out_of_range &e)
     {

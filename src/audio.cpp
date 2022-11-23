@@ -1,10 +1,10 @@
-#include <music.hpp>
+#include <audio.hpp>
 #include <utils.hpp>
 
 #include <map>
 
 // Initialize the audio player
-MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
+AudioManager::AudioManager(FileManager *fm) : fileManager{fm}
 {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)
     {
@@ -16,24 +16,24 @@ MusicManager::MusicManager(FileManager *fm) : fileManager{fm}
     Mix_Volume(-1, SE_VOLUME);
     Mix_Volume(CHANNEL_PCM, PCM_VOLUME);
 
-    LOG << "MusicManager initialized";
+    LOG << "AudioManager initialized";
 }
 
 // Play a specified PCM asset
 // PCM will only use a fixed channel and never loop
-void MusicManager::setPCM(const std::string &asset)
+void AudioManager::setPCM(const std::string &asset)
 {
-    fileManager->fetchAssetAndProcess(asset + PCM_EXT, this, &MusicManager::playSoundFromMem, std::make_pair(CHANNEL_PCM, 0));
+    fileManager->fetchAssetAndProcess(asset + PCM_EXT, this, &AudioManager::playSoundFromMem, std::make_pair(CHANNEL_PCM, 0));
 }
 
 // Play a specified sound effect asset
-void MusicManager::setSE(const std::string &asset, const int channel, const int loops)
+void AudioManager::setSE(const std::string &asset, const int channel, const int loops)
 {
-    fileManager->fetchAssetAndProcess(asset + SE_EXT, this, &MusicManager::playSoundFromMem, std::make_pair(channel, loops));
+    fileManager->fetchAssetAndProcess(asset + SE_EXT, this, &AudioManager::playSoundFromMem, std::make_pair(channel, loops));
 }
 
 // Play a file buffer as music
-void MusicManager::playMusicFromMem(byte *buf, size_t sz, const std::string name)
+void AudioManager::playMusicFromMem(byte *buf, size_t sz, const std::string name)
 {
     stopAndFreeMusic();
     if (musicOps != NULL)
@@ -50,7 +50,7 @@ void MusicManager::playMusicFromMem(byte *buf, size_t sz, const std::string name
 }
 
 // Play a file buffer as sound
-void MusicManager::playSoundFromMem(byte *buf, size_t sz, const std::pair<int, int> channelLoops)
+void AudioManager::playSoundFromMem(byte *buf, size_t sz, const std::pair<int, int> channelLoops)
 {
     const int &channel = channelLoops.first;
     const int &loops = channelLoops.second;
@@ -69,7 +69,7 @@ void MusicManager::playSoundFromMem(byte *buf, size_t sz, const std::pair<int, i
 }
 
 // Stops a sound and frees the channel
-void MusicManager::stopSound(const int channel)
+void AudioManager::stopSound(const int channel)
 {
     if (soundChunks[channel] != NULL)
     {
@@ -86,14 +86,14 @@ void MusicManager::stopSound(const int channel)
 }
 
 // Set the current music file
-void MusicManager::setMusic(const std::string name)
+void AudioManager::setMusic(const std::string name)
 {
     auto fpath = name + MUSIC_EXT;
-    fileManager->fetchAssetAndProcess(fpath, this, &MusicManager::playMusicFromMem, name);
+    fileManager->fetchAssetAndProcess(fpath, this, &AudioManager::playMusicFromMem, name);
 }
 
 // Stop and free any existing music
-void MusicManager::stopAndFreeMusic()
+void AudioManager::stopAndFreeMusic()
 {
     if (music != NULL)
     {
@@ -105,7 +105,7 @@ void MusicManager::stopAndFreeMusic()
 }
 
 // Free any existing music SDL_RWops
-void MusicManager::freeOps(SDL_RWops *ops)
+void AudioManager::freeOps(SDL_RWops *ops)
 {
     if (SDL_RWclose(ops) < 0)
     {
@@ -113,7 +113,7 @@ void MusicManager::freeOps(SDL_RWops *ops)
     }
 }
 
-void MusicManager::loadDump(const json &j)
+void AudioManager::loadDump(const json &j)
 {
     // Stop all SE
     for (int i = 0; i < soundChunks.size(); i++)
@@ -127,7 +127,7 @@ void MusicManager::loadDump(const json &j)
     }
 }
 
-const json MusicManager::dump()
+const json AudioManager::dump()
 {
     json j;
 

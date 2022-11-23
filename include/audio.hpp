@@ -25,11 +25,11 @@
 #define KEY_LOOPS "loops"
 #define KEY_NAME "name"
 
-class MusicManager
+class AudioManager
 {
 
 public:
-    MusicManager(FileManager *fileManager);
+    AudioManager(FileManager *fileManager);
 
     void setMusic(const std::string);
 
