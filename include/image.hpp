@@ -195,6 +195,8 @@ private:
 
     void setLogo();
 
+    void fetchImage(const std::string &);
+
     void processImage(byte *, size_t, std::pair<std::string, int>);
 
     void renderImage(const ImageData &);

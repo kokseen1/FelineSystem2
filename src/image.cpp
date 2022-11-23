@@ -563,8 +563,6 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
     Utils::lowercase(asset);
 #endif
 
-    std::vector<std::string> assetsToFetch;
-
     switch (type)
     {
 
@@ -575,7 +573,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
             return;
 
         currBgs[zIndex] = {asset, xShift, yShift};
-        assetsToFetch.push_back(asset);
+        fetchImage(asset);
         break;
 
     case IMAGE_TYPE::EG:
@@ -585,7 +583,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
             return;
 
         currEgs[zIndex] = {asset, xShift, yShift};
-        assetsToFetch.push_back(asset);
+        fetchImage(asset);
         break;
 
     case IMAGE_TYPE::CG:
@@ -614,19 +612,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         if (fileManager->inDB(baseName + IMAGE_EXT))
         {
             cg.base = Image{baseName, xShift, yShift};
-            assetsToFetch.push_back(baseName);
+            fetchImage(baseName);
         }
 
         if (fileManager->inDB(part1Name + IMAGE_EXT))
         {
             cg.part1 = Image{part1Name, xShift, yShift};
-            assetsToFetch.push_back(part1Name);
+            fetchImage(part1Name);
         }
 
         if (fileManager->inDB(part2Name + IMAGE_EXT))
         {
             cg.part2 = Image{part2Name, xShift, yShift};
-            assetsToFetch.push_back(part2Name);
+            fetchImage(part2Name);
         }
     }
     break;
@@ -662,39 +660,38 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         if (fileManager->inDB(baseName + IMAGE_EXT))
         {
             fw.base = Image{baseName, xShift, yShift};
-            assetsToFetch.push_back(baseName);
+            fetchImage(baseName);
         }
 
         if (fileManager->inDB(part1Name + IMAGE_EXT))
         {
             fw.part1 = Image{part1Name, xShift, yShift};
-            assetsToFetch.push_back(part1Name);
+            fetchImage(part1Name);
         }
 
         if (fileManager->inDB(part2Name + IMAGE_EXT))
         {
             fw.part2 = Image{part2Name, xShift, yShift};
-            assetsToFetch.push_back(part2Name);
+            fetchImage(part2Name);
         }
     }
-
     break;
     }
+}
 
-    // Fetch and cache required assets
-    for (auto &name : assetsToFetch)
-    {
-        // Prevent fetching already cached images
-        auto pos = textureCache.find(name);
-        if (pos != textureCache.end())
-            continue;
+// Helper function to fetch images that are not already in cache
+void ImageManager::fetchImage(const std::string &name)
+{
+    // Prevent fetching already cached images
+    auto pos = textureCache.find(name);
+    if (pos != textureCache.end())
+        return;
 
-        // Initialize cache entry with NULL (more efficient but prevents failed fetches from retrying)
-        // textureCache[name];
+    // Initialize cache entry with NULL (more efficient but prevents failed fetches from retrying)
+    // textureCache[name];
 
-        // Assume frame 0 for all images
-        fileManager->fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, std::make_pair(name, 0));
-    }
+    // Assume frame 0 for all images
+    fileManager->fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, std::make_pair(name, 0));
 }
 
 // Decode a raw HG buffer and cache the texture
