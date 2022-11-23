@@ -30,6 +30,12 @@
 
 #define FONT_PATH ASSETS "font.ttf"
 #define FONT_SIZE 20
+#define SELECT_FONT_SIZE 30
+
+#define SEL "sys_sel_02"
+#define SEL_WIDTH 782
+#define SEL_HEIGHT 63
+#define SEL_XSHIFT WINDOW_WIDTH / 2 - SEL_WIDTH / 2
 
 #define MWND "sys_mwnd_43"
 #define MWND_DECO "sys_mwnd_42"
@@ -108,6 +114,14 @@ private:
     TextureData *textureData = NULL;
 };
 
+class Select : public Image
+{
+    using Image::Image;
+
+public:
+    void renderText(SDL_Renderer*, TTF_Font*, const std::string&);
+};
+
 class Bg : public Image
 {
     using Image::Image;
@@ -182,6 +196,7 @@ private:
     Image mwndDeco = {MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
 
     TTF_Font *font = NULL;
+    TTF_Font *selectFont = NULL;
 
     SDL_Color textColor = {255, 255, 255, 0};
 
@@ -194,6 +209,8 @@ private:
     std::vector<std::string> getAssetArgs(const std::string &);
 
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
+
+    void renderChoices();
 
     void setWindowIcon(SDL_Window *);
 

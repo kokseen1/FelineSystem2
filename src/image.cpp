@@ -2,6 +2,7 @@
 #include <hgdecoder.hpp>
 #include <utils.hpp>
 #include <sys_mwnd.h>
+#include <sys_sel.h>
 
 #include <iostream>
 #include <sstream>
@@ -98,6 +99,36 @@ const json Image::dump()
 {
     auto &j = *this;
     return j;
+}
+
+// Render text for a selection box
+void Select::renderText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text)
+{
+    if (text.empty())
+        return;
+
+    // Render text
+    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(font, text.c_str(), {0, 0, 0, 255}, 0);
+    if (surface == NULL)
+    {
+        LOG << "TTF Surface failed!";
+        return;
+    }
+
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (texture == NULL)
+    {
+        LOG << "TTF texture failed!";
+        SDL_FreeSurface(surface);
+        return;
+    }
+
+    // Center text in select box
+    SDL_Rect rect = {xShift + (SEL_WIDTH / 2 - surface->w / 2), yShift + (SEL_HEIGHT / 2 - surface->h / 2), surface->w, surface->h};
+    SDL_RenderCopy(renderer, texture, NULL, &rect);
+
+    SDL_DestroyTexture(texture);
+    SDL_FreeSurface(surface);
 }
 
 void Cg::render(SDL_Renderer *renderer)
@@ -275,6 +306,15 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
         throw std::runtime_error("Could not open font");
     }
 
+    selectFont = TTF_OpenFont(FONT_PATH, SELECT_FONT_SIZE);
+    if (selectFont == NULL)
+    {
+        throw std::runtime_error("Could not open font");
+    }
+
+    // Decode and cache choice selection asset
+    processImage(sys_sel, sizeof(sys_sel), std::pair<std::string, int>(SEL, 2));
+
     // Decode and cache message window assets
     processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>(MWND, 43));
     processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>(MWND_DECO, 42));
@@ -415,6 +455,17 @@ void ImageManager::renderMessage(const std::string &text)
     SDL_FreeSurface(surface);
 }
 
+// Render choice textures
+void ImageManager::renderChoices()
+{
+    for (int i = 0; i < sceneManager->currChoices.size(); i++)
+    {
+        Select select(SEL, SEL_XSHIFT, (i + 1) * (SEL_HEIGHT + 30));
+        select.render(renderer);
+        select.renderText(renderer, selectFont, "[" + std::to_string(i + 1) + "] " + sceneManager->currChoices[i].prompt);
+    }
+}
+
 // Render images in order of type precedence and z-index
 void ImageManager::render()
 {
@@ -440,9 +491,7 @@ void ImageManager::render()
     renderMessage(currText);
     renderSpeaker(currSpeaker);
 
-    // TODO: Render choice textures
-    for (int i = 0; i < sceneManager->currChoices.size(); i++)
-        std::cout << "[" << i + 1 << "] " << sceneManager->currChoices[i].prompt << std::endl;
+    renderChoices();
 
     // Update screen
     SDL_RenderPresent(renderer);
