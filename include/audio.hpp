@@ -5,6 +5,7 @@
 
 #include <SDL2/SDL_mixer.h>
 
+#include <unordered_map>
 #include <map>
 #include <string>
 #include <vector>
@@ -24,6 +25,8 @@
 #define KEY_SE "se"
 #define KEY_LOOPS "loops"
 #define KEY_NAME "name"
+
+typedef std::unordered_map<std::string, Mix_Music *> MusicCache;
 
 class AudioManager
 {
@@ -45,21 +48,22 @@ public:
 
 private:
     FileManager *fileManager = NULL;
+    MusicCache musicCache;
 
     std::array<SDL_RWops *, SOUND_CHANNELS> soundOps{};
     std::array<Mix_Chunk *, SOUND_CHANNELS> soundChunks{};
 
-    Mix_Music *music = NULL;
-    SDL_RWops *musicOps = NULL;
-    std::vector<byte> musicVec;
+    std::vector<std::vector<byte>> musicBufVec;
 
-    std::string currMusic;
+    std::string currMusicName;
 
-    void stopAndFreeMusic();
+    void stopMusic();
 
     void freeOps(SDL_RWops *);
 
     void freeBuf();
+
+    void playMusic(Mix_Music *, const std::string &);
 
     void playMusicFromMem(byte *, size_t, const std::string);
 

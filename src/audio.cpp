@@ -32,21 +32,29 @@ void AudioManager::setSE(const std::string &asset, const int channel, const int 
     fileManager->fetchAssetAndProcess(asset + SE_EXT, this, &AudioManager::playSoundFromMem, std::make_pair(channel, loops));
 }
 
+inline void AudioManager::playMusic(Mix_Music *mixMusic, const std::string &name)
+{
+    // Ensure that current music is to be played (in async cases)
+    if (name == currMusicName)
+        Mix_PlayMusic(mixMusic, -1);
+}
+
 // Play a file buffer as music
 void AudioManager::playMusicFromMem(byte *buf, size_t sz, const std::string name)
 {
-    stopAndFreeMusic();
-    if (musicOps != NULL)
-        freeOps(musicOps);
-    musicVec.clear();
+    // Store raw buffer as a byte vector in a global vector and retrieve reference to it
+    musicBufVec.push_back({buf, buf + sz});
+    const auto &musicBuf = musicBufVec.back();
 
-    musicVec.insert(musicVec.end(), buf, buf + sz);
-    musicOps = SDL_RWFromConstMem(musicVec.data(), sz);
-    music = Mix_LoadMUS_RW(musicOps, 0);
+    // musicOps is not freed as all music will remain cached throughout the program lifetime
+    auto musicOps = SDL_RWFromConstMem(musicBuf.data(), musicBuf.size());
 
-    Mix_PlayMusic(music, -1);
+    // Create music object and play
+    auto mixMusic = Mix_LoadMUS_RW(musicOps, 1);
+    playMusic(mixMusic, name);
 
-    currMusic = name;
+    // Cache music
+    musicCache[name] = mixMusic;
 }
 
 // Play a file buffer as sound
@@ -88,24 +96,31 @@ void AudioManager::stopSound(const int channel)
 // Set the current music file
 void AudioManager::setMusic(const std::string name)
 {
-    auto fpath = name + MUSIC_EXT;
-    fileManager->fetchAssetAndProcess(fpath, this, &AudioManager::playMusicFromMem, name);
+    currMusicName = name;
+
+    auto mixMusic = musicCache[name];
+    if (mixMusic != NULL)
+    {
+        // Play directly from cache
+        playMusic(mixMusic, name);
+    }
+    else
+    {
+        // Fetch and store in cache
+        auto fpath = name + MUSIC_EXT;
+        fileManager->fetchAssetAndProcess(fpath, this, &AudioManager::playMusicFromMem, name);
+    }
 }
 
-// Stop and free any existing music
-void AudioManager::stopAndFreeMusic()
+// Stop any existing music
+void AudioManager::stopMusic()
 {
-    if (music != NULL)
-    {
-        Mix_HaltMusic();
-        Mix_FreeMusic(music);
-        music = NULL;
-    }
-    currMusic.clear();
+    Mix_HaltMusic();
+    currMusicName.clear();
 }
 
 // Free any existing music SDL_RWops
-void AudioManager::freeOps(SDL_RWops *ops)
+inline void AudioManager::freeOps(SDL_RWops *ops)
 {
     if (SDL_RWclose(ops) < 0)
     {
@@ -119,7 +134,7 @@ void AudioManager::loadDump(const json &j)
     for (int i = 0; i < soundChunks.size(); i++)
         stopSound(i);
 
-    stopAndFreeMusic();
+    stopMusic();
 
     if (j.contains(KEY_MUSIC) && j[KEY_MUSIC].contains(KEY_NAME))
     {
@@ -133,9 +148,9 @@ const json AudioManager::dump()
 
     // TODO: dump (looping) SE
 
-    if (!currMusic.empty())
+    if (!currMusicName.empty())
     {
-        j[KEY_MUSIC][KEY_NAME] = currMusic;
+        j[KEY_MUSIC][KEY_NAME] = currMusicName;
     }
 
     return j;
