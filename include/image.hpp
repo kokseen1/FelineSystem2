@@ -35,6 +35,7 @@
 #define SEL "sys_sel_02"
 #define SEL_WIDTH 782
 #define SEL_HEIGHT 63
+#define SEL_SPACING 30
 #define SEL_XSHIFT WINDOW_WIDTH / 2 - SEL_WIDTH / 2
 
 #define MWND "sys_mwnd_43"

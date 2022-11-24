@@ -460,7 +460,7 @@ void ImageManager::renderChoices()
 {
     for (int i = 0; i < sceneManager->currChoices.size(); i++)
     {
-        Select select(SEL, SEL_XSHIFT, (i + 1) * (SEL_HEIGHT + 30));
+        Select select(SEL, SEL_XSHIFT, (i + 1) * (SEL_HEIGHT + SEL_SPACING));
         select.render(renderer);
         select.renderText(renderer, selectFont, "[" + std::to_string(i + 1) + "] " + sceneManager->currChoices[i].prompt);
     }
