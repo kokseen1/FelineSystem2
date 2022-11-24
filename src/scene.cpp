@@ -14,8 +14,12 @@ void to_json(json &j, const std::vector<Choice> &choices)
 
 void from_json(const json &j, std::vector<Choice> &choices)
 {
+    unsigned long i = 0;
     for (auto &el : j.items())
-        choices.push_back({el.key(), el.value()});
+    {
+        choices.push_back({i, el.key(), el.value()});
+        i++;
+    }
 }
 
 SceneManager::SceneManager(AudioManager *mm, ImageManager *im, FileManager *fm) : audioManager{mm}, imageManager{im}, fileManager{fm} {};
@@ -383,13 +387,14 @@ void SceneManager::handleCommand(const std::string &cmdString)
     // Indicates start of choices
     else if (std::regex_search(cmdString, std::regex("^fselect")))
     {
+        // Should not be required, but clear just to be sure
         currChoices.clear();
     }
 
     // Choice options
     else if (std::regex_match(cmdString, matches, std::regex("^(\\d+) (\\w+) (.+)")))
     {
-        currChoices.push_back({cleanText(matches[2].str()), cleanText(matches[3].str())});
+        currChoices.push_back({currChoices.size(), cleanText(matches[2].str()), cleanText(matches[3].str())});
     }
 
     // Auto mode

@@ -61,6 +61,17 @@ void Image::clear()
     textureName.clear();
 }
 
+Choice::Choice(const unsigned long idx, const std::string &s, const std::string &p) : Image(SEL, SEL_XSHIFT, (idx + 1) * (SEL_HEIGHT + SEL_SPACING)), scriptName(s), prompt(p), displayText("[" + std::to_string(idx + 1) + "] " + p)
+{
+}
+
+void Choice::render(SDL_Renderer *renderer)
+{
+    // Render base box image
+    Image::render(renderer);
+    renderText(renderer, displayText);
+}
+
 // Render image onto the given renderer
 void Image::render(SDL_Renderer *renderer)
 {
@@ -102,13 +113,15 @@ const json Image::dump()
 }
 
 // Render text for a selection box
-void Select::renderText(SDL_Renderer *renderer, TTF_Font *font, const std::string &text)
+void Choice::renderText(SDL_Renderer *renderer, const std::string &text)
 {
+    static TTF_Font *selectFont = TTF_OpenFont(SELECT_FONT_PATH, SELECT_FONT_SIZE);
+
     if (text.empty())
         return;
 
     // Render text
-    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(font, text.c_str(), {0, 0, 0, 255}, 0);
+    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(selectFont, text.c_str(), {0, 0, 0, 255}, 0);
     if (surface == NULL)
     {
         LOG << "TTF Surface failed!";
@@ -306,12 +319,6 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
         throw std::runtime_error("Could not open font");
     }
 
-    selectFont = TTF_OpenFont(FONT_PATH, SELECT_FONT_SIZE);
-    if (selectFont == NULL)
-    {
-        throw std::runtime_error("Could not open font");
-    }
-
     // Decode and cache choice selection asset
     processImage(sys_sel, sizeof(sys_sel), std::pair<std::string, int>(SEL, 2));
 
@@ -458,12 +465,8 @@ void ImageManager::renderMessage(const std::string &text)
 // Render choice textures
 void ImageManager::renderChoices()
 {
-    for (int i = 0; i < sceneManager->currChoices.size(); i++)
-    {
-        Select select(SEL, SEL_XSHIFT, (i + 1) * (SEL_HEIGHT + SEL_SPACING));
-        select.render(renderer);
-        select.renderText(renderer, selectFont, "[" + std::to_string(i + 1) + "] " + sceneManager->currChoices[i].prompt);
-    }
+    for (auto choice : sceneManager->getCurrChoices())
+        choice.render(renderer);
 }
 
 // Render images in order of type precedence and z-index

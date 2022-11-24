@@ -34,15 +34,10 @@
 typedef struct
 {
     std::string scriptName;
-    std::string prompt;
-} Choice;
-
-typedef struct
-{
-    std::string scriptName;
     byte *offsetFromBase;
 } SaveData;
 
+class Choice;
 class ImageManager;
 
 class SceneManager
@@ -65,6 +60,8 @@ private:
 
     std::string currScriptName;
 
+    // Vector of Choice structs
+    std::vector<Choice> currChoices;
 
     // Vector containing uncompressed script data to be traversed
     std::vector<byte> currScriptData;
@@ -94,10 +91,9 @@ private:
     std::string sj2utf8(const std::string &);
 
 public:
-    // Vector of Choice structs
-    std::vector<Choice> currChoices;
-
     SceneManager(AudioManager *, ImageManager *, FileManager *);
+
+    std::vector<Choice> &getCurrChoices() { return currChoices; };
 
     void parse()
     {

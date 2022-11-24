@@ -30,6 +30,7 @@
 
 #define FONT_PATH ASSETS "font.ttf"
 #define FONT_SIZE 20
+#define SELECT_FONT_PATH FONT_PATH
 #define SELECT_FONT_SIZE 30
 
 #define SEL "sys_sel_02"
@@ -115,12 +116,22 @@ private:
     TextureData *textureData = NULL;
 };
 
-class Select : public Image
+class Choice : public Image
 {
-    using Image::Image;
+private:
+    // Might remove
+    const std::string displayText;
+
+    void renderText(SDL_Renderer *, const std::string &);
 
 public:
-    void renderText(SDL_Renderer*, TTF_Font*, const std::string&);
+    const std::string scriptName;
+
+    const std::string prompt;
+
+    Choice(const unsigned long, const std::string &, const std::string &);
+
+    void render(SDL_Renderer *);
 };
 
 class Bg : public Image
