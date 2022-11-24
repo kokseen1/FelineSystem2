@@ -138,7 +138,7 @@ void Parser::set_lexer_buffer(std::string &buffer)
 double Parser::primary()
 {
     std::string buffer;
-    double result;
+    double result = 0.0;
 
     switch (p_lexer->get_current_token())
     {
@@ -189,7 +189,10 @@ double Parser::primary()
         auto token = static_cast<char>(p_lexer->get_current_token());
         if (token == -1)
             throw std::runtime_error("Unexpected EOF!");
-        throw std::runtime_error(std::string("Invalid primary operand! Token: ") + token);
+
+        // IGNORE ALL UNSUPPORTED TOKENS
+        return result;
+        // throw std::runtime_error(std::string("Invalid primary operand! Token: ") + token);
     }
 }
 
