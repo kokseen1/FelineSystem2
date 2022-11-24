@@ -125,11 +125,13 @@ public:
 
 class Bg : public Image
 {
+    // Inherit ctors
     using Image::Image;
 };
 
 class Eg : public Image
 {
+    // Inherit ctors
     using Image::Image;
 };
 
