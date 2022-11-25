@@ -52,7 +52,7 @@ void from_json(const json &j, Cg &i)
     j.at(KEY_YSHIFT).get_to(i.base.yShift);
 }
 
-Image::Image(std::string n, int x, int y) : textureName{n}, xShift{x}, yShift{y}
+Image::Image(SDL_Renderer *r, std::string n, int x, int y) : renderer{r}, textureName{n}, xShift{x}, yShift{y}
 {
 }
 
@@ -61,19 +61,19 @@ void Image::clear()
     textureName.clear();
 }
 
-Choice::Choice(const unsigned long idx, const std::string &s, const std::string &p) : Image(SEL, SEL_XSHIFT, (idx + 1) * (SEL_HEIGHT + SEL_SPACING)), scriptName(s), prompt(p), displayText("[" + std::to_string(idx + 1) + "] " + p)
+Choice::Choice(SDL_Renderer *r, const unsigned long idx, const std::string &s, const std::string &p) : Image(r, SEL, SEL_XSHIFT, (idx + 1) * (SEL_HEIGHT + SEL_SPACING)), scriptName(s), prompt(p), displayText("[" + std::to_string(idx + 1) + "] " + p)
 {
 }
 
 void Choice::render(SDL_Renderer *renderer)
 {
     // Render base box image
-    Image::render(renderer);
-    renderText(renderer, displayText);
+    Image::render();
+    renderText(displayText);
 }
 
 // Render image onto the given renderer
-void Image::render(SDL_Renderer *renderer)
+void Image::render()
 {
     if (!isActive())
         // Image is inactive
@@ -113,7 +113,7 @@ const json Image::dump()
 }
 
 // Render text for a selection box
-void Choice::renderText(SDL_Renderer *renderer, const std::string &text)
+void Choice::renderText(const std::string &text)
 {
     static TTF_Font *selectFont = TTF_OpenFont(SELECT_FONT_PATH, SELECT_FONT_SIZE);
 
@@ -144,11 +144,11 @@ void Choice::renderText(SDL_Renderer *renderer, const std::string &text)
     SDL_FreeSurface(surface);
 }
 
-void Cg::render(SDL_Renderer *renderer)
+void Cg::render()
 {
-    base.render(renderer);
-    part1.render(renderer);
-    part2.render(renderer);
+    base.render();
+    part1.render();
+    part2.render();
 }
 
 void Cg::clear()
@@ -322,6 +322,9 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
     // Decode and cache choice selection asset
     processImage(sys_sel, sizeof(sys_sel), std::pair<std::string, int>(SEL, 2));
 
+    mwnd = {renderer, MWND, MWND_XSHIFT, MWND_YSHIFT};
+    mwndDeco = {renderer, MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
+
     // Decode and cache message window assets
     processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>(MWND, 43));
     processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>(MWND_DECO, 42));
@@ -476,20 +479,20 @@ void ImageManager::render()
     SDL_RenderClear(renderer);
 
     for (auto &bg : currBgs)
-        bg.render(renderer);
+        bg.render();
 
     for (auto &cg : currCgs)
-        cg.render(renderer);
+        cg.render();
 
     for (auto &eg : currEgs)
-        eg.render(renderer);
+        eg.render();
 
     // Render message window
-    mwnd.render(renderer);
-    mwndDeco.render(renderer);
+    mwnd.render();
+    mwndDeco.render();
 
     for (auto &fw : currFws)
-        fw.render(renderer);
+        fw.render();
 
     renderMessage(currText);
     renderSpeaker(currSpeaker);
@@ -628,7 +631,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         if (!fileManager->inDB(asset + IMAGE_EXT))
             return;
 
-        currBgs[zIndex] = {asset, xShift, yShift};
+        currBgs[zIndex] = {renderer, asset, xShift, yShift};
         fetchImage(asset);
         break;
 
@@ -638,7 +641,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         if (!fileManager->inDB(asset + IMAGE_EXT))
             return;
 
-        currEgs[zIndex] = {asset, xShift, yShift};
+        currEgs[zIndex] = {renderer, asset, xShift, yShift};
         fetchImage(asset);
         break;
 
@@ -667,19 +670,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
         if (fileManager->inDB(baseName + IMAGE_EXT))
         {
-            cg.base = Image{baseName, xShift, yShift};
+            cg.base = Image{renderer, baseName, xShift, yShift};
             fetchImage(baseName);
         }
 
         if (fileManager->inDB(part1Name + IMAGE_EXT))
         {
-            cg.part1 = Image{part1Name, xShift, yShift};
+            cg.part1 = Image{renderer, part1Name, xShift, yShift};
             fetchImage(part1Name);
         }
 
         if (fileManager->inDB(part2Name + IMAGE_EXT))
         {
-            cg.part2 = Image{part2Name, xShift, yShift};
+            cg.part2 = Image{renderer, part2Name, xShift, yShift};
             fetchImage(part2Name);
         }
     }
@@ -715,19 +718,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
         if (fileManager->inDB(baseName + IMAGE_EXT))
         {
-            fw.base = Image{baseName, xShift, yShift};
+            fw.base = Image{renderer, baseName, xShift, yShift};
             fetchImage(baseName);
         }
 
         if (fileManager->inDB(part1Name + IMAGE_EXT))
         {
-            fw.part1 = Image{part1Name, xShift, yShift};
+            fw.part1 = Image{renderer, part1Name, xShift, yShift};
             fetchImage(part1Name);
         }
 
         if (fileManager->inDB(part2Name + IMAGE_EXT))
         {
-            fw.part2 = Image{part2Name, xShift, yShift};
+            fw.part2 = Image{renderer, part2Name, xShift, yShift};
             fetchImage(part2Name);
         }
     }

@@ -102,15 +102,18 @@ public:
 
     Image(){};
 
-    Image(std::string, int, int);
+    Image(SDL_Renderer *, std::string, int, int);
 
     bool isActive() { return !textureName.empty(); }
 
-    void render(SDL_Renderer *);
+    void render();
 
     void clear();
 
     const json dump();
+
+protected:
+    SDL_Renderer *renderer = NULL;
 
 private:
     TextureData *textureData = NULL;
@@ -122,14 +125,14 @@ private:
     // Might remove
     const std::string displayText;
 
-    void renderText(SDL_Renderer *, const std::string &);
+    void renderText(const std::string &);
 
 public:
     const std::string scriptName;
 
     const std::string prompt;
 
-    Choice(const unsigned long, const std::string &, const std::string &);
+    Choice(SDL_Renderer *, const unsigned long, const std::string &, const std::string &);
 
     void render(SDL_Renderer *);
 };
@@ -149,7 +152,7 @@ class Eg : public Image
 class Cg
 {
 public:
-    void render(SDL_Renderer *);
+    void render();
 
     void clear();
 
@@ -199,6 +202,8 @@ public:
 
     void toggle_fullscreen();
 
+    SDL_Renderer* getRenderer(){return renderer;};
+
 private:
     FileManager *fileManager = NULL;
     SceneManager *sceneManager = NULL;
@@ -206,8 +211,8 @@ private:
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
 
-    Image mwnd = {MWND, MWND_XSHIFT, MWND_YSHIFT};
-    Image mwndDeco = {MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
+    Image mwnd; 
+    Image mwndDeco; 
 
     TTF_Font *font = NULL;
     TTF_Font *selectFont = NULL;

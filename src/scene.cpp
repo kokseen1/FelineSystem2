@@ -12,16 +12,6 @@ void to_json(json &j, const std::vector<Choice> &choices)
         j[c.scriptName] = c.prompt;
 }
 
-void from_json(const json &j, std::vector<Choice> &choices)
-{
-    unsigned long i = 0;
-    for (auto &el : j.items())
-    {
-        choices.push_back({i, el.key(), el.value()});
-        i++;
-    }
-}
-
 SceneManager::SceneManager(AudioManager *mm, ImageManager *im, FileManager *fm) : audioManager{mm}, imageManager{im}, fileManager{fm} {};
 
 // Parse a raw CST file from a memory buffer and store the uncompressed script
@@ -394,7 +384,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     // Choice options
     else if (std::regex_match(cmdString, matches, std::regex("^(\\d+) (\\w+) (.+)")))
     {
-        currChoices.push_back({currChoices.size(), cleanText(matches[2].str()), cleanText(matches[3].str())});
+        currChoices.push_back({imageManager->getRenderer(), currChoices.size(), cleanText(matches[2].str()), cleanText(matches[3].str())});
     }
 
     // Auto mode
@@ -473,7 +463,12 @@ void SceneManager::loadState(const int saveSlot)
         currChoices.clear();
         if (jScene.contains(KEY_CHOICE))
         {
-            currChoices = jScene.at(KEY_CHOICE);
+            unsigned long count = 0;
+            for (auto &el : jScene.at(KEY_CHOICE).items())
+            {
+                currChoices.push_back({imageManager->getRenderer(), count, el.key(), el.value()});
+                count++;
+            }
         }
     }
     catch (const json::out_of_range &e)
