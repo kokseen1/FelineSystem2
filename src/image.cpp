@@ -61,22 +61,21 @@ void Image::clear()
     textureName.clear();
 }
 
-Choice::Choice(SDL_Renderer *r, const unsigned long idx, const std::string &s, const std::string &p) : Image(r, SEL, SEL_XSHIFT, (idx + 1) * (SEL_HEIGHT + SEL_SPACING)), scriptName(s), prompt(p), displayText("[" + std::to_string(idx + 1) + "] " + p)
+Choice::Choice(SDL_Renderer *r, const std::string &t, const std::string &p) : Image(r, SEL, 0, 0), target(t), prompt(p)
 {
 }
 
-void Choice::render(SDL_Renderer *renderer)
+void Choice::render(const int yShift)
 {
     // Render base box image
-    Image::render();
-    renderText(displayText);
+    Image::render(SEL_XSHIFT, yShift);
+    renderText(SEL_XSHIFT, yShift);
 }
 
-// Render image onto the given renderer
-void Image::render()
+// Render image with given offsets
+void Image::render(const int xShift, const int yShift)
 {
     if (!isActive())
-        // Image is inactive
         return;
 
     if (textureData == NULL)
@@ -106,6 +105,12 @@ void Image::render()
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);
 }
 
+// Render image with the offsets set in ctor
+void Image::render()
+{
+    render(xShift, yShift);
+}
+
 const json Image::dump()
 {
     auto &j = *this;
@@ -113,15 +118,15 @@ const json Image::dump()
 }
 
 // Render text for a selection box
-void Choice::renderText(const std::string &text)
+void Choice::renderText(const int xShift, const int yShift)
 {
     static TTF_Font *selectFont = TTF_OpenFont(SELECT_FONT_PATH, SELECT_FONT_SIZE);
 
-    if (text.empty())
+    if (prompt.empty())
         return;
 
     // Render text
-    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(selectFont, text.c_str(), {0, 0, 0, 255}, 0);
+    SDL_Surface *surface = TTF_RenderUTF8_Blended_Wrapped(selectFont, prompt.c_str(), {0, 0, 0, 255}, 0);
     if (surface == NULL)
     {
         LOG << "TTF Surface failed!";
@@ -468,8 +473,19 @@ void ImageManager::renderMessage(const std::string &text)
 // Render choice textures
 void ImageManager::renderChoices()
 {
-    for (auto choice : sceneManager->getCurrChoices())
-        choice.render(renderer);
+    auto &choices = sceneManager->getCurrChoices();
+    auto sz = choices.size();
+    if (sz == 0)
+        return;
+
+    auto blockHeight = sz * SEL_HEIGHT + (sz - 1) * SEL_SPACING;
+    auto yShift = WINDOW_HEIGHT / 2 - blockHeight / 2;
+
+    for (auto choice : choices)
+    {
+        choice.render(yShift);
+        yShift +=  SEL_HEIGHT + SEL_SPACING;
+    }
 }
 
 // Render images in order of type precedence and z-index

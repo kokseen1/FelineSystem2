@@ -9,7 +9,7 @@ using json = nlohmann::json;
 void to_json(json &j, const std::vector<Choice> &choices)
 {
     for (const auto &c : choices)
-        j[c.scriptName] = c.prompt;
+        j[c.target] = c.prompt;
 }
 
 SceneManager::SceneManager(AudioManager *mm, ImageManager *im, FileManager *fm) : audioManager{mm}, imageManager{im}, fileManager{fm} {};
@@ -384,7 +384,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     // Choice options
     else if (std::regex_match(cmdString, matches, std::regex("^(\\d+) (\\w+) (.+)")))
     {
-        currChoices.push_back({imageManager->getRenderer(), currChoices.size(), cleanText(matches[2].str()), cleanText(matches[3].str())});
+        currChoices.push_back({imageManager->getRenderer(), cleanText(matches[2].str()), cleanText(matches[3].str())});
     }
 
     // Auto mode
@@ -409,7 +409,7 @@ void SceneManager::selectChoice(int idx)
 {
     if (idx < currChoices.size())
     {
-        setScript(currChoices[idx].scriptName);
+        setScript(currChoices[idx].target);
         currChoices.clear();
     }
     else
@@ -463,12 +463,9 @@ void SceneManager::loadState(const int saveSlot)
         currChoices.clear();
         if (jScene.contains(KEY_CHOICE))
         {
-            unsigned long count = 0;
+            // Populate choices from savedata
             for (auto &el : jScene.at(KEY_CHOICE).items())
-            {
-                currChoices.push_back({imageManager->getRenderer(), count, el.key(), el.value()});
-                count++;
-            }
+                currChoices.push_back({imageManager->getRenderer(), el.key(), el.value()});
         }
     }
     catch (const json::out_of_range &e)

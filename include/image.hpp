@@ -115,6 +115,8 @@ public:
 protected:
     SDL_Renderer *renderer = NULL;
 
+    void render(const int, const int);
+
 private:
     TextureData *textureData = NULL;
 };
@@ -122,19 +124,15 @@ private:
 class Choice : public Image
 {
 private:
-    // Might remove
-    const std::string displayText;
-
-    void renderText(const std::string &);
+    void renderText(const int, const int);
 
 public:
-    const std::string scriptName;
-
+    const std::string target;
     const std::string prompt;
 
-    Choice(SDL_Renderer *, const unsigned long, const std::string &, const std::string &);
+    Choice(SDL_Renderer *, const std::string &, const std::string &);
 
-    void render(SDL_Renderer *);
+    void render(const int);
 };
 
 class Bg : public Image
@@ -202,7 +200,7 @@ public:
 
     void toggle_fullscreen();
 
-    SDL_Renderer* getRenderer(){return renderer;};
+    SDL_Renderer *getRenderer() { return renderer; };
 
 private:
     FileManager *fileManager = NULL;
@@ -211,8 +209,8 @@ private:
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
 
-    Image mwnd; 
-    Image mwndDeco; 
+    Image mwnd;
+    Image mwndDeco;
 
     TTF_Font *font = NULL;
     TTF_Font *selectFont = NULL;

@@ -60,7 +60,6 @@ private:
 
     std::string currScriptName;
 
-    // Vector of Choice structs
     std::vector<Choice> currChoices;
 
     // Vector containing uncompressed script data to be traversed
