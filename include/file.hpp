@@ -183,7 +183,7 @@ public:
     }
 
     // Return true if asset is in database
-    inline bool inDB(const std::string &name)
+    bool inDB(const std::string &name)
     {
         return kifDb.find(name) != kifDb.end();
     }

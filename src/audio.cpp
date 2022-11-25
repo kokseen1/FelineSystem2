@@ -32,7 +32,7 @@ void AudioManager::setSE(const std::string &asset, const int channel, const int 
     fileManager->fetchAssetAndProcess(asset + SE_EXT, this, &AudioManager::playSoundFromMem, std::make_pair(channel, loops));
 }
 
-inline void AudioManager::playMusic(Mix_Music *mixMusic, const std::string &name)
+void AudioManager::playMusic(Mix_Music *mixMusic, const std::string &name)
 {
     // Ensure that current music is to be played (in async cases)
     if (name == currMusicName)
@@ -120,7 +120,7 @@ void AudioManager::stopMusic()
 }
 
 // Free any existing music SDL_RWops
-inline void AudioManager::freeOps(SDL_RWops *ops)
+void AudioManager::freeOps(SDL_RWops *ops)
 {
     if (SDL_RWclose(ops) < 0)
     {
