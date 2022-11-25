@@ -46,7 +46,12 @@ void main_loop()
             switch (event.key.keysym.sym)
             {
             case SDLK_LCTRL:
+            case SDLK_RETURN:
                 sceneManager->parse();
+                break;
+
+            case SDLK_SPACE:
+                imageManager->toggleMwnd();
                 break;
 
             case SDLK_f:

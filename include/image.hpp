@@ -200,6 +200,8 @@ public:
 
     void toggle_fullscreen();
 
+    void toggleMwnd() { showMwnd = !showMwnd; };
+
     SDL_Renderer *getRenderer() { return renderer; };
 
 private:
@@ -208,6 +210,8 @@ private:
 
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
+
+    bool showMwnd = true;
 
     Image mwnd;
     Image mwndDeco;

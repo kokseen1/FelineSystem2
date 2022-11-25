@@ -356,17 +356,17 @@ void ImageManager::toggle_fullscreen()
     }
 #else
     // SDL fullscreen
-    static int isFullscreen = 0;
+    static bool isFullscreen = false;
     switch (isFullscreen)
     {
-    case 0:
+    case false:
         SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
         break;
-    case 1:
+    case true:
         SDL_SetWindowFullscreen(window, 0);
         break;
     }
-    isFullscreen ^= 1;
+    isFullscreen = !isFullscreen;
 #endif
 }
 
@@ -484,7 +484,7 @@ void ImageManager::renderChoices()
     for (auto choice : choices)
     {
         choice.render(yShift);
-        yShift +=  SEL_HEIGHT + SEL_SPACING;
+        yShift += SEL_HEIGHT + SEL_SPACING;
     }
 }
 
@@ -503,15 +503,18 @@ void ImageManager::render()
     for (auto &eg : currEgs)
         eg.render();
 
-    // Render message window
-    mwnd.render();
-    mwndDeco.render();
+    if (showMwnd)
+    {
+        // Render message window
+        mwnd.render();
+        mwndDeco.render();
 
-    for (auto &fw : currFws)
-        fw.render();
+        for (auto &fw : currFws)
+            fw.render();
 
-    renderMessage(currText);
-    renderSpeaker(currSpeaker);
+        renderMessage(currText);
+        renderSpeaker(currSpeaker);
+    }
 
     renderChoices();
 
