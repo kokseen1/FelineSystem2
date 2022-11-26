@@ -28,6 +28,33 @@
 
 typedef std::unordered_map<std::string, Mix_Music *> MusicCache;
 
+class Sound
+{
+private:
+    std::string name;
+    int loops;
+
+    SDL_RWops *rwOps = NULL;
+    Mix_Chunk *mixChunk = NULL;
+
+    void free();
+
+public:
+    std::string &getName() { return name; };
+
+    void stop();
+
+    void set(const std::string &, const int);
+
+    void play(byte *, const size_t, const int);
+};
+
+typedef struct
+{
+    int channel;
+    std::string name;
+} SoundData;
+
 class AudioManager
 {
 
@@ -50,8 +77,7 @@ private:
     FileManager *fileManager = NULL;
     MusicCache musicCache;
 
-    std::array<SDL_RWops *, SOUND_CHANNELS> soundOps{};
-    std::array<Mix_Chunk *, SOUND_CHANNELS> soundChunks{};
+    std::array<Sound, SOUND_CHANNELS> currSounds;
 
     std::vector<std::vector<byte>> musicBufVec;
 
@@ -59,13 +85,11 @@ private:
 
     void stopMusic();
 
-    void freeOps(SDL_RWops *);
-
     void freeBuf();
 
     void playMusic(Mix_Music *, const std::string &);
 
     void playMusicFromMem(byte *, size_t, const std::string);
 
-    void playSoundFromMem(byte *, size_t, const std::pair<int, int>);
+    void playSoundFromMem(byte *, size_t, const SoundData);
 };
