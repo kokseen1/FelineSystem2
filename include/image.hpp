@@ -82,13 +82,6 @@ enum class IMAGE_TYPE
     FW,
 };
 
-typedef struct
-{
-    int xShift;
-    int yShift;
-    std::vector<std::string> names;
-} ImageData;
-
 typedef std::pair<SDL_Texture *, Stdinfo> TextureData;
 
 class Image
@@ -171,6 +164,13 @@ public:
     const json dump();
 };
 
+typedef struct
+{
+    const Image &image;
+    const std::string name; // Cannot be a reference in async
+    const int index;
+} ImageData;
+
 class ImageManager
 {
 
@@ -237,11 +237,11 @@ private:
 
     void setLogo();
 
-    void fetchImage(const std::string &);
+    void fetchImage(const Image &, const std::string &);
+
+    void processImageRet(byte *, size_t, const ImageData);
 
     void processImage(byte *, size_t, std::pair<std::string, int>);
-
-    void renderImage(const ImageData &);
 
     void renderMessage(const std::string &);
 

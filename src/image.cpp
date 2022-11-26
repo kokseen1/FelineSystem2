@@ -325,14 +325,14 @@ ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
     }
 
     // Decode and cache choice selection asset
-    processImage(sys_sel, sizeof(sys_sel), std::pair<std::string, int>(SEL, 2));
+    processImage(sys_sel, sizeof(sys_sel), {SEL, 2});
 
     mwnd = {renderer, MWND, MWND_XSHIFT, MWND_YSHIFT};
     mwndDeco = {renderer, MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
 
     // Decode and cache message window assets
-    processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>(MWND, 43));
-    processImage(sys_mwnd, sizeof(sys_mwnd), std::pair<std::string, int>(MWND_DECO, 42));
+    processImage(sys_mwnd, sizeof(sys_mwnd), {MWND, 43});
+    processImage(sys_mwnd, sizeof(sys_mwnd), {MWND_DECO, 42});
     if (textureCache[MWND].first != NULL)
         SDL_SetTextureAlphaMod(textureCache[MWND].first, MWND_ALPHA);
 
@@ -631,7 +631,6 @@ std::vector<std::string> ImageManager::getAssetArgs(const std::string &asset)
     return args;
 }
 
-// Parses image arguments into ImageData to be displayed
 // Names of assets must be inserted in ascending z-index
 void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string asset, int xShift, int yShift)
 {
@@ -651,7 +650,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
             return;
 
         currBgs[zIndex] = {renderer, asset, xShift, yShift};
-        fetchImage(asset);
+        fetchImage(currBgs[zIndex], asset);
         break;
 
     case IMAGE_TYPE::EG:
@@ -661,7 +660,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
             return;
 
         currEgs[zIndex] = {renderer, asset, xShift, yShift};
-        fetchImage(asset);
+        fetchImage(currEgs[zIndex], asset);
         break;
 
     case IMAGE_TYPE::CG:
@@ -690,19 +689,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         if (fileManager->inDB(baseName + IMAGE_EXT))
         {
             cg.base = Image{renderer, baseName, xShift, yShift};
-            fetchImage(baseName);
+            fetchImage(cg.base, baseName);
         }
 
         if (fileManager->inDB(part1Name + IMAGE_EXT))
         {
             cg.part1 = Image{renderer, part1Name, xShift, yShift};
-            fetchImage(part1Name);
+            fetchImage(cg.part1, part1Name);
         }
 
         if (fileManager->inDB(part2Name + IMAGE_EXT))
         {
             cg.part2 = Image{renderer, part2Name, xShift, yShift};
-            fetchImage(part2Name);
+            fetchImage(cg.part2, part2Name);
         }
     }
     break;
@@ -738,19 +737,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         if (fileManager->inDB(baseName + IMAGE_EXT))
         {
             fw.base = Image{renderer, baseName, xShift, yShift};
-            fetchImage(baseName);
+            fetchImage(fw.base, baseName);
         }
 
         if (fileManager->inDB(part1Name + IMAGE_EXT))
         {
             fw.part1 = Image{renderer, part1Name, xShift, yShift};
-            fetchImage(part1Name);
+            fetchImage(fw.part1, part1Name);
         }
 
         if (fileManager->inDB(part2Name + IMAGE_EXT))
         {
             fw.part2 = Image{renderer, part2Name, xShift, yShift};
-            fetchImage(part2Name);
+            fetchImage(fw.part2, part2Name);
         }
     }
     break;
@@ -758,7 +757,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 }
 
 // Helper function to fetch images that are not already in cache
-void ImageManager::fetchImage(const std::string &name)
+void ImageManager::fetchImage(const Image &image, const std::string &name)
 {
     // Prevent fetching already cached images
     auto pos = textureCache.find(name);
@@ -769,7 +768,20 @@ void ImageManager::fetchImage(const std::string &name)
     // textureCache[name];
 
     // Assume frame 0 for all images
-    fileManager->fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, std::make_pair(name, 0));
+    fileManager->fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImageRet, ImageData{image, name, 0});
+}
+
+// Called when image has been fetched
+// Will return early and skip processing in async fetch if image was already passed
+void ImageManager::processImageRet(byte *buf, size_t sz, const ImageData imageData)
+{
+    const auto &name = imageData.name;
+
+    // Do not process if image was already passed
+    if (imageData.image.textureName != name)
+        return;
+
+    processImage(buf, sz, {name, imageData.index});
 }
 
 // Decode a raw HG buffer and cache the texture
