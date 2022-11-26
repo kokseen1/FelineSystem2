@@ -43,6 +43,10 @@ enum class Token
     Or = '||',
 
     Assign = '=',
+    PlusAssign = '+=',
+    MinusAssign = '-=',
+    MulAssign = '*=',
+    DivAssign = '/=',
 };
 
 class Lexer;

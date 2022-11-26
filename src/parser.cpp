@@ -78,20 +78,50 @@ Token Lexer::get_next_token()
         }
 
     case '+':
-        if (iss.get() == '+')
+        switch (iss.get())
+        {
+        case '+':
             return Token::Incr;
-        iss.unget();
-        return Token::Plus;
+        case '=':
+            return Token::PlusAssign;
+        default:
+            iss.unget();
+            return Token::Plus;
+        }
 
     case '-':
-        if (iss.get() == '-')
+        switch (iss.get())
+        {
+        case '-':
             return Token::Decr;
-        iss.unget();
-        return Token::Minus;
+        case '=':
+            return Token::MinusAssign;
+        default:
+            iss.unget();
+            return Token::Minus;
+        }
 
         // Single character tokens
     case '*':
+        switch (iss.get())
+        {
+        case '=':
+            return Token::MulAssign;
+        default:
+            iss.unget();
+            return Token::Mul;
+        }
+
     case '/':
+        switch (iss.get())
+        {
+        case '=':
+            return Token::DivAssign;
+        default:
+            iss.unget();
+            return Token::Div;
+        }
+
     case '#':
     case '(':
     case ')':
@@ -425,18 +455,51 @@ double Parser::assign_expr()
     Token t = p_lexer->get_current_token();
     auto result = BASE_EXPR();
 
-    if (t == Token::Id && p_lexer->get_current_token() == Token::Assign)
+    if (t == Token::Id)
     {
-        // Verify valid LHS (Not working for dynamic variable names)
-        auto buffer = p_lexer->get_curr_buffer();
-        if (buffer != last_var_name)
-            throw(std::runtime_error("Invalid '" + buffer + "' on LHS of assignment!"));
-
         // Evaluate RHS
-        p_lexer->advance();
-        result = BASE_EXPR();
-        // std::cout << "SETVAR #" << last_var_name << "=" << result << std::endl;
-        symbol_table[last_var_name] = result;
+        switch (p_lexer->get_current_token())
+        {
+        case Token::Assign:
+            // Verify valid LHS (Not working for dynamic variable names)
+            // Prevents expressions like #300+12345=100
+            // auto buffer = p_lexer->get_curr_buffer();
+            // if (buffer != last_var_name)
+            //     throw(std::runtime_error("Invalid '" + buffer + "' on LHS of assignment!"));
+
+            p_lexer->advance();
+            result = BASE_EXPR();
+            // LOG << "SETVAR #" << last_var_name << "=" << result << std::endl;
+            symbol_table[last_var_name] = result;
+            break;
+
+        case Token::PlusAssign:
+            p_lexer->advance();
+            result = BASE_EXPR();
+            symbol_table[last_var_name] += result;
+            break;
+
+        case Token::MinusAssign:
+            p_lexer->advance();
+            result = BASE_EXPR();
+            symbol_table[last_var_name] -= result;
+            break;
+
+        case Token::MulAssign:
+            p_lexer->advance();
+            result = BASE_EXPR();
+            symbol_table[last_var_name] *= result;
+            break;
+
+        case Token::DivAssign:
+            p_lexer->advance();
+            result = BASE_EXPR();
+            symbol_table[last_var_name] /= result;
+            break;
+
+        default:
+            break;
+        }
     }
 
     if (p_lexer->get_current_token() != Token::Eof)
