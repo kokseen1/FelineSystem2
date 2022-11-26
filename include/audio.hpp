@@ -85,7 +85,7 @@ private:
 
     std::string currMusicName;
 
-    void stopSE();
+    void stopSounds();
 
     void stopMusic();
 
