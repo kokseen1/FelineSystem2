@@ -239,7 +239,7 @@ private:
 
     void fetchImage(const Image &, const std::string &);
 
-    void processImageRet(byte *, size_t, const ImageData);
+    void processImage(byte *, size_t, const ImageData);
 
     void processImage(byte *, size_t, std::pair<std::string, int>);
 
