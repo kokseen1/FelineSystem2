@@ -42,6 +42,8 @@ private:
 public:
     std::string &getName() { return name; };
 
+    auto getLoops() { return loops; };
+
     void stop();
 
     void set(const std::string &, const int);
@@ -82,6 +84,8 @@ private:
     std::vector<std::vector<byte>> musicBufVec;
 
     std::string currMusicName;
+
+    void stopSE();
 
     void stopMusic();
 

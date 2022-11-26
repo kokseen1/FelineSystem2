@@ -164,29 +164,50 @@ void AudioManager::stopMusic()
     currMusicName.clear();
 }
 
-void AudioManager::loadDump(const json &j)
+// Stop all SE
+void AudioManager::stopSE()
 {
-    // Stop all SE
     for (auto &sound : currSounds)
         sound.stop();
+}
+
+void AudioManager::loadDump(const json &j)
+{
+    stopSE();
+    if (j.contains(KEY_SE))
+    {
+        unsigned int c = 0;
+        for (auto &sound : currSounds)
+        {
+            const auto &channel = std::to_string(c);
+            if (j[KEY_SE].contains(channel))
+                setSE(j[KEY_SE][channel], c, -1);
+            c++;
+        }
+    }
 
     stopMusic();
-
     if (j.contains(KEY_MUSIC) && j[KEY_MUSIC].contains(KEY_NAME))
-    {
         setMusic(j[KEY_MUSIC][KEY_NAME]);
-    }
 }
 
 const json AudioManager::dump()
 {
     json j;
 
-    // TODO: dump (looping) SE
-
     if (!currMusicName.empty())
     {
         j[KEY_MUSIC][KEY_NAME] = currMusicName;
+    }
+
+    // Save only looping SE
+    unsigned int c = 0;
+    for (auto &sound : currSounds)
+    {
+        auto &name = sound.getName();
+        if (!name.empty() && sound.getLoops() == -1)
+            j[KEY_SE][std::to_string(c)] = name;
+        c++;
     }
 
     return j;
