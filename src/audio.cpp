@@ -43,7 +43,7 @@ void Sound::play(byte *buf, const size_t sz, const int channel)
 }
 
 // Initialize the audio player
-AudioManager::AudioManager(FileManager *fm) : fileManager{fm}
+AudioManager::AudioManager(FileManager &fm) : fileManager{fm}
 {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024) == -1)
     {
@@ -68,7 +68,7 @@ void AudioManager::stopSound(const int channel)
 void AudioManager::setMusic(const std::string name)
 {
     // Ensure asset exists in database
-    if (!fileManager->inDB(name + MUSIC_EXT))
+    if (!fileManager.inDB(name + MUSIC_EXT))
         return;
 
     currMusicName = name;
@@ -82,7 +82,7 @@ void AudioManager::setMusic(const std::string name)
     else
     {
         // Fetch and store in cache
-        fileManager->fetchAssetAndProcess(name + MUSIC_EXT, this, &AudioManager::playMusicFromMem, name);
+        fileManager.fetchAssetAndProcess(name + MUSIC_EXT, this, &AudioManager::playMusicFromMem, name);
     }
 }
 
@@ -93,7 +93,7 @@ void AudioManager::setPCM(const std::string &name)
     Mix_HaltChannel(CHANNEL_PCM);
     currSounds[CHANNEL_PCM].set(name, 0);
 
-    fileManager->fetchAssetAndProcess(name + PCM_EXT, this, &AudioManager::playSoundFromMem, {CHANNEL_PCM, name});
+    fileManager.fetchAssetAndProcess(name + PCM_EXT, this, &AudioManager::playSoundFromMem, {CHANNEL_PCM, name});
 }
 
 // Play a specified sound effect asset
@@ -104,13 +104,13 @@ void AudioManager::setSE(const std::string &name, const int channel, const int l
         return;
 
     // Ensure asset exists in database
-    if (!fileManager->inDB(name + SE_EXT))
+    if (!fileManager.inDB(name + SE_EXT))
         return;
 
     Mix_HaltChannel(channel);
     currSounds[channel].set(name, loops);
 
-    fileManager->fetchAssetAndProcess(name + SE_EXT, this, &AudioManager::playSoundFromMem, {channel, name});
+    fileManager.fetchAssetAndProcess(name + SE_EXT, this, &AudioManager::playSoundFromMem, {channel, name});
 }
 
 void AudioManager::playMusic(Mix_Music *mixMusic, const std::string &name)

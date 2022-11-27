@@ -16,16 +16,19 @@
 #include <sstream>
 #include <iomanip>
 
-static FileManager *fileManager = NULL;
-static AudioManager *audioManager = NULL;
-static ImageManager *imageManager = NULL;
-static SceneManager *sceneManager = NULL;
+// Texture cache map must be defined in main
+std::unordered_map<std::string, TextureData> textureCache;
+
+static FileManager fileManager;
+static AudioManager audioManager(fileManager);
+static ImageManager imageManager(fileManager);
+static SceneManager sceneManager(audioManager, imageManager, fileManager);
 
 void main_loop()
 {
     SDL_Event event;
 
-    sceneManager->tickScript();
+    sceneManager.tickScript();
 
     while (SDL_PollEvent(&event))
     {
@@ -35,11 +38,11 @@ void main_loop()
             break;
 
         case SDL_MOUSEWHEEL:
-            sceneManager->parse();
+            sceneManager.parse();
             break;
 
         case SDL_MOUSEBUTTONDOWN:
-            sceneManager->parse();
+            sceneManager.parse();
             break;
 
         case SDL_KEYDOWN:
@@ -47,15 +50,15 @@ void main_loop()
             {
             case SDLK_LCTRL:
             case SDLK_RETURN:
-                sceneManager->parse();
+                sceneManager.parse();
                 break;
 
             case SDLK_SPACE:
-                imageManager->toggleMwnd();
+                imageManager.toggleMwnd();
                 break;
 
             case SDLK_f:
-                imageManager->toggle_fullscreen();
+                imageManager.toggle_fullscreen();
                 break;
 
             case SDLK_1:
@@ -69,11 +72,11 @@ void main_loop()
             case SDLK_9:
                 // Ensure compatibility with mobile browsers
                 if (SDL_GetModState() & KMOD_ALT && SDL_GetModState() & KMOD_SHIFT)
-                    sceneManager->saveState(event.key.keysym.sym - SDLK_1);
+                    sceneManager.saveState(event.key.keysym.sym - SDLK_1);
                 else if (SDL_GetModState() & KMOD_SHIFT)
-                    sceneManager->loadState(event.key.keysym.sym - SDLK_1);
+                    sceneManager.loadState(event.key.keysym.sym - SDLK_1);
                 else
-                    sceneManager->selectChoice(event.key.keysym.sym - SDLK_1);
+                    sceneManager.selectChoice(event.key.keysym.sym - SDLK_1);
                 break;
 
             default:
@@ -91,18 +94,13 @@ void main_loop()
     }
 
     // Render the canvas
-    imageManager->render();
+    imageManager.render();
 }
 
 int main(int argc, char **argv)
 {
-    fileManager = new FileManager;
-    audioManager = new AudioManager(fileManager);
-    imageManager = new ImageManager(fileManager);
-    sceneManager = new SceneManager(audioManager, imageManager, fileManager);
-
-    fileManager->init(sceneManager);
-    imageManager->init(sceneManager);
+    fileManager.init(&sceneManager);
+    imageManager.init(&sceneManager);
 
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(main_loop, -1, 1);

@@ -8,8 +8,6 @@
 #include <sstream>
 #include <vector>
 
-static std::map<std::string, TextureData> textureCache;
-
 void to_json(json &j, const Image &i)
 {
     j = json{
@@ -269,7 +267,7 @@ const json ImageManager::dump()
     return j;
 }
 
-ImageManager::ImageManager(FileManager *fm) : fileManager{fm}
+ImageManager::ImageManager(FileManager &fm) : fileManager{fm}
 {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -646,7 +644,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
     case IMAGE_TYPE::BG:
         if (zIndex >= currBgs.size())
             return;
-        if (!fileManager->inDB(asset + IMAGE_EXT))
+        if (!fileManager.inDB(asset + IMAGE_EXT))
             return;
 
         currBgs[zIndex] = {renderer, asset, xShift, yShift};
@@ -656,7 +654,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
     case IMAGE_TYPE::EG:
         if (zIndex >= currEgs.size())
             return;
-        if (!fileManager->inDB(asset + IMAGE_EXT))
+        if (!fileManager.inDB(asset + IMAGE_EXT))
             return;
 
         currEgs[zIndex] = {renderer, asset, xShift, yShift};
@@ -686,19 +684,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         // Store raw asset identifier
         cg.assetRaw = asset;
 
-        if (fileManager->inDB(baseName + IMAGE_EXT))
+        if (fileManager.inDB(baseName + IMAGE_EXT))
         {
             cg.base = Image{renderer, baseName, xShift, yShift};
             fetchImage(cg.base, baseName);
         }
 
-        if (fileManager->inDB(part1Name + IMAGE_EXT))
+        if (fileManager.inDB(part1Name + IMAGE_EXT))
         {
             cg.part1 = Image{renderer, part1Name, xShift, yShift};
             fetchImage(cg.part1, part1Name);
         }
 
-        if (fileManager->inDB(part2Name + IMAGE_EXT))
+        if (fileManager.inDB(part2Name + IMAGE_EXT))
         {
             cg.part2 = Image{renderer, part2Name, xShift, yShift};
             fetchImage(cg.part2, part2Name);
@@ -734,19 +732,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
         fw.assetRaw = asset;
 
-        if (fileManager->inDB(baseName + IMAGE_EXT))
+        if (fileManager.inDB(baseName + IMAGE_EXT))
         {
             fw.base = Image{renderer, baseName, xShift, yShift};
             fetchImage(fw.base, baseName);
         }
 
-        if (fileManager->inDB(part1Name + IMAGE_EXT))
+        if (fileManager.inDB(part1Name + IMAGE_EXT))
         {
             fw.part1 = Image{renderer, part1Name, xShift, yShift};
             fetchImage(fw.part1, part1Name);
         }
 
-        if (fileManager->inDB(part2Name + IMAGE_EXT))
+        if (fileManager.inDB(part2Name + IMAGE_EXT))
         {
             fw.part2 = Image{renderer, part2Name, xShift, yShift};
             fetchImage(fw.part2, part2Name);
@@ -768,7 +766,7 @@ void ImageManager::fetchImage(const Image &image, const std::string &name)
     // textureCache[name];
 
     // Assume frame 0 for all images
-    fileManager->fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, ImageData{image, name, 0});
+    fileManager.fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, ImageData{image, name, 0});
 }
 
 // Called when image has been fetched

@@ -74,6 +74,10 @@
 #define KEY_XSHIFT "x"
 #define KEY_YSHIFT "y"
 
+typedef std::pair<SDL_Texture *, Stdinfo> TextureData;
+
+extern std::unordered_map<std::string, TextureData> textureCache;
+
 enum class IMAGE_TYPE
 {
     BG,
@@ -81,8 +85,6 @@ enum class IMAGE_TYPE
     EG,
     FW,
 };
-
-typedef std::pair<SDL_Texture *, Stdinfo> TextureData;
 
 class Image
 {
@@ -178,7 +180,7 @@ public:
     std::string currText;
     std::string currSpeaker;
 
-    ImageManager(FileManager *);
+    ImageManager(FileManager &);
 
     void init(SceneManager *sm) { sceneManager = sm; }
 
@@ -205,7 +207,7 @@ public:
     SDL_Renderer *getRenderer() { return renderer; };
 
 private:
-    FileManager *fileManager = NULL;
+    FileManager &fileManager;
     SceneManager *sceneManager = NULL;
 
     SDL_Window *window = NULL;

@@ -61,7 +61,7 @@ class AudioManager
 {
 
 public:
-    AudioManager(FileManager *fileManager);
+    AudioManager(FileManager &fileManager);
 
     void setMusic(const std::string);
 
@@ -76,7 +76,7 @@ public:
     const json dump();
 
 private:
-    FileManager *fileManager = NULL;
+    FileManager &fileManager ;
     MusicCache musicCache;
 
     std::array<Sound, SOUND_CHANNELS> currSounds;

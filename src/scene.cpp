@@ -12,7 +12,7 @@ void to_json(json &j, const std::vector<Choice> &choices)
         j[c.target] = c.prompt;
 }
 
-SceneManager::SceneManager(AudioManager *mm, ImageManager *im, FileManager *fm) : audioManager{mm}, imageManager{im}, fileManager{fm} {};
+SceneManager::SceneManager(AudioManager &mm, ImageManager &im, FileManager &fm) : audioManager{mm}, imageManager{im}, fileManager{fm} {};
 
 // Parse a raw CST file from a memory buffer and store the uncompressed script
 void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptName)
@@ -74,13 +74,13 @@ void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData saveDat
 // Fetch and load script and offset specified in SaveData
 void SceneManager::setScriptOffset(const SaveData &saveData)
 {
-    fileManager->fetchAssetAndProcess(saveData.scriptName + SCRIPT_EXT, this, &SceneManager::loadScriptOffset, saveData);
+    fileManager.fetchAssetAndProcess(saveData.scriptName + SCRIPT_EXT, this, &SceneManager::loadScriptOffset, saveData);
 }
 
 // Fetch the specified script and begin parsing
 void SceneManager::setScript(const std::string &name)
 {
-    fileManager->fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadScriptStart, name);
+    fileManager.fetchAssetAndProcess(name + SCRIPT_EXT, this, &SceneManager::loadScriptStart, name);
 }
 
 // Fetch and parse entrypoint script
@@ -228,15 +228,15 @@ int SceneManager::parseLine()
         else
         {
             if (speakerCounter == 0)
-                imageManager->currSpeaker.clear();
+                imageManager.currSpeaker.clear();
 
-            imageManager->currText = cleanText(std::string(&stringTable->StringStart));
+            imageManager.currText = cleanText(std::string(&stringTable->StringStart));
             speakerCounter--;
         }
         break;
 
     case 0x21: // Set speaker of the message
-        imageManager->currSpeaker = cleanText(std::string(&stringTable->StringStart));
+        imageManager.currSpeaker = cleanText(std::string(&stringTable->StringStart));
         speakerCounter = 1;
         break;
 
@@ -272,11 +272,11 @@ void SceneManager::handleCommand(const std::string &cmdString)
 #ifdef LOWERCASE_ASSETS
         Utils::lowercase(asset);
 #endif
-        audioManager->setPCM(asset);
+        audioManager.setPCM(asset);
     }
     else if (std::regex_search(cmdString, matches, std::regex("^bgm (\\d+) (\\S+)")))
     {
-        audioManager->setMusic(matches[2].str());
+        audioManager.setMusic(matches[2].str());
     }
     else if (std::regex_search(cmdString, matches, std::regex("^se (\\d) ([\\w\\d]+)(?: ([\\w\\d]+))?")))
     {
@@ -289,7 +289,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
         {
             if (asset == "end")
             {
-                audioManager->stopSound(channel);
+                audioManager.stopSound(channel);
                 return;
             }
 
@@ -302,7 +302,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
 #ifdef LOWERCASE_ASSETS
         Utils::lowercase(asset);
 #endif
-        audioManager->setSE(asset, channel, loop);
+        audioManager.setSE(asset, channel, loop);
     }
 
     // Display images
@@ -331,7 +331,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
         const std::string &zIndexStr = matches[2].str();
         if (zIndexStr.empty())
         {
-            imageManager->clearImageType(imageType);
+            imageManager.clearImageType(imageType);
             return;
         }
 
@@ -339,12 +339,12 @@ void SceneManager::handleCommand(const std::string &cmdString)
         const std::string &asset = matches[3].str();
         if (asset.empty() || asset == "0")
         {
-            imageManager->clearZIndex(imageType, zIndex);
+            imageManager.clearZIndex(imageType, zIndex);
             return;
         }
 
         // Support for @ symbol referring to previous value
-        const auto &image = imageManager->getImage(imageType, zIndex);
+        const auto &image = imageManager.getImage(imageType, zIndex);
         auto prevXShift = image.xShift;
         auto prevYShift = image.yShift;
 
@@ -354,7 +354,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
         int xShift = xShiftStr.empty() ? 0 : parser.parse(xShiftStr, prevXShift);
         int yShift = yShiftStr.empty() ? 0 : parser.parse(yShiftStr, prevYShift);
 
-        imageManager->setImage(imageType, zIndex, asset, xShift, yShift);
+        imageManager.setImage(imageType, zIndex, asset, xShift, yShift);
     }
 
     // Conditional statement
@@ -384,7 +384,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     // Choice options
     else if (std::regex_match(cmdString, matches, std::regex("^(\\d+) (\\w+) (.+)")))
     {
-        currChoices.push_back({imageManager->getRenderer(), cleanText(matches[2].str()), cleanText(matches[3].str())});
+        currChoices.push_back({imageManager.getRenderer(), cleanText(matches[2].str()), cleanText(matches[3].str())});
     }
 
     // Auto mode
@@ -421,10 +421,10 @@ void SceneManager::selectChoice(int idx)
 void SceneManager::saveState(const int saveSlot)
 {
     json j;
-    j[KEY_IMAGE] = imageManager->dump();
-    j[KEY_AUDIO] = audioManager->dump();
-    j[KEY_TEXT] = imageManager->currText;
-    j[KEY_SPEAKER] = imageManager->currSpeaker;
+    j[KEY_IMAGE] = imageManager.dump();
+    j[KEY_AUDIO] = audioManager.dump();
+    j[KEY_TEXT] = imageManager.currText;
+    j[KEY_SPEAKER] = imageManager.currSpeaker;
 
     json &jScene = j[KEY_SCENE];
     jScene[KEY_SYMBOL_TABLE] = json(parser.getSymbolTable());
@@ -455,17 +455,17 @@ void SceneManager::loadState(const int saveSlot)
 
         setScriptOffset({jScene.at(KEY_SCRIPT_NAME), reinterpret_cast<byte *>(jScene.at(KEY_OFFSET).get<Uint64>())});
         parser.setSymbolTable(jScene.at(KEY_SYMBOL_TABLE).get<SymbolTable>());
-        imageManager->currText = j.at(KEY_TEXT);
-        imageManager->currSpeaker = j.at(KEY_SPEAKER);
-        imageManager->loadDump(jImage);
-        audioManager->loadDump(jAudio);
+        imageManager.currText = j.at(KEY_TEXT);
+        imageManager.currSpeaker = j.at(KEY_SPEAKER);
+        imageManager.loadDump(jImage);
+        audioManager.loadDump(jAudio);
 
         currChoices.clear();
         if (jScene.contains(KEY_CHOICE))
         {
             // Populate choices from savedata
             for (auto &el : jScene.at(KEY_CHOICE).items())
-                currChoices.push_back({imageManager->getRenderer(), el.key(), el.value()});
+                currChoices.push_back({imageManager.getRenderer(), el.key(), el.value()});
         }
     }
     catch (const json::out_of_range &e)

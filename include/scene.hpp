@@ -44,9 +44,9 @@ class SceneManager
 {
 private:
     // Pointers to other manager classes
-    FileManager *fileManager = NULL;
-    AudioManager *audioManager = NULL;
-    ImageManager *imageManager = NULL;
+    FileManager &fileManager;
+    AudioManager &audioManager;
+    ImageManager &imageManager;
 
     // Recursive-descent parser for expressions
     Parser parser;
@@ -90,7 +90,7 @@ private:
     std::string sj2utf8(const std::string &);
 
 public:
-    SceneManager(AudioManager *, ImageManager *, FileManager *);
+    SceneManager(AudioManager &, ImageManager &, FileManager &);
 
     std::vector<Choice> &getCurrChoices() { return currChoices; };
 

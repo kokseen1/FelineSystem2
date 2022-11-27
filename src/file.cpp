@@ -12,9 +12,6 @@ FileManager::FileManager()
 // Assign pointer to SceneManager and start game by fetching KIF db
 void FileManager::init(SceneManager *sm)
 {
-    if (sm == NULL)
-        throw std::runtime_error("Scene manager is uninitialized!");
-
     sceneManager = sm;
     fetchFileAndProcess(KIF_DB, this, &FileManager::parseKifDb, 0);
 }
