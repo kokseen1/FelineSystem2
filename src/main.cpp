@@ -99,8 +99,6 @@ void main_loop()
 
 int main(int argc, char **argv)
 {
-    fileManager.init(&sceneManager);
-    imageManager.init(&sceneManager);
 
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(main_loop, -1, 1);

@@ -12,7 +12,11 @@ void to_json(json &j, const std::vector<Choice> &choices)
         j[c.target] = c.prompt;
 }
 
-SceneManager::SceneManager(AudioManager &mm, ImageManager &im, FileManager &fm) : audioManager{mm}, imageManager{im}, fileManager{fm} {};
+SceneManager::SceneManager(AudioManager &mm, ImageManager &im, FileManager &fm) : audioManager{mm}, imageManager{im}, fileManager{fm}
+{
+    fileManager.init(this);
+    imageManager.init(this);
+}
 
 // Parse a raw CST file from a memory buffer and store the uncompressed script
 void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptName)
