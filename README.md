@@ -1,6 +1,28 @@
 # ![icon](https://i.imgur.com/fgr54yA.png) FelineSystem2
 
-An open source from-scratch remake of the CS2 engine.
+An open source remake of the CatSystem2 visual novel engine.
+
+## Demo
+
+A makeshift demo of the current version can be [found here](http://159.223.50.204/index.html).
+
+![screenshot](https://i.imgur.com/den1WpN.png) 
+
+## Controls
+
+`Click`/`Scroll` - Advance text 
+
+`Ctrl`/`Enter` - Advance text, hold to skip 
+
+`SPACE` - Hide message window
+
+`f` - Toggle fullscreen
+
+`1-9` - Select choice
+
+`Shift + Alt` + `1-9` - Quick save to slot `1-9`
+
+`Shift` + `1-9` - Quick load from slot `1-9`
 
 ## Features
 
