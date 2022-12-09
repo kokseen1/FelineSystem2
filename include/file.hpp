@@ -50,11 +50,11 @@ class FileManager
 public:
     FileManager();
 
-    void init(SceneManager *);
+    void init(SceneManager &);
 
     // Find asset in KIF DB and fetch it and pass data to callback
     template <typename TClass, typename TUserdata>
-    void fetchAssetAndProcess(const std::string &fname, TClass *classobj, FFAP_CB(cb), TUserdata userdata)
+    void fetchAssetAndProcess(const std::string &fname, TClass *classobj, FFAP_CB(cb), TUserdata &&userdata)
     {
 #ifdef LOWERCASE_ASSETS
         Utils::lowercase(const_cast<std::string &>(fname));
@@ -81,7 +81,7 @@ public:
                 kte,
                 classobj,
                 cb,
-                userdata};
+                std::forward<TUserdata>(userdata)};
 
             fetchFileAndProcess(ASSETS + kte.Filename, this, &FileManager::decryptKifAndProcess<A>, a, offset, length);
         }
@@ -90,7 +90,7 @@ public:
     // Multi-platform function to fetch a file and pass the contents to a callback
     // Supports optional offset and length arguments
     template <typename TClass, typename TUserdata>
-    void fetchFileAndProcess(const std::string &fpath, TClass *classobj, FFAP_CB(cb), const TUserdata &userdata, uint64_t offset = 0, uint64_t length = 0)
+    void fetchFileAndProcess(const std::string &fpath, TClass *classobj, FFAP_CB(cb), TUserdata &&userdata, uint64_t offset = 0, uint64_t length = 0)
     {
         typedef FFAP_CB(TCallback);
 
@@ -114,7 +114,7 @@ public:
         attr.userData = new Misc{
             classobj,
             cb,
-            userdata};
+            std::forward<TUserdata>(userdata)};
 
         // Handle optional byte range request
         const char *headers[] = {"Range", NULL, NULL};
@@ -189,20 +189,18 @@ public:
     }
 
 private:
-    SceneManager *sceneManager = NULL;
-
     // Map of each asset to their respective offset and length and archive index in the KIF table
     std::unordered_map<std::string, KifDbEntry> kifDb;
 
     // Vector of KIF archives along with their decryption keys
     std::vector<KifTableEntry> kifTable;
 
-    void parseKifDb(byte *, size_t, int);
+    void parseKifDb(byte *, size_t, SceneManager &);
 
     // Post-fetch decryption function for KIF assets
     // Passes the decrypted asset to the original callback
     template <typename A>
-    void decryptKifAndProcess(byte *data, size_t sz, const A a)
+    void decryptKifAndProcess(byte *data, size_t sz, const A &a)
     {
         if (a.kte.IsEncrypted == '\x01')
         {

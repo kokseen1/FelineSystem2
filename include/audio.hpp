@@ -63,7 +63,7 @@ class AudioManager
 public:
     AudioManager(FileManager &fileManager);
 
-    void setMusic(const std::string);
+    void setMusic(const std::string &);
 
     void setPCM(const std::string &);
 
@@ -76,7 +76,7 @@ public:
     const json dump();
 
 private:
-    FileManager &fileManager ;
+    FileManager &fileManager;
     MusicCache musicCache;
 
     std::array<Sound, SOUND_CHANNELS> currSounds;
@@ -93,7 +93,7 @@ private:
 
     void playMusic(Mix_Music *, const std::string &);
 
-    void playMusicFromMem(byte *, size_t, const std::string);
+    void playMusicFromMem(byte *, size_t, const std::string &);
 
-    void playSoundFromMem(byte *, size_t, const SoundData);
+    void playSoundFromMem(byte *, size_t, const SoundData &);
 };
