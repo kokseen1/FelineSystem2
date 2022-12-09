@@ -766,13 +766,12 @@ void ImageManager::fetchImage(const Image &image, const std::string &name)
     // textureCache[name];
 
     // Assume frame 0 for all images
-    const auto &imageData = ImageData{image, name, 0};
-    fileManager.fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, imageData);
+    fileManager.fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImage, ImageData{image, name, 0});
 }
 
 // Called when image has been fetched
 // Will return early and skip processing in async fetch if image was already passed
-void ImageManager::processImage(byte *buf, size_t sz, const ImageData &imageData)
+void ImageManager::processImage(byte *buf, size_t sz, const ImageData imageData)
 {
     const auto &name = imageData.name;
 
@@ -784,7 +783,7 @@ void ImageManager::processImage(byte *buf, size_t sz, const ImageData &imageData
 }
 
 // Decode a raw HG buffer and cache the texture
-void ImageManager::processImage(byte *buf, size_t sz, const std::pair<std::string, int> &nameIdx)
+void ImageManager::processImage(byte *buf, size_t sz, std::pair<std::string, int> nameIdx)
 {
     auto &name = nameIdx.first;
     auto frameIdx = nameIdx.second;

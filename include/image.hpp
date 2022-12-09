@@ -241,9 +241,9 @@ private:
 
     void fetchImage(const Image &, const std::string &);
 
-    void processImage(byte *, size_t, const ImageData &);
+    void processImage(byte *, size_t, const ImageData);
 
-    void processImage(byte *, size_t, const std::pair<std::string, int> &);
+    void processImage(byte *, size_t, std::pair<std::string, int>);
 
     void renderMessage(const std::string &);
 

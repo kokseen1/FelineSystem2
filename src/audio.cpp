@@ -65,7 +65,7 @@ void AudioManager::stopSound(const int channel)
 }
 
 // Set the current music file
-void AudioManager::setMusic(const std::string& name)
+void AudioManager::setMusic(const std::string name)
 {
     // Ensure asset exists in database
     if (!fileManager.inDB(name + MUSIC_EXT))
@@ -121,7 +121,7 @@ void AudioManager::playMusic(Mix_Music *mixMusic, const std::string &name)
 }
 
 // Play a file buffer as music
-void AudioManager::playMusicFromMem(byte *buf, size_t sz, const std::string& name)
+void AudioManager::playMusicFromMem(byte *buf, size_t sz, const std::string name)
 {
     // Do not play if curr music already changed (async fetch was too slow)
     if (currMusicName != name)
@@ -143,7 +143,7 @@ void AudioManager::playMusicFromMem(byte *buf, size_t sz, const std::string& nam
 }
 
 // Play a file buffer as sound
-void AudioManager::playSoundFromMem(byte *buf, size_t sz, const SoundData& soundData)
+void AudioManager::playSoundFromMem(byte *buf, size_t sz, const SoundData soundData)
 {
     const int channel = soundData.channel;
     const auto &name = soundData.name;
