@@ -93,7 +93,7 @@ void AudioManager::setPCM(const std::string &name)
     Mix_HaltChannel(CHANNEL_PCM);
     currSounds[CHANNEL_PCM].set(name, 0);
 
-    fileManager.fetchAssetAndProcess(name + PCM_EXT, this, &AudioManager::playSoundFromMem, {CHANNEL_PCM, name});
+    fileManager.fetchAssetAndProcess(name + PCM_EXT, this, &AudioManager::playSoundFromMem, SoundData{CHANNEL_PCM, name});
 }
 
 // Play a specified sound effect asset
@@ -110,7 +110,7 @@ void AudioManager::setSE(const std::string &name, const int channel, const int l
     Mix_HaltChannel(channel);
     currSounds[channel].set(name, loops);
 
-    fileManager.fetchAssetAndProcess(name + SE_EXT, this, &AudioManager::playSoundFromMem, {channel, name});
+    fileManager.fetchAssetAndProcess(name + SE_EXT, this, &AudioManager::playSoundFromMem, SoundData{channel, name});
 }
 
 void AudioManager::playMusic(Mix_Music *mixMusic, const std::string &name)
@@ -121,7 +121,7 @@ void AudioManager::playMusic(Mix_Music *mixMusic, const std::string &name)
 }
 
 // Play a file buffer as music
-void AudioManager::playMusicFromMem(byte *buf, size_t sz, const std::string name)
+void AudioManager::playMusicFromMem(byte *buf, size_t sz, const std::string& name)
 {
     // Do not play if curr music already changed (async fetch was too slow)
     if (currMusicName != name)
@@ -143,7 +143,7 @@ void AudioManager::playMusicFromMem(byte *buf, size_t sz, const std::string name
 }
 
 // Play a file buffer as sound
-void AudioManager::playSoundFromMem(byte *buf, size_t sz, const SoundData soundData)
+void AudioManager::playSoundFromMem(byte *buf, size_t sz, const SoundData& soundData)
 {
     const int channel = soundData.channel;
     const auto &name = soundData.name;

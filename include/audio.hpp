@@ -93,7 +93,7 @@ private:
 
     void playMusic(Mix_Music *, const std::string &);
 
-    void playMusicFromMem(byte *, size_t, const std::string);
+    void playMusicFromMem(byte *, size_t, const std::string&);
 
-    void playSoundFromMem(byte *, size_t, const SoundData);
+    void playSoundFromMem(byte *, size_t, const SoundData&);
 };

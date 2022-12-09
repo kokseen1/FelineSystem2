@@ -15,13 +15,14 @@
 #define ftell64 _ftelli64
 #endif
 
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 #include <string>
 #include <sstream>
 
 // Macro for function signature of callbacks passed to FFAP function
-#define FFAP_CB(X) void (TClass::*X)(byte *, size_t, TUserdata)
+#define FFAP_CB(X) void (TClass::*X)(byte *, size_t, UdOutType)
 
 // Custom database of asset names and offsets
 #define KIF_DB ASSETS "kif.fs2"
@@ -53,11 +54,11 @@ public:
     void init(SceneManager *);
 
     // Find asset in KIF DB and fetch it and pass data to callback
-    template <typename TClass, typename TUserdata>
-    void fetchAssetAndProcess(const std::string &fname, TClass *classobj, FFAP_CB(cb), TUserdata userdata)
+    template <typename TClass, typename UdOutType, typename UdInType>
+    void fetchAssetAndProcess(std::string fname, TClass *classobj, FFAP_CB(cb), UdInType userdata)
     {
 #ifdef LOWERCASE_ASSETS
-        Utils::lowercase(const_cast<std::string &>(fname));
+        Utils::lowercase(fname);
 #endif
         auto got = kifDb.find(fname);
         if (got != kifDb.end())
@@ -74,23 +75,17 @@ public:
                 KifTableEntry kte;
                 TClass *classobj;
                 TCallback cb;
-                TUserdata userdata;
+                UdInType userdata;
             } A;
 
-            const A a = {
-                kte,
-                classobj,
-                cb,
-                userdata};
-
-            fetchFileAndProcess(ASSETS + kte.Filename, this, &FileManager::decryptKifAndProcess<A>, a, offset, length);
+            fetchFileAndProcess(ASSETS + kte.Filename, this, &FileManager::decryptKifAndProcess<A>, A{kte, classobj, cb, userdata}, offset, length);
         }
     }
 
     // Multi-platform function to fetch a file and pass the contents to a callback
     // Supports optional offset and length arguments
-    template <typename TClass, typename TUserdata>
-    void fetchFileAndProcess(const std::string &fpath, TClass *classobj, FFAP_CB(cb), const TUserdata &userdata, uint64_t offset = 0, uint64_t length = 0)
+    template <typename TClass, typename UdOutType, typename UdInType>
+    void fetchFileAndProcess(const std::string &fpath, TClass *classobj, FFAP_CB(cb), UdInType userdata, uint64_t offset = 0, uint64_t length = 0)
     {
         typedef FFAP_CB(TCallback);
 
@@ -108,7 +103,9 @@ public:
         {
             TClass *classobj;
             TCallback cb;
-            TUserdata userdata;
+            // Assumes all references are temporary and make copies of them to this struct
+            // Do not pass objects that must not be copied (e.g. class instances)
+            typename std::remove_reference<UdInType>::type userdata;
         } Misc;
 
         attr.userData = new Misc{
@@ -148,7 +145,7 @@ public:
             auto a = reinterpret_cast<Misc *>(fetch->userData);
             TClass *classobj = a->classobj;
             TCallback cb = a->cb;
-            TUserdata userdata = a->userdata;
+            UdInType userdata = a->userdata;
 
 #else
 
@@ -189,15 +186,13 @@ public:
     }
 
 private:
-    SceneManager *sceneManager = NULL;
-
     // Map of each asset to their respective offset and length and archive index in the KIF table
     std::unordered_map<std::string, KifDbEntry> kifDb;
 
     // Vector of KIF archives along with their decryption keys
     std::vector<KifTableEntry> kifTable;
 
-    void parseKifDb(byte *, size_t, int);
+    void parseKifDb(byte *, size_t, SceneManager*);
 
     // Post-fetch decryption function for KIF assets
     // Passes the decrypted asset to the original callback

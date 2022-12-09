@@ -10,14 +10,13 @@ FileManager::FileManager()
 }
 
 // Assign pointer to SceneManager and start game by fetching KIF db
-void FileManager::init(SceneManager *sm)
+void FileManager::init(SceneManager *sceneManager)
 {
-    sceneManager = sm;
-    fetchFileAndProcess(KIF_DB, this, &FileManager::parseKifDb, 0);
+    fetchFileAndProcess(KIF_DB, this, &FileManager::parseKifDb, sceneManager);
 }
 
 // Parse a raw KIF database file and populate the KIF DB and table
-void FileManager::parseKifDb(byte *buf, size_t sz, int userdata)
+void FileManager::parseKifDb(byte *buf, size_t sz, SceneManager* sceneManager)
 {
     std::vector<uint32> entryCountVec;
 

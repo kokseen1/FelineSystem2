@@ -61,7 +61,7 @@ void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptNam
 }
 
 // Load a script from a raw buffer and parse it from the start
-void SceneManager::loadScriptStart(byte *buf, size_t sz, const std::string scriptName)
+void SceneManager::loadScriptStart(byte *buf, size_t sz, const std::string &scriptName)
 {
     loadScript(buf, sz, scriptName);
 
@@ -69,7 +69,7 @@ void SceneManager::loadScriptStart(byte *buf, size_t sz, const std::string scrip
     parseScript = true;
 }
 
-void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData saveData)
+void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData& saveData)
 {
     loadScript(buf, sz, saveData.scriptName);
     stringOffsetTable = reinterpret_cast<StringOffsetTable *>(stringTableBase - saveData.offsetFromBase);
