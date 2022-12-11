@@ -236,12 +236,7 @@ const json ImageManager::dump()
 {
     json j;
 
-    for (int i = 0; i < currBgs.size(); i++)
-    {
-        if (!currBgs[i].isActive())
-            continue;
-        j[KEY_BG][std::to_string(i)] = currBgs[i].dump();
-    }
+    j[KEY_BG] = bgLayer.dump();
 
     for (int i = 0; i < currEgs.size(); i++)
     {
@@ -492,8 +487,7 @@ void ImageManager::render()
     // Clear render canvas
     SDL_RenderClear(renderer);
 
-    for (auto &bg : currBgs)
-        bg.render();
+    bgLayer.render();
 
     for (auto &cg : currCgs)
         cg.render();
@@ -526,9 +520,7 @@ void ImageManager::clearZIndex(const IMAGE_TYPE type, const int zIndex)
     switch (type)
     {
     case IMAGE_TYPE::BG:
-        if (zIndex >= currBgs.size())
-            return;
-        currBgs[zIndex].clear();
+        bgLayer.clear(zIndex);
         break;
 
     case IMAGE_TYPE::EG:
@@ -560,8 +552,7 @@ void ImageManager::clearImageType(const IMAGE_TYPE type)
     switch (type)
     {
     case IMAGE_TYPE::BG:
-        for (int i = 0; i < currBgs.size(); i++)
-            currBgs[i].clear();
+        bgLayer.clear();
         break;
 
     case IMAGE_TYPE::EG:
@@ -591,9 +582,7 @@ const Image &ImageManager::getImage(const IMAGE_TYPE type, const int zIndex)
     switch (type)
     {
     case IMAGE_TYPE::BG:
-        if (zIndex >= currBgs.size())
-            return {};
-        return currBgs[zIndex];
+        return bgLayer.get(zIndex);
 
     case IMAGE_TYPE::EG:
         if (zIndex >= currEgs.size())
@@ -642,13 +631,13 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
     {
 
     case IMAGE_TYPE::BG:
-        if (zIndex >= currBgs.size())
+        if (zIndex >= bgLayer.size())
             return;
         if (!fileManager.inDB(asset + IMAGE_EXT))
             return;
 
-        currBgs[zIndex] = {renderer, asset, xShift, yShift};
-        fetchImage(currBgs[zIndex], asset);
+        bgLayer[zIndex] = {renderer, asset, xShift, yShift};
+        fetchImage(bgLayer[zIndex], asset);
         break;
 
     case IMAGE_TYPE::EG:

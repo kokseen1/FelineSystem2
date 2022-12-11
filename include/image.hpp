@@ -173,6 +173,56 @@ typedef struct
     const int index;
 } ImageData;
 
+template <typename _Tp, std::size_t _Nm>
+class ImageLayer
+{
+private:
+    std::array<_Tp, _Nm> objects;
+
+public:
+    _Tp &operator[](size_t i) { return objects[i]; }
+
+    constexpr size_t size() { return objects.size(); }
+
+    const _Tp &get(size_t i)
+    {
+        if (i >= size())
+            return {};
+        return objects[i];
+    }
+
+    const json dump()
+    {
+        json j;
+        for (int i = 0; i < size(); i++)
+        {
+            if (!objects[i].isActive())
+                continue;
+            j[std::to_string(i)] = objects[i].dump();
+        }
+        return j;
+    }
+
+    void clear(size_t i)
+    {
+        if (i >= size())
+            return;
+        objects[i].clear();
+    }
+
+    void clear()
+    {
+        for (_Tp &image : objects)
+            image.clear();
+    }
+
+    void render()
+    {
+        for (_Tp &image : objects)
+            image.render();
+    }
+};
+
 class ImageManager
 {
 
@@ -224,7 +274,7 @@ private:
     SDL_Color textColor = {255, 255, 255, 0};
 
     // Arrays to simulate the current canvas with layers
-    std::array<Bg, MAX_BG> currBgs;
+    ImageLayer<Bg, MAX_BG> bgLayer;
     std::array<Eg, MAX_EG> currEgs;
     std::array<Cg, MAX_CG> currCgs;
     std::array<Fw, MAX_FW> currFws;
@@ -241,7 +291,7 @@ private:
 
     void fetchImage(const Image &, const std::string &);
 
-    void processImageData(byte *, size_t, const ImageData&);
+    void processImageData(byte *, size_t, const ImageData &);
 
     void processImage(byte *, size_t, std::pair<std::string, int>);
 
