@@ -154,6 +154,8 @@ void AudioManager::playSoundFromMem(byte *buf, size_t sz, const SoundData& sound
     if (name != sound.getName())
         return;
 
+    stopSound(channel);
+
     sound.play(buf, sz, channel);
 }
 
