@@ -2,7 +2,7 @@
 
 #include <SDL2/SDL_ttf.h>
 
-Image::Image(SDL_Renderer *r, std::string n, int x, int y) : renderer{r}, textureName{n}, xShift{x}, yShift{y}
+Image::Image(SDL_Renderer *r, TextureCache *tC, std::string n, int x, int y) : renderer{r}, textureCache{tC}, textureName{n}, xShift{x}, yShift{y}
 {
 }
 
@@ -11,7 +11,7 @@ void Image::clear()
     textureName.clear();
 }
 
-Choice::Choice(SDL_Renderer *r, const std::string &t, const std::string &p) : Image(r, SEL, 0, 0), target(t), prompt(p)
+Choice::Choice(SDL_Renderer *r, TextureCache *tC, const std::string &t, const std::string &p) : Image(r, tC, SEL, 0, 0), target(t), prompt(p)
 {
 }
 
@@ -31,8 +31,8 @@ void Image::render(const int xShift, const int yShift)
     if (textureData == NULL)
     {
         // Look for texture in cache
-        auto got = textureCache.find(textureName);
-        if (got == textureCache.end())
+        auto got = textureCache->find(textureName);
+        if (got == textureCache->end())
             return;
 
         textureData = &got->second;

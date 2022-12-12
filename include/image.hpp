@@ -80,7 +80,11 @@ public:
 
     SDL_Renderer *getRenderer() { return renderer; };
 
+    TextureCache& getCache() { return textureCache; };
+
 private:
+    TextureCache textureCache;
+
     FileManager &fileManager;
     SceneManager *sceneManager = NULL;
 

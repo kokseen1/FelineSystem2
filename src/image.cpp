@@ -193,8 +193,8 @@ ImageManager::ImageManager(FileManager &fm) : fileManager{fm}
     // Decode and cache choice selection asset
     processImage(sys_sel, sizeof(sys_sel), {SEL, 2});
 
-    mwnd = {renderer, MWND, MWND_XSHIFT, MWND_YSHIFT};
-    mwndDeco = {renderer, MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
+    mwnd = {renderer, &textureCache, MWND, MWND_XSHIFT, MWND_YSHIFT};
+    mwndDeco = {renderer, &textureCache, MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
 
     // Decode and cache message window assets
     processImage(sys_mwnd, sizeof(sys_mwnd), {MWND, 43});
@@ -483,7 +483,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         if (!fileManager.inDB(asset + IMAGE_EXT))
             return;
 
-        bgLayer[zIndex] = {renderer, asset, xShift, yShift};
+        bgLayer[zIndex] = {renderer, &textureCache, asset, xShift, yShift};
         fetchImage(bgLayer[zIndex], asset);
         break;
 
@@ -493,7 +493,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         if (!fileManager.inDB(asset + IMAGE_EXT))
             return;
 
-        egLayer[zIndex] = {renderer, asset, xShift, yShift};
+        egLayer[zIndex] = {renderer, &textureCache, asset, xShift, yShift};
         fetchImage(egLayer[zIndex], asset);
         break;
 
@@ -522,19 +522,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
         if (fileManager.inDB(baseName + IMAGE_EXT))
         {
-            cg.base = Image{renderer, baseName, xShift, yShift};
+            cg.base = Image{renderer, &textureCache, baseName, xShift, yShift};
             fetchImage(cg.base, baseName);
         }
 
         if (fileManager.inDB(part1Name + IMAGE_EXT))
         {
-            cg.part1 = Image{renderer, part1Name, xShift, yShift};
+            cg.part1 = Image{renderer, &textureCache, part1Name, xShift, yShift};
             fetchImage(cg.part1, part1Name);
         }
 
         if (fileManager.inDB(part2Name + IMAGE_EXT))
         {
-            cg.part2 = Image{renderer, part2Name, xShift, yShift};
+            cg.part2 = Image{renderer, &textureCache, part2Name, xShift, yShift};
             fetchImage(cg.part2, part2Name);
         }
     }
@@ -570,19 +570,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
         if (fileManager.inDB(baseName + IMAGE_EXT))
         {
-            fw.base = Image{renderer, baseName, xShift, yShift};
+            fw.base = Image{renderer, &textureCache, baseName, xShift, yShift};
             fetchImage(fw.base, baseName);
         }
 
         if (fileManager.inDB(part1Name + IMAGE_EXT))
         {
-            fw.part1 = Image{renderer, part1Name, xShift, yShift};
+            fw.part1 = Image{renderer, &textureCache, part1Name, xShift, yShift};
             fetchImage(fw.part1, part1Name);
         }
 
         if (fileManager.inDB(part2Name + IMAGE_EXT))
         {
-            fw.part2 = Image{renderer, part2Name, xShift, yShift};
+            fw.part2 = Image{renderer, &textureCache, part2Name, xShift, yShift};
             fetchImage(fw.part2, part2Name);
         }
     }

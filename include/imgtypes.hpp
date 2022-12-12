@@ -42,8 +42,7 @@
 #define RENDERER_FLIP_MODE SDL_FLIP_VERTICAL
 
 typedef std::pair<SDL_Texture *, Stdinfo> TextureData;
-
-extern std::unordered_map<std::string, TextureData> textureCache;
+typedef std::unordered_map<std::string, TextureData> TextureCache;
 
 class Image
 {
@@ -56,7 +55,7 @@ public:
 
     Image(){};
 
-    Image(SDL_Renderer *, std::string, int, int);
+    Image(SDL_Renderer *, TextureCache *, std::string, int, int);
 
     bool isActive() { return !textureName.empty(); }
 
@@ -67,6 +66,8 @@ public:
     const json dump();
 
 protected:
+    TextureCache *textureCache = NULL;
+
     SDL_Renderer *renderer = NULL;
 
     void render(const int, const int);
@@ -84,7 +85,7 @@ public:
     const std::string target;
     const std::string prompt;
 
-    Choice(SDL_Renderer *, const std::string &, const std::string &);
+    Choice(SDL_Renderer *, TextureCache *, const std::string &, const std::string &);
 
     void render(const int);
 };

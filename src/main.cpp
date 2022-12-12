@@ -16,9 +16,6 @@
 #include <sstream>
 #include <iomanip>
 
-// Texture cache map must be defined in main
-std::unordered_map<std::string, TextureData> textureCache;
-
 static FileManager fileManager;
 static AudioManager audioManager(fileManager);
 static ImageManager imageManager(fileManager);
