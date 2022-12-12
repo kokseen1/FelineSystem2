@@ -83,45 +83,45 @@ void ImageManager::loadDump(const json &j)
 {
     clearCanvas();
 
-    if (j.contains(KEY_BG))
-    {
-        for (auto &e : j[KEY_BG].items())
-        {
-            const auto &idx = std::stoi(e.key());
-            auto bg = e.value().get<Bg>();
-            setImage(IMAGE_TYPE::BG, idx, bg.textureName, bg.xShift, bg.yShift);
-        }
-    }
+    // if (j.contains(KEY_BG))
+    // {
+    //     for (auto &e : j[KEY_BG].items())
+    //     {
+    //         const auto &idx = std::stoi(e.key());
+    //         auto bg = e.value().get<Bg>();
+    //         setImage(IMAGE_TYPE::BG, idx, bg.textureName, bg.xShift, bg.yShift);
+    //     }
+    // }
 
-    if (j.contains(KEY_EG))
-    {
-        for (auto &e : j[KEY_EG].items())
-        {
-            const auto &idx = std::stoi(e.key());
-            auto eg = e.value().get<Eg>();
-            setImage(IMAGE_TYPE::EG, idx, eg.textureName, eg.xShift, eg.yShift);
-        }
-    }
+    // if (j.contains(KEY_EG))
+    // {
+    //     for (auto &e : j[KEY_EG].items())
+    //     {
+    //         const auto &idx = std::stoi(e.key());
+    //         auto eg = e.value().get<Eg>();
+    //         setImage(IMAGE_TYPE::EG, idx, eg.textureName, eg.xShift, eg.yShift);
+    //     }
+    // }
 
-    if (j.contains(KEY_CG))
-    {
-        for (auto &e : j[KEY_CG].items())
-        {
-            const auto &idx = std::stoi(e.key());
-            auto cg = e.value().get<Cg>();
-            setImage(IMAGE_TYPE::CG, idx, cg.assetRaw, cg.base.xShift, cg.base.yShift);
-        }
-    }
+    // if (j.contains(KEY_CG))
+    // {
+    //     for (auto &e : j[KEY_CG].items())
+    //     {
+    //         const auto &idx = std::stoi(e.key());
+    //         auto cg = e.value().get<Cg>();
+    //         setImage(IMAGE_TYPE::CG, idx, cg.assetRaw, cg.base.xShift, cg.base.yShift);
+    //     }
+    // }
 
-    if (j.contains(KEY_FW))
-    {
-        for (auto &e : j[KEY_FW].items())
-        {
-            const auto &idx = std::stoi(e.key());
-            auto fw = e.value().get<Fw>();
-            setImage(IMAGE_TYPE::FW, idx, fw.assetRaw, fw.base.xShift, fw.base.yShift);
-        }
-    }
+    // if (j.contains(KEY_FW))
+    // {
+    //     for (auto &e : j[KEY_FW].items())
+    //     {
+    //         const auto &idx = std::stoi(e.key());
+    //         auto fw = e.value().get<Fw>();
+    //         setImage(IMAGE_TYPE::FW, idx, fw.assetRaw, fw.base.xShift, fw.base.yShift);
+    //     }
+    // }
 }
 
 // Dump all images currently on the canvas to a json object
@@ -135,7 +135,7 @@ const json ImageManager::dump()
     return j;
 }
 
-ImageManager::ImageManager(FileManager &fm) : fileManager{fm}
+ImageManager::ImageManager(FileManager &fm) : fileManager{fm}, bgLayer{renderer, textureCache}, egLayer{renderer, textureCache}, cgLayer{renderer, textureCache}, fwLayer{renderer, textureCache}
 {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -193,8 +193,8 @@ ImageManager::ImageManager(FileManager &fm) : fileManager{fm}
     // Decode and cache choice selection asset
     processImage(sys_sel, sizeof(sys_sel), {SEL, 2});
 
-    mwnd = {renderer, &textureCache, MWND, MWND_XSHIFT, MWND_YSHIFT};
-    mwndDeco = {renderer, &textureCache, MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
+    mwnd.set(MWND, MWND_XSHIFT, MWND_YSHIFT);
+    mwndDeco.set(MWND_DECO, MWND_XSHIFT, MWND_YSHIFT);
 
     // Decode and cache message window assets
     processImage(sys_mwnd, sizeof(sys_mwnd), {MWND, 43});
@@ -483,7 +483,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         if (!fileManager.inDB(asset + IMAGE_EXT))
             return;
 
-        bgLayer[zIndex] = {renderer, &textureCache, asset, xShift, yShift};
+        bgLayer[zIndex].set(asset, xShift, yShift);
         fetchImage(bgLayer[zIndex], asset);
         break;
 
@@ -493,7 +493,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         if (!fileManager.inDB(asset + IMAGE_EXT))
             return;
 
-        egLayer[zIndex] = {renderer, &textureCache, asset, xShift, yShift};
+        egLayer[zIndex].set(asset, xShift, yShift);
         fetchImage(egLayer[zIndex], asset);
         break;
 
@@ -522,19 +522,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
         if (fileManager.inDB(baseName + IMAGE_EXT))
         {
-            cg.base = Image{renderer, &textureCache, baseName, xShift, yShift};
+            cg.base.set(baseName, xShift, yShift);
             fetchImage(cg.base, baseName);
         }
 
         if (fileManager.inDB(part1Name + IMAGE_EXT))
         {
-            cg.part1 = Image{renderer, &textureCache, part1Name, xShift, yShift};
+            cg.part1.set(part1Name, xShift, yShift);
             fetchImage(cg.part1, part1Name);
         }
 
         if (fileManager.inDB(part2Name + IMAGE_EXT))
         {
-            cg.part2 = Image{renderer, &textureCache, part2Name, xShift, yShift};
+            cg.part2.set(part2Name, xShift, yShift);
             fetchImage(cg.part2, part2Name);
         }
     }
@@ -570,19 +570,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
         if (fileManager.inDB(baseName + IMAGE_EXT))
         {
-            fw.base = Image{renderer, &textureCache, baseName, xShift, yShift};
+            fw.base.set(baseName, xShift, yShift);
             fetchImage(fw.base, baseName);
         }
 
         if (fileManager.inDB(part1Name + IMAGE_EXT))
         {
-            fw.part1 = Image{renderer, &textureCache, part1Name, xShift, yShift};
+            fw.part1.set(part1Name, xShift, yShift);
             fetchImage(fw.part1, part1Name);
         }
 
         if (fileManager.inDB(part2Name + IMAGE_EXT))
         {
-            fw.part2 = Image{renderer, &textureCache, part2Name, xShift, yShift};
+            fw.part2.set(part2Name, xShift, yShift);
             fetchImage(fw.part2, part2Name);
         }
     }

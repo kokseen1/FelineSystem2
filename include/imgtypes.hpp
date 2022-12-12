@@ -53,9 +53,11 @@ public:
     int xShift = 0;
     int yShift = 0;
 
-    Image(){};
+    Image(SDL_Renderer *&, TextureCache &, std::string, int, int);
 
-    Image(SDL_Renderer *, TextureCache *, std::string, int, int);
+    Image(SDL_Renderer *&, TextureCache &);
+
+    void set(const std::string &, int, int);
 
     bool isActive() { return !textureName.empty(); }
 
@@ -66,9 +68,9 @@ public:
     const json dump();
 
 protected:
-    TextureCache *textureCache = NULL;
+    TextureCache &textureCache;
 
-    SDL_Renderer *renderer = NULL;
+    SDL_Renderer *&renderer;
 
     void render(const int, const int);
 
@@ -85,7 +87,7 @@ public:
     const std::string target;
     const std::string prompt;
 
-    Choice(SDL_Renderer *, TextureCache *, const std::string &, const std::string &);
+    Choice(SDL_Renderer *&, TextureCache &, const std::string &, const std::string &);
 
     void render(const int);
 };
@@ -102,9 +104,11 @@ class Eg : public Image
     using Image::Image;
 };
 
-class Cg
+class Cg : public Image
 {
 public:
+    Cg(SDL_Renderer *&, TextureCache &);
+
     void render();
 
     void clear();
@@ -122,6 +126,8 @@ public:
 
 class Fw : public Cg
 {
+    using Cg::Cg;
+
 public:
     const json dump();
 };
@@ -133,6 +139,25 @@ typedef struct
     const int index;
 } ImageData;
 
+namespace detail
+{
+    // Template function to initialize array with default values
+    // by making use of comma operator and index_sequence
+    template <typename T, std::size_t... Is>
+    constexpr std::array<T, sizeof...(Is)>
+    create_array(T value, std::index_sequence<Is...>)
+    {
+        // cast Is to void to remove the warning: unused value
+        return {(static_cast<void>(Is), value)...};
+    }
+}
+
+template <std::size_t N, typename T>
+constexpr std::array<T, N> create_array(const T &value)
+{
+    return detail::create_array(value, std::make_index_sequence<N>());
+}
+
 // Templated wrapper class for array of image objects
 template <typename _Tp, std::size_t _Nm>
 class ImageLayer
@@ -141,6 +166,9 @@ private:
     std::array<_Tp, _Nm> objects;
 
 public:
+    // ImageLayer(SDL_Renderer *&renderer, TextureCache &textureCache) : objects{create_array<_Nm, _Tp>({renderer, textureCache})} {}
+    ImageLayer(SDL_Renderer *&renderer, TextureCache &textureCache) : objects{{_Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}}} {}
+
     _Tp &operator[](size_t i) { return objects[i]; }
 
     constexpr size_t size() { return objects.size(); }
@@ -148,7 +176,7 @@ public:
     const _Tp &get(size_t i)
     {
         if (i >= size())
-            return {};
+            throw std::runtime_error("Out of range access");
         return objects[i];
     }
 
@@ -179,7 +207,7 @@ public:
 
     void render()
     {
-        for (_Tp &image : objects)
-            image.render();
+        for (int i = 0; i < _Nm; i++)
+            objects[i].render();
     }
 };

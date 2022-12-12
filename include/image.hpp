@@ -78,9 +78,9 @@ public:
 
     void toggleMwnd() { showMwnd = !showMwnd; };
 
-    SDL_Renderer *getRenderer() { return renderer; };
+    SDL_Renderer *&getRenderer() { return renderer; };
 
-    TextureCache& getCache() { return textureCache; };
+    TextureCache &getCache() { return textureCache; };
 
 private:
     TextureCache textureCache;
@@ -93,8 +93,8 @@ private:
 
     bool showMwnd = true;
 
-    Image mwnd;
-    Image mwndDeco;
+    Image mwnd{renderer, textureCache};
+    Image mwndDeco{renderer, textureCache};
 
     TTF_Font *font = NULL;
     TTF_Font *selectFont = NULL;

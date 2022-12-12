@@ -69,7 +69,7 @@ void SceneManager::loadScriptStart(byte *buf, size_t sz, const std::string &scri
     parseScript = true;
 }
 
-void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData& saveData)
+void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData &saveData)
 {
     loadScript(buf, sz, saveData.scriptName);
     stringOffsetTable = reinterpret_cast<StringOffsetTable *>(stringTableBase - saveData.offsetFromBase);
@@ -388,7 +388,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     // Choice options
     else if (std::regex_match(cmdString, matches, std::regex("^(\\d+) (\\w+) (.+)")))
     {
-        currChoices.push_back({imageManager.getRenderer(), &imageManager.getCache(), cleanText(matches[2].str()), cleanText(matches[3].str())});
+        currChoices.push_back({imageManager.getRenderer(), imageManager.getCache(), cleanText(matches[2].str()), cleanText(matches[3].str())});
     }
 
     // Auto mode
@@ -469,7 +469,7 @@ void SceneManager::loadState(const int saveSlot)
         {
             // Populate choices from savedata
             for (auto &el : jScene.at(KEY_CHOICE).items())
-                currChoices.push_back({imageManager.getRenderer(), &imageManager.getCache(), el.key(), el.value()});
+                currChoices.push_back({imageManager.getRenderer(), imageManager.getCache(), el.key(), el.value()});
         }
     }
     catch (const json::out_of_range &e)

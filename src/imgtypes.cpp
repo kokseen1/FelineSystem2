@@ -2,8 +2,15 @@
 
 #include <SDL2/SDL_ttf.h>
 
-Image::Image(SDL_Renderer *r, TextureCache *tC, std::string n, int x, int y) : renderer{r}, textureCache{tC}, textureName{n}, xShift{x}, yShift{y}
+Image::Image(SDL_Renderer *&renderer, TextureCache &textureCache) : renderer{renderer}, textureCache{textureCache} {}
+
+Image::Image(SDL_Renderer *&renderer, TextureCache &textureCache, std::string n, int x, int y) : renderer{renderer}, textureCache{textureCache}, textureName{n}, xShift{x}, yShift{y} {}
+
+void Image::set(const std::string &name, int x, int y)
 {
+    textureName = name;
+    xShift = x;
+    yShift = y;
 }
 
 void Image::clear()
@@ -11,9 +18,7 @@ void Image::clear()
     textureName.clear();
 }
 
-Choice::Choice(SDL_Renderer *r, TextureCache *tC, const std::string &t, const std::string &p) : Image(r, tC, SEL, 0, 0), target(t), prompt(p)
-{
-}
+Choice::Choice(SDL_Renderer *&renderer, TextureCache &textureCache, const std::string &t, const std::string &p) : Image{renderer, textureCache, SEL, 0, 0}, target{t}, prompt{p} {}
 
 void Choice::render(const int yShift)
 {
@@ -31,8 +36,8 @@ void Image::render(const int xShift, const int yShift)
     if (textureData == NULL)
     {
         // Look for texture in cache
-        auto got = textureCache->find(textureName);
-        if (got == textureCache->end())
+        auto got = textureCache.find(textureName);
+        if (got == textureCache.end())
             return;
 
         textureData = &got->second;
@@ -92,6 +97,8 @@ void Choice::renderText(const int xShift, const int yShift)
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
 }
+
+Cg::Cg(SDL_Renderer *&renderer, TextureCache &textureCache) : Image{renderer, textureCache}, base{renderer, textureCache}, part1{renderer, textureCache}, part2{renderer, textureCache} {}
 
 void Cg::render()
 {
