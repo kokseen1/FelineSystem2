@@ -2,9 +2,9 @@
 
 #include <SDL2/SDL_ttf.h>
 
-Image::Image(SDL_Renderer *&renderer, TextureCache &textureCache) : renderer{renderer}, textureCache{textureCache} {}
+Image::Image(SDL_Renderer *renderer, TextureCache &textureCache) : renderer{renderer}, textureCache{textureCache} {}
 
-Image::Image(SDL_Renderer *&renderer, TextureCache &textureCache, std::string n, int x, int y) : renderer{renderer}, textureCache{textureCache}, textureName{n}, xShift{x}, yShift{y} {}
+Image::Image(SDL_Renderer *renderer, TextureCache &textureCache, std::string n, int x, int y) : renderer{renderer}, textureCache{textureCache}, textureName{n}, xShift{x}, yShift{y} {}
 
 void Image::set(const std::string &name, int x, int y)
 {
@@ -18,7 +18,7 @@ void Image::clear()
     textureName.clear();
 }
 
-Choice::Choice(SDL_Renderer *&renderer, TextureCache &textureCache, const std::string &t, const std::string &p) : Image{renderer, textureCache, SEL, 0, 0}, target{t}, prompt{p} {}
+Choice::Choice(SDL_Renderer *renderer, TextureCache &textureCache, const std::string &t, const std::string &p) : Image{renderer, textureCache, SEL, 0, 0}, target{t}, prompt{p} {}
 
 void Choice::render(const int yShift)
 {
@@ -98,7 +98,7 @@ void Choice::renderText(const int xShift, const int yShift)
     SDL_FreeSurface(surface);
 }
 
-Cg::Cg(SDL_Renderer *&renderer, TextureCache &textureCache) : Image{renderer, textureCache}, base{renderer, textureCache}, part1{renderer, textureCache}, part2{renderer, textureCache} {}
+Cg::Cg(SDL_Renderer *renderer, TextureCache &textureCache) : Image{renderer, textureCache}, base{renderer, textureCache}, part1{renderer, textureCache}, part2{renderer, textureCache} {}
 
 void Cg::render()
 {

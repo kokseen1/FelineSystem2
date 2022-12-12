@@ -2,6 +2,7 @@
 
 #include <hgdecoder.hpp>
 #include <file.hpp>
+#include <window.hpp>
 #include <scene.hpp>
 #include <imgtypes.hpp>
 
@@ -54,7 +55,7 @@ public:
     std::string currText;
     std::string currSpeaker;
 
-    ImageManager(FileManager &);
+    ImageManager(FileManager &, SDL_Renderer *);
 
     void init(SceneManager *sm) { sceneManager = sm; }
 
@@ -78,7 +79,7 @@ public:
 
     void toggleMwnd() { showMwnd = !showMwnd; };
 
-    SDL_Renderer *&getRenderer() { return renderer; };
+    SDL_Renderer *getRenderer() { return renderer; };
 
     TextureCache &getCache() { return textureCache; };
 
@@ -112,8 +113,6 @@ private:
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
 
     void renderChoices();
-
-    void setWindowIcon(SDL_Window *);
 
     void setLogo();
 

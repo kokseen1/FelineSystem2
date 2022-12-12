@@ -2,6 +2,7 @@
 
 #include <hgdecoder.hpp>
 #include <utils.hpp>
+#include <window.hpp>
 
 #include <SDL2/SDL.h>
 
@@ -26,12 +27,6 @@
 #define SELECT_FONT_PATH FONT_PATH
 #define SELECT_FONT_SIZE 30
 
-#define WINDOW_WIDTH 1024
-#define WINDOW_HEIGHT 576
-
-// #define WINDOW_WIDTH 1280
-// #define WINDOW_HEIGHT 720
-
 #define SEL "sys_sel_02"
 #define SEL_WIDTH 782
 #define SEL_HEIGHT 63
@@ -53,9 +48,9 @@ public:
     int xShift = 0;
     int yShift = 0;
 
-    Image(SDL_Renderer *&, TextureCache &, std::string, int, int);
+    Image(SDL_Renderer *, TextureCache &, std::string, int, int);
 
-    Image(SDL_Renderer *&, TextureCache &);
+    Image(SDL_Renderer *, TextureCache &);
 
     void set(const std::string &, int, int);
 
@@ -70,7 +65,7 @@ public:
 protected:
     TextureCache &textureCache;
 
-    SDL_Renderer *&renderer;
+    SDL_Renderer *renderer;
 
     void render(const int, const int);
 
@@ -87,7 +82,7 @@ public:
     const std::string target;
     const std::string prompt;
 
-    Choice(SDL_Renderer *&, TextureCache &, const std::string &, const std::string &);
+    Choice(SDL_Renderer *, TextureCache &, const std::string &, const std::string &);
 
     void render(const int);
 };
@@ -107,7 +102,7 @@ class Eg : public Image
 class Cg : public Image
 {
 public:
-    Cg(SDL_Renderer *&, TextureCache &);
+    Cg(SDL_Renderer *, TextureCache &);
 
     void render();
 
@@ -166,8 +161,8 @@ private:
     std::array<_Tp, _Nm> objects;
 
 public:
-    // ImageLayer(SDL_Renderer *&renderer, TextureCache &textureCache) : objects{create_array<_Nm, _Tp>({renderer, textureCache})} {}
-    ImageLayer(SDL_Renderer *&renderer, TextureCache &textureCache) : objects{{_Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}}} {}
+    // ImageLayer(SDL_Renderer *renderer, TextureCache &textureCache) : objects{create_array<_Nm, _Tp>({renderer, textureCache})} {}
+    ImageLayer(SDL_Renderer *renderer, TextureCache &textureCache) : objects{{_Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}}} {}
 
     _Tp &operator[](size_t i) { return objects[i]; }
 
