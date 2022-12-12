@@ -128,30 +128,10 @@ void ImageManager::loadDump(const json &j)
 const json ImageManager::dump()
 {
     json j;
-
     j[KEY_BG] = bgLayer.dump();
-
-    for (int i = 0; i < currEgs.size(); i++)
-    {
-        if (!currEgs[i].isActive())
-            continue;
-        j[KEY_EG][std::to_string(i)] = currEgs[i].dump();
-    }
-
-    for (int i = 0; i < currCgs.size(); i++)
-    {
-        if (!currCgs[i].isActive())
-            continue;
-        j[KEY_CG][std::to_string(i)] = currCgs[i].dump();
-    }
-
-    for (int i = 0; i < currFws.size(); i++)
-    {
-        if (!currFws[i].isActive())
-            continue;
-        j[KEY_FW][std::to_string(i)] = currFws[i].dump();
-    }
-
+    j[KEY_EG] = egLayer.dump();
+    j[KEY_CG] = cgLayer.dump();
+    j[KEY_FW] = fwLayer.dump();
     return j;
 }
 
@@ -381,12 +361,8 @@ void ImageManager::render()
     SDL_RenderClear(renderer);
 
     bgLayer.render();
-
-    for (auto &cg : currCgs)
-        cg.render();
-
-    for (auto &eg : currEgs)
-        eg.render();
+    cgLayer.render();
+    egLayer.render();
 
     if (showMwnd)
     {
@@ -394,8 +370,7 @@ void ImageManager::render()
         mwnd.render();
         mwndDeco.render();
 
-        for (auto &fw : currFws)
-            fw.render();
+        fwLayer.render();
 
         renderMessage(currText);
         renderSpeaker(currSpeaker);
@@ -417,24 +392,15 @@ void ImageManager::clearZIndex(const IMAGE_TYPE type, const int zIndex)
         break;
 
     case IMAGE_TYPE::EG:
-        if (zIndex >= currEgs.size())
-            return;
-        currEgs[zIndex].clear();
+        egLayer.clear(zIndex);
         break;
 
     case IMAGE_TYPE::CG:
-        if (zIndex >= currCgs.size())
-            return;
-        currCgs[zIndex].clear();
+        cgLayer.clear(zIndex);
         break;
 
     case IMAGE_TYPE::FW:
-        if (zIndex >= currFws.size())
-            return;
-        currFws[zIndex].clear();
-        break;
-
-    default:
+        fwLayer.clear(zIndex);
         break;
     }
 }
@@ -449,21 +415,15 @@ void ImageManager::clearImageType(const IMAGE_TYPE type)
         break;
 
     case IMAGE_TYPE::EG:
-        for (int i = 0; i < currEgs.size(); i++)
-            currEgs[i].clear();
+        egLayer.clear();
         break;
 
     case IMAGE_TYPE::CG:
-        for (int i = 0; i < currCgs.size(); i++)
-            currCgs[i].clear();
+        cgLayer.clear();
         break;
 
     case IMAGE_TYPE::FW:
-        for (int i = 0; i < currFws.size(); i++)
-            currFws[i].clear();
-        break;
-
-    default:
+        fwLayer.clear();
         break;
     }
 }
@@ -478,20 +438,14 @@ const Image &ImageManager::getImage(const IMAGE_TYPE type, const int zIndex)
         return bgLayer.get(zIndex);
 
     case IMAGE_TYPE::EG:
-        if (zIndex >= currEgs.size())
-            return {};
-        return currEgs[zIndex];
+        return egLayer.get(zIndex);
 
     // Assume that any valid CG/FW must always contain a valid base
     case IMAGE_TYPE::CG:
-        if (zIndex >= currCgs.size())
-            return {};
-        return currCgs[zIndex].base;
+        return cgLayer.get(zIndex).base;
 
     case IMAGE_TYPE::FW:
-        if (zIndex >= currFws.size())
-            return {};
-        return currFws[zIndex].base;
+        return fwLayer.get(zIndex).base;
     }
 }
 
@@ -534,18 +488,18 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         break;
 
     case IMAGE_TYPE::EG:
-        if (zIndex >= currEgs.size())
+        if (zIndex >= egLayer.size())
             return;
         if (!fileManager.inDB(asset + IMAGE_EXT))
             return;
 
-        currEgs[zIndex] = {renderer, asset, xShift, yShift};
-        fetchImage(currEgs[zIndex], asset);
+        egLayer[zIndex] = {renderer, asset, xShift, yShift};
+        fetchImage(egLayer[zIndex], asset);
         break;
 
     case IMAGE_TYPE::CG:
     {
-        if (zIndex >= currCgs.size())
+        if (zIndex >= cgLayer.size())
             return;
 
         auto args = getAssetArgs(asset);
@@ -560,7 +514,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         const std::string &part1Name = baseRaw + "_" + Utils::zeroPad(args[3], 3);
         const std::string &part2Name = baseRaw + "_" + Utils::zeroPad(args[4], 4);
 
-        Cg &cg = currCgs[zIndex];
+        Cg &cg = cgLayer[zIndex];
         cg.clear();
 
         // Store raw asset identifier
@@ -588,7 +542,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
     case IMAGE_TYPE::FW:
     {
-        if (zIndex >= currFws.size())
+        if (zIndex >= fwLayer.size())
             return;
 
         // Attempt to match CS2 offsets for FW images
@@ -609,7 +563,7 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
         const std::string &part1Name = baseRaw + "_" + Utils::zeroPad(args[3], 3);
         const std::string &part2Name = baseRaw + "_" + Utils::zeroPad(args[4], 4);
 
-        Fw &fw = currFws[zIndex];
+        Fw &fw = fwLayer[zIndex];
         fw.clear();
 
         fw.assetRaw = asset;

@@ -132,6 +132,7 @@ typedef struct
     const int index;
 } ImageData;
 
+// Templated wrapper class for array of image objects
 template <typename _Tp, std::size_t _Nm>
 class ImageLayer
 {

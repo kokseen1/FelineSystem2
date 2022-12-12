@@ -99,9 +99,9 @@ private:
 
     // Arrays to simulate the current canvas with layers
     ImageLayer<Bg, MAX_BG> bgLayer;
-    std::array<Eg, MAX_EG> currEgs;
-    std::array<Cg, MAX_CG> currCgs;
-    std::array<Fw, MAX_FW> currFws;
+    ImageLayer<Eg, MAX_EG> egLayer;
+    ImageLayer<Cg, MAX_CG> cgLayer;
+    ImageLayer<Fw, MAX_FW> fwLayer;
 
     std::vector<std::string> getAssetArgs(const std::string &);
 
