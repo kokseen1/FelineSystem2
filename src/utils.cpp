@@ -113,4 +113,20 @@ namespace Utils
             return {};
         }
     }
+
+    // Parse comma separated asset names
+    const std::vector<std::string> getAssetArgs(const std::string &asset)
+    {
+        std::stringstream ss(asset);
+        std::vector<std::string> args;
+
+        while (ss.good())
+        {
+            std::string arg;
+            getline(ss, arg, ',');
+            args.push_back(arg);
+        }
+
+        return args;
+    }
 }

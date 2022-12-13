@@ -55,7 +55,7 @@ AudioManager::AudioManager(FileManager &fm) : fileManager{fm}
     Mix_Volume(-1, SE_VOLUME);
     Mix_Volume(CHANNEL_PCM, PCM_VOLUME);
 
-    LOG << "AudioManager initialized";
+    // LOG << "AudioManager initialized";
 }
 
 void AudioManager::stopSound(const int channel)

@@ -69,7 +69,7 @@ void SceneManager::loadScriptStart(byte *buf, size_t sz, const std::string &scri
     parseScript = true;
 }
 
-void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData& saveData)
+void SceneManager::loadScriptOffset(byte *buf, size_t sz, const SaveData &saveData)
 {
     loadScript(buf, sz, saveData.scriptName);
     stringOffsetTable = reinterpret_cast<StringOffsetTable *>(stringTableBase - saveData.offsetFromBase);
@@ -225,11 +225,7 @@ int SceneManager::parseLine()
         break;
 
     case 0x20: // Display a message
-        if (stringTable->StringStart == '\0')
-        {
-            LOG << "Empty text!";
-        }
-        else
+        if (stringTable->StringStart != '\0')
         {
             if (speakerCounter == 0)
                 imageManager.currSpeaker.clear();
@@ -348,9 +344,9 @@ void SceneManager::handleCommand(const std::string &cmdString)
         }
 
         // Support for @ symbol referring to previous value
-        const auto &image = imageManager.getImage(imageType, zIndex);
-        auto prevXShift = image.xShift;
-        auto prevYShift = image.yShift;
+        const auto &prevShifts = imageManager.getShifts(imageType, zIndex);
+        const auto &prevXShift = prevShifts.first;
+        const auto &prevYShift = prevShifts.second;
 
         auto xShiftStr = matches[4].str();
         auto yShiftStr = matches[5].str();
@@ -388,7 +384,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     // Choice options
     else if (std::regex_match(cmdString, matches, std::regex("^(\\d+) (\\w+) (.+)")))
     {
-        currChoices.push_back({imageManager.getRenderer(), &imageManager.getCache(), cleanText(matches[2].str()), cleanText(matches[3].str())});
+        currChoices.push_back({imageManager, cleanText(matches[2].str()), cleanText(matches[3].str())});
     }
 
     // Auto mode
@@ -469,7 +465,7 @@ void SceneManager::loadState(const int saveSlot)
         {
             // Populate choices from savedata
             for (auto &el : jScene.at(KEY_CHOICE).items())
-                currChoices.push_back({imageManager.getRenderer(), &imageManager.getCache(), el.key(), el.value()});
+                currChoices.push_back({imageManager, el.key(), el.value()});
         }
     }
     catch (const json::out_of_range &e)

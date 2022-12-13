@@ -2,6 +2,7 @@
 
 #include <hgdecoder.hpp>
 #include <utils.hpp>
+#include <window.hpp>
 
 #include <SDL2/SDL.h>
 
@@ -26,12 +27,6 @@
 #define SELECT_FONT_PATH FONT_PATH
 #define SELECT_FONT_SIZE 30
 
-#define WINDOW_WIDTH 1024
-#define WINDOW_HEIGHT 576
-
-// #define WINDOW_WIDTH 1280
-// #define WINDOW_HEIGHT 720
-
 #define SEL "sys_sel_02"
 #define SEL_WIDTH 782
 #define SEL_HEIGHT 63
@@ -44,20 +39,27 @@
 typedef std::pair<SDL_Texture *, Stdinfo> TextureData;
 typedef std::unordered_map<std::string, TextureData> TextureCache;
 
+class ImageManager;
+
 class Image
 {
 public:
-    std::string textureName;
+    // Name of base asset
+    std::string baseName;
 
     // Additional offset applied on top of base position
     int xShift = 0;
     int yShift = 0;
 
-    Image(){};
+    Image(ImageManager &, std::string = "", int = 0, int = 0);
 
-    Image(SDL_Renderer *, TextureCache *, std::string, int, int);
+    bool isActive() { return !baseName.empty(); }
 
-    bool isActive() { return !textureName.empty(); }
+    void fetch();
+
+    void update(const std::string &, int, int);
+
+    void set(const std::string &, int, int);
 
     void render();
 
@@ -65,15 +67,14 @@ public:
 
     const json dump();
 
-protected:
-    TextureCache *textureCache = NULL;
-
-    SDL_Renderer *renderer = NULL;
-
     void render(const int, const int);
 
-private:
-    TextureData *textureData = NULL;
+protected:
+    ImageManager &imageManager;
+
+    TextureCache &textureCache;
+
+    SDL_Renderer *renderer;
 };
 
 class Choice : public Image
@@ -83,11 +84,12 @@ private:
 
 public:
     const std::string target;
+
     const std::string prompt;
 
-    Choice(SDL_Renderer *, TextureCache *, const std::string &, const std::string &);
+    Choice(ImageManager &, const std::string &, const std::string &);
 
-    void render(const int);
+    void render();
 };
 
 class Bg : public Image
@@ -102,35 +104,40 @@ class Eg : public Image
     using Image::Image;
 };
 
-class Cg
+class Cg : public Image
 {
 public:
-    void render();
-
-    void clear();
-
-    bool isActive() { return !assetRaw.empty(); }
-
-    const json dump();
-
-    Image base;
     Image part1;
     Image part2;
 
     std::string assetRaw;
+
+    Cg(ImageManager &);
+
+    void render();
+
+    void clear();
+
+    void update(const std::string &, int, int);
+
+    const json dump();
 };
 
 class Fw : public Cg
 {
+    using Cg::Cg;
+
 public:
+    void render();
+
     const json dump();
 };
 
 typedef struct
 {
-    const Image &image;
     const std::string name; // Cannot be a reference in async
     const int index;
+    const Image *image;
 } ImageData;
 
 // Templated wrapper class for array of image objects
@@ -141,28 +148,37 @@ private:
     std::array<_Tp, _Nm> objects;
 
 public:
+    ImageLayer(ImageManager &imageManager) : objects{Utils::create_array<_Nm, _Tp>({imageManager})} {}
+
     _Tp &operator[](size_t i) { return objects[i]; }
 
     constexpr size_t size() { return objects.size(); }
 
-    const _Tp &get(size_t i)
+    void update(const int i, const std::string rawName, const int x, const int y)
     {
         if (i >= size())
-            return {};
-        return objects[i];
+            throw std::runtime_error("Out of range access");
+        objects[i].update(rawName, x, y);
     }
 
-    const json dump()
+    const std::pair<int, int> getShifts(size_t i)
     {
-        json j;
-        for (int i = 0; i < size(); i++)
-        {
-            if (!objects[i].isActive())
-                continue;
-            j[std::to_string(i)] = objects[i].dump();
-        }
-        return j;
+        if (i >= size())
+            throw std::runtime_error("Out of range access");
+        return {objects[i].xShift, objects[i].yShift};
     }
+
+    // const json dump()
+    // {
+    //     json j;
+    //     for (int i = 0; i < size(); i++)
+    //     {
+    //         if (!objects[i].isActive())
+    //             continue;
+    //         j[std::to_string(i)] = objects[i].dump();
+    //     }
+    //     return j;
+    // }
 
     void clear(size_t i)
     {
@@ -173,13 +189,13 @@ public:
 
     void clear()
     {
-        for (_Tp &image : objects)
+        for (auto &image : objects)
             image.clear();
     }
 
     void render()
     {
-        for (_Tp &image : objects)
+        for (auto &image : objects)
             image.render();
     }
 };

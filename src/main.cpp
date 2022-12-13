@@ -1,4 +1,5 @@
 #include <audio.hpp>
+#include <window.hpp>
 #include <image.hpp>
 #include <scene.hpp>
 #include <file.hpp>
@@ -17,8 +18,9 @@
 #include <iomanip>
 
 static FileManager fileManager;
+static WindowManager windowManager;
 static AudioManager audioManager(fileManager);
-static ImageManager imageManager(fileManager);
+static ImageManager imageManager(fileManager, windowManager.getRenderer());
 static SceneManager sceneManager(audioManager, imageManager, fileManager);
 
 void main_loop()
@@ -55,7 +57,7 @@ void main_loop()
                 break;
 
             case SDLK_f:
-                imageManager.toggle_fullscreen();
+                windowManager.toggleFullscreen();
                 break;
 
             case SDLK_1:

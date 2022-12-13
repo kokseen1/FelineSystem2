@@ -1,25 +1,61 @@
+#include <image.hpp>
 #include <imgtypes.hpp>
 
 #include <SDL2/SDL_ttf.h>
 
-Image::Image(SDL_Renderer *r, TextureCache *tC, std::string n, int x, int y) : renderer{r}, textureCache{tC}, textureName{n}, xShift{x}, yShift{y}
+// Constructor for non-updating images
+Image::Image(ImageManager &imageManager, std::string n, int x, int y) : imageManager{imageManager}, renderer{imageManager.getRenderer()}, textureCache{imageManager.getCache()}, baseName{n}, xShift{x}, yShift{y} {}
+
+// Main constructor to init with renderer and cache (not required as default arguments are available for the above constructor)
+// Image::Image(ImageManager &imageManager) : imageManager{imageManager}, renderer{imageManager.getRenderer()}, textureCache{imageManager.getCache()} {}
+
+// Constructor to init both inherited base and additional parts
+Cg::Cg(ImageManager &imageManager) : Image{imageManager}, part1{imageManager}, part2{imageManager} {}
+
+// Custom ctor for choices
+Choice::Choice(ImageManager &imageManager, const std::string &t, const std::string &p) : Image{imageManager, SEL, SEL_XSHIFT, 0}, target{t}, prompt{p} {}
+
+void Image::update(const std::string &name, int x, int y)
 {
+    // Ensure that the asset exists in db
+    if (!imageManager.getFileManager().inDB(name + IMAGE_EXT))
+        return;
+
+    set(name, x, y);
+    fetch();
+}
+
+void Image::set(const std::string &name, int x, int y)
+{
+    baseName = name;
+    xShift = x;
+    yShift = y;
+}
+
+// Fetch and cache the current image
+void Image::fetch()
+{
+    // Prevent fetching already cached images
+    auto pos = textureCache.find(baseName);
+    if (pos != textureCache.end())
+        return;
+
+    // Initialize cache entry with NULL (more efficient but prevents failed fetches from retrying)
+    // textureCache[name];
+
+    imageManager.getFileManager().fetchAssetAndProcess(baseName + IMAGE_EXT, &imageManager, &ImageManager::processImage, ImageData{baseName, 0, this});
 }
 
 void Image::clear()
 {
-    textureName.clear();
+    baseName.clear();
 }
 
-Choice::Choice(SDL_Renderer *r, TextureCache *tC, const std::string &t, const std::string &p) : Image(r, tC, SEL, 0, 0), target(t), prompt(p)
-{
-}
-
-void Choice::render(const int yShift)
+void Choice::render()
 {
     // Render base box image
-    Image::render(SEL_XSHIFT, yShift);
-    renderText(SEL_XSHIFT, yShift);
+    Image::render(xShift, yShift);
+    renderText(xShift, yShift);
 }
 
 // Render image with given offsets
@@ -28,17 +64,14 @@ void Image::render(const int xShift, const int yShift)
     if (!isActive())
         return;
 
-    if (textureData == NULL)
-    {
-        // Look for texture in cache
-        auto got = textureCache->find(textureName);
-        if (got == textureCache->end())
-            return;
+    // Look for texture in cache
+    auto got = textureCache.find(baseName);
+    if (got == textureCache.end())
+        return;
 
-        textureData = &got->second;
-    }
+    const auto &textureData = got->second;
 
-    auto texture = textureData->first;
+    auto texture = textureData.first;
     if (texture == NULL)
     {
         LOG << "NULL texture in cache";
@@ -46,7 +79,7 @@ void Image::render(const int xShift, const int yShift)
     }
 
     // Calculate shift
-    auto &stdinfo = textureData->second;
+    auto &stdinfo = textureData.second;
     auto xPos = stdinfo.OffsetX - stdinfo.BaseX + xShift;
     auto yPos = stdinfo.OffsetY - stdinfo.BaseY + yShift;
 
@@ -55,7 +88,7 @@ void Image::render(const int xShift, const int yShift)
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);
 }
 
-// Render image with the offsets set in ctor
+// Render image with the member offsets by default
 void Image::render()
 {
     render(xShift, yShift);
@@ -95,7 +128,7 @@ void Choice::renderText(const int xShift, const int yShift)
 
 void Cg::render()
 {
-    base.render();
+    Image::render();
     part1.render();
     part2.render();
 }
@@ -104,7 +137,36 @@ void Cg::clear()
 {
     assetRaw.clear();
 
-    base.clear();
+    Image::clear();
     part1.clear();
     part2.clear();
+}
+
+void Cg::update(const std::string &rawName, int x, int y)
+{
+    const auto &args = Utils::getAssetArgs(rawName);
+    // TODO: Handle arguments like `blend`
+    if (args.size() < 5)
+        return;
+
+    clear();
+
+    const std::string &rawBase = args[0];
+    const std::string &baseName = rawBase + "_" + args[1];
+    const std::string &part1Name = rawBase + "_" + Utils::zeroPad(args[3], 3);
+    const std::string &part2Name = rawBase + "_" + Utils::zeroPad(args[4], 4);
+
+    Image::update(baseName, x, y);
+    part1.update(part1Name, x, y);
+    part2.update(part2Name, x, y);
+}
+
+void Fw::render()
+{
+    auto x = xShift + FW_XSHIFT;
+    auto y = yShift + FW_YSHIFT;
+
+    Image::render(x, y);
+    part1.render(x, y);
+    part2.render(x, y);
 }
