@@ -129,25 +129,6 @@ typedef struct
     const int index;
 } ImageData;
 
-namespace detail
-{
-    // Template function to initialize array with default values
-    // by making use of comma operator and index_sequence
-    template <typename T, std::size_t... Is>
-    constexpr std::array<T, sizeof...(Is)>
-    create_array(T value, std::index_sequence<Is...>)
-    {
-        // cast Is to void to remove the warning: unused value
-        return {(static_cast<void>(Is), value)...};
-    }
-}
-
-template <std::size_t N, typename T>
-constexpr std::array<T, N> create_array(const T &value)
-{
-    return detail::create_array(value, std::make_index_sequence<N>());
-}
-
 // Templated wrapper class for array of image objects
 template <typename _Tp, std::size_t _Nm>
 class ImageLayer
@@ -156,8 +137,7 @@ private:
     std::array<_Tp, _Nm> objects;
 
 public:
-    // ImageLayer(SDL_Renderer *renderer, TextureCache &textureCache) : objects{create_array<_Nm, _Tp>({renderer, textureCache})} {}
-    ImageLayer(SDL_Renderer *renderer, TextureCache &textureCache) : objects{{_Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}, _Tp{renderer, textureCache}}} {}
+    ImageLayer(SDL_Renderer *renderer, TextureCache &textureCache) : objects{Utils::create_array<_Nm, _Tp>({renderer, textureCache})} {}
 
     _Tp &operator[](size_t i) { return objects[i]; }
 
