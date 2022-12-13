@@ -69,8 +69,6 @@ protected:
 
     void render(const int, const int);
 
-private:
-    TextureData *textureData = NULL;
 };
 
 class Choice : public Image

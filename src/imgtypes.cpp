@@ -33,17 +33,14 @@ void Image::render(const int xShift, const int yShift)
     if (!isActive())
         return;
 
-    if (textureData == NULL)
-    {
-        // Look for texture in cache
-        auto got = textureCache.find(textureName);
-        if (got == textureCache.end())
-            return;
+    // Look for texture in cache
+    auto got = textureCache.find(textureName);
+    if (got == textureCache.end())
+        return;
 
-        textureData = &got->second;
-    }
+    const auto &textureData = got->second;
 
-    auto texture = textureData->first;
+    auto texture = textureData.first;
     if (texture == NULL)
     {
         LOG << "NULL texture in cache";
@@ -51,7 +48,7 @@ void Image::render(const int xShift, const int yShift)
     }
 
     // Calculate shift
-    auto &stdinfo = textureData->second;
+    auto &stdinfo = textureData.second;
     auto xPos = stdinfo.OffsetX - stdinfo.BaseX + xShift;
     auto yPos = stdinfo.OffsetY - stdinfo.BaseY + yShift;
 
