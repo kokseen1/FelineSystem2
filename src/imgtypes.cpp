@@ -1,12 +1,18 @@
+#include <image.hpp>
 #include <imgtypes.hpp>
 
 #include <SDL2/SDL_ttf.h>
 
-// Main constructor to init with renderer and cache
-Image::Image(SDL_Renderer *renderer, TextureCache &textureCache) : renderer{renderer}, textureCache{textureCache} {}
-
 // Constructor for non-updating images
-Image::Image(SDL_Renderer *renderer, TextureCache &textureCache, std::string n, int x, int y) : renderer{renderer}, textureCache{textureCache}, baseName{n}, xShift{x}, yShift{y} {}
+Image::Image(ImageManager &imageManager, std::string n, int x, int y) : imageManager{imageManager}, renderer{imageManager.getRenderer()}, textureCache{imageManager.getCache()}, baseName{n}, xShift{x}, yShift{y} {}
+
+// // Main constructor to init with renderer and cache
+// Image::Image(ImageManager &imageManager) : imageManager{imageManager}, renderer{imageManager.getRenderer()}, textureCache{imageManager.getCache()} {}
+
+// Constructor  o init both inherited base and additional parts
+Cg::Cg(ImageManager &imageManager) : Image{imageManager}, part1{imageManager}, part2{imageManager} {}
+
+Choice::Choice(ImageManager &imageManager, const std::string &t, const std::string &p) : Image{imageManager, SEL, 0, 0}, target{t}, prompt{p} {}
 
 void Image::set(const std::string &name, int x, int y)
 {
@@ -19,8 +25,6 @@ void Image::clear()
 {
     baseName.clear();
 }
-
-Choice::Choice(SDL_Renderer *renderer, TextureCache &textureCache, const std::string &t, const std::string &p) : Image{renderer, textureCache, SEL, 0, 0}, target{t}, prompt{p} {}
 
 void Choice::render(const int yShift)
 {
@@ -96,9 +100,6 @@ void Choice::renderText(const int xShift, const int yShift)
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
 }
-
-// Constructor to init both inherited base and additional parts
-Cg::Cg(SDL_Renderer *renderer, TextureCache &textureCache) : Image{renderer, textureCache}, part1{renderer, textureCache}, part2{renderer, textureCache} {}
 
 void Cg::render()
 {

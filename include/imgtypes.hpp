@@ -39,6 +39,8 @@
 typedef std::pair<SDL_Texture *, Stdinfo> TextureData;
 typedef std::unordered_map<std::string, TextureData> TextureCache;
 
+class ImageManager;
+
 class Image
 {
 public:
@@ -49,9 +51,7 @@ public:
     int xShift = 0;
     int yShift = 0;
 
-    Image(SDL_Renderer *, TextureCache &);
-
-    Image(SDL_Renderer *, TextureCache &, std::string, int, int);
+    Image(ImageManager &, std::string = "", int = 0, int = 0);
 
     bool isActive() { return !baseName.empty(); }
 
@@ -66,6 +66,8 @@ public:
     void render(const int, const int);
 
 protected:
+    ImageManager &imageManager;
+
     TextureCache &textureCache;
 
     SDL_Renderer *renderer;
@@ -80,7 +82,7 @@ public:
     const std::string target;
     const std::string prompt;
 
-    Choice(SDL_Renderer *, TextureCache &, const std::string &, const std::string &);
+    Choice(ImageManager &, const std::string &, const std::string &);
 
     void render(const int);
 };
@@ -105,7 +107,7 @@ public:
 
     std::string assetRaw;
 
-    Cg(SDL_Renderer *, TextureCache &);
+    Cg(ImageManager &);
 
     void render();
 
@@ -139,7 +141,7 @@ private:
     std::array<_Tp, _Nm> objects;
 
 public:
-    ImageLayer(SDL_Renderer *renderer, TextureCache &textureCache) : objects{Utils::create_array<_Nm, _Tp>({renderer, textureCache})} {}
+    ImageLayer(ImageManager &imageManager) : objects{Utils::create_array<_Nm, _Tp>({imageManager})} {}
 
     _Tp &operator[](size_t i) { return objects[i]; }
 

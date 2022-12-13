@@ -135,7 +135,7 @@ const json ImageManager::dump()
     return j;
 }
 
-ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer) : fileManager{fm}, renderer{renderer}, bgLayer{renderer, textureCache}, egLayer{renderer, textureCache}, cgLayer{renderer, textureCache}, fwLayer{renderer, textureCache}
+ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer) : fileManager{fm}, renderer{renderer}, bgLayer{*this}, egLayer{*this}, cgLayer{*this}, fwLayer{*this}
 {
     // Background color when rendering transparent textures
     if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0) < 0)

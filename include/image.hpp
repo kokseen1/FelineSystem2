@@ -94,8 +94,8 @@ private:
 
     bool showMwnd = true;
 
-    Image mwnd{renderer, textureCache};
-    Image mwndDeco{renderer, textureCache};
+    Image mwnd{*this};
+    Image mwndDeco{*this};
 
     TTF_Font *font = NULL;
     TTF_Font *selectFont = NULL;
