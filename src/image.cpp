@@ -17,65 +17,65 @@ void ImageManager::clearCanvas()
     clearImageType(IMAGE_TYPE::FW);
 }
 
-void to_json(json &j, const Image &i)
-{
-    j = json{
-        {KEY_NAME, i.textureName},
-        {KEY_XSHIFT, i.xShift},
-        {KEY_YSHIFT, i.yShift}};
-}
+// void to_json(json &j, const Image &i)
+// {
+//     j = json{
+//         {KEY_NAME, i.baseName},
+//         {KEY_XSHIFT, i.xShift},
+//         {KEY_YSHIFT, i.yShift}};
+// }
 
-void from_json(const json &j, Image &i)
-{
-    j.at(KEY_NAME).get_to(i.textureName);
-    j.at(KEY_XSHIFT).get_to(i.xShift);
-    j.at(KEY_YSHIFT).get_to(i.yShift);
-}
+// void from_json(const json &j, Image &i)
+// {
+//     j.at(KEY_NAME).get_to(i.baseName);
+//     j.at(KEY_XSHIFT).get_to(i.xShift);
+//     j.at(KEY_YSHIFT).get_to(i.yShift);
+// }
 
-void to_json(json &j, const Fw &i)
-{
-    j = json{
-        {KEY_NAME, i.assetRaw},
-        // Assume base is always valid in a valid CG/FW
-        // Undo hardcoded offset for FW
-        {KEY_XSHIFT, i.base.xShift - FW_XSHIFT},
-        {KEY_YSHIFT, i.base.yShift - FW_YSHIFT}};
-}
+// void to_json(json &j, const Fw &i)
+// {
+//     j = json{
+//         {KEY_NAME, i.assetRaw},
+//         // Assume base is always valid in a valid CG/FW
+//         // Undo hardcoded offset for FW
+//         {KEY_XSHIFT, i.base.xShift - FW_XSHIFT},
+//         {KEY_YSHIFT, i.base.yShift - FW_YSHIFT}};
+// }
 
-void to_json(json &j, const Cg &i)
-{
-    j = json{
-        {KEY_NAME, i.assetRaw},
-        // Assume base is always valid in a valid CG
-        {KEY_XSHIFT, i.base.xShift},
-        {KEY_YSHIFT, i.base.yShift}};
-}
+// void to_json(json &j, const Cg &i)
+// {
+//     j = json{
+//         {KEY_NAME, i.assetRaw},
+//         // Assume base is always valid in a valid CG
+//         {KEY_XSHIFT, i.base.xShift},
+//         {KEY_YSHIFT, i.base.yShift}};
+// }
 
-void from_json(const json &j, Cg &i)
-{
-    j.at(KEY_NAME).get_to(i.assetRaw);
-    // Assume base is always valid in a valid CG
-    j.at(KEY_XSHIFT).get_to(i.base.xShift);
-    j.at(KEY_YSHIFT).get_to(i.base.yShift);
-}
+// void from_json(const json &j, Cg &i)
+// {
+//     j.at(KEY_NAME).get_to(i.assetRaw);
+//     // Assume base is always valid in a valid CG
+//     j.at(KEY_XSHIFT).get_to(i.base.xShift);
+//     j.at(KEY_YSHIFT).get_to(i.base.yShift);
+// }
 
-const json Image::dump()
-{
-    auto &j = *this;
-    return j;
-}
+// const json Image::dump()
+// {
+//     auto &j = *this;
+//     return j;
+// }
 
-const json Fw::dump()
-{
-    auto &j = *this;
-    return j;
-}
+// const json Fw::dump()
+// {
+//     auto &j = *this;
+//     return j;
+// }
 
-const json Cg::dump()
-{
-    auto &j = *this;
-    return j;
-}
+// const json Cg::dump()
+// {
+//     auto &j = *this;
+//     return j;
+// }
 
 // Load a json object of dumped image data
 // Throws json::out_of_range if key is missing
@@ -89,7 +89,7 @@ void ImageManager::loadDump(const json &j)
     //     {
     //         const auto &idx = std::stoi(e.key());
     //         auto bg = e.value().get<Bg>();
-    //         setImage(IMAGE_TYPE::BG, idx, bg.textureName, bg.xShift, bg.yShift);
+    //         setImage(IMAGE_TYPE::BG, idx, bg.baseName, bg.xShift, bg.yShift);
     //     }
     // }
 
@@ -99,7 +99,7 @@ void ImageManager::loadDump(const json &j)
     //     {
     //         const auto &idx = std::stoi(e.key());
     //         auto eg = e.value().get<Eg>();
-    //         setImage(IMAGE_TYPE::EG, idx, eg.textureName, eg.xShift, eg.yShift);
+    //         setImage(IMAGE_TYPE::EG, idx, eg.baseName, eg.xShift, eg.yShift);
     //     }
     // }
 
@@ -128,10 +128,10 @@ void ImageManager::loadDump(const json &j)
 const json ImageManager::dump()
 {
     json j;
-    j[KEY_BG] = bgLayer.dump();
-    j[KEY_EG] = egLayer.dump();
-    j[KEY_CG] = cgLayer.dump();
-    j[KEY_FW] = fwLayer.dump();
+//     j[KEY_BG] = bgLayer.dump();
+//     j[KEY_EG] = egLayer.dump();
+//     j[KEY_CG] = cgLayer.dump();
+//     j[KEY_FW] = fwLayer.dump();
     return j;
 }
 
@@ -398,10 +398,10 @@ const Image &ImageManager::getImage(const IMAGE_TYPE type, const int zIndex)
 
     // Assume that any valid CG/FW must always contain a valid base
     case IMAGE_TYPE::CG:
-        return cgLayer.get(zIndex).base;
+        return cgLayer.get(zIndex);
 
     case IMAGE_TYPE::FW:
-        return fwLayer.get(zIndex).base;
+        return fwLayer.get(zIndex);
     }
 }
 
@@ -478,8 +478,8 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
         if (fileManager.inDB(baseName + IMAGE_EXT))
         {
-            cg.base.set(baseName, xShift, yShift);
-            fetchImage(cg.base, baseName);
+            cg.set(baseName, xShift, yShift);
+            fetchImage(cg, baseName);
         }
 
         if (fileManager.inDB(part1Name + IMAGE_EXT))
@@ -526,8 +526,8 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
 
         if (fileManager.inDB(baseName + IMAGE_EXT))
         {
-            fw.base.set(baseName, xShift, yShift);
-            fetchImage(fw.base, baseName);
+            fw.set(baseName, xShift, yShift);
+            fetchImage(fw, baseName);
         }
 
         if (fileManager.inDB(part1Name + IMAGE_EXT))
@@ -568,7 +568,7 @@ void ImageManager::processImageData(byte *buf, size_t sz, const ImageData &image
     const auto &name = imageData.name;
 
     // Do not process if image was already passed
-    if (imageData.image.textureName != name)
+    if (imageData.image.baseName != name)
         return;
 
     processImage(buf, sz, {name, imageData.index});

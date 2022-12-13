@@ -2,20 +2,22 @@
 
 #include <SDL2/SDL_ttf.h>
 
+// Main constructor to init with renderer and cache
 Image::Image(SDL_Renderer *renderer, TextureCache &textureCache) : renderer{renderer}, textureCache{textureCache} {}
 
-Image::Image(SDL_Renderer *renderer, TextureCache &textureCache, std::string n, int x, int y) : renderer{renderer}, textureCache{textureCache}, textureName{n}, xShift{x}, yShift{y} {}
+// Constructor for non-updating images
+Image::Image(SDL_Renderer *renderer, TextureCache &textureCache, std::string n, int x, int y) : renderer{renderer}, textureCache{textureCache}, baseName{n}, xShift{x}, yShift{y} {}
 
 void Image::set(const std::string &name, int x, int y)
 {
-    textureName = name;
+    baseName = name;
     xShift = x;
     yShift = y;
 }
 
 void Image::clear()
 {
-    textureName.clear();
+    baseName.clear();
 }
 
 Choice::Choice(SDL_Renderer *renderer, TextureCache &textureCache, const std::string &t, const std::string &p) : Image{renderer, textureCache, SEL, 0, 0}, target{t}, prompt{p} {}
@@ -34,7 +36,7 @@ void Image::render(const int xShift, const int yShift)
         return;
 
     // Look for texture in cache
-    auto got = textureCache.find(textureName);
+    auto got = textureCache.find(baseName);
     if (got == textureCache.end())
         return;
 
@@ -95,11 +97,12 @@ void Choice::renderText(const int xShift, const int yShift)
     SDL_FreeSurface(surface);
 }
 
-Cg::Cg(SDL_Renderer *renderer, TextureCache &textureCache) : Image{renderer, textureCache}, base{renderer, textureCache}, part1{renderer, textureCache}, part2{renderer, textureCache} {}
+// Constructor to init both inherited base and additional parts
+Cg::Cg(SDL_Renderer *renderer, TextureCache &textureCache) : Image{renderer, textureCache}, part1{renderer, textureCache}, part2{renderer, textureCache} {}
 
 void Cg::render()
 {
-    base.render();
+    Image::render();
     part1.render();
     part2.render();
 }
@@ -108,7 +111,7 @@ void Cg::clear()
 {
     assetRaw.clear();
 
-    base.clear();
+    Image::clear();
     part1.clear();
     part2.clear();
 }

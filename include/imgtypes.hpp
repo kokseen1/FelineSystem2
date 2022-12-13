@@ -42,19 +42,20 @@ typedef std::unordered_map<std::string, TextureData> TextureCache;
 class Image
 {
 public:
-    std::string textureName;
+    // Name of base asset
+    std::string baseName;
 
     // Additional offset applied on top of base position
     int xShift = 0;
     int yShift = 0;
 
-    Image(SDL_Renderer *, TextureCache &, std::string, int, int);
-
     Image(SDL_Renderer *, TextureCache &);
 
-    void set(const std::string &, int, int);
+    Image(SDL_Renderer *, TextureCache &, std::string, int, int);
 
-    bool isActive() { return !textureName.empty(); }
+    bool isActive() { return !baseName.empty(); }
+
+    void set(const std::string &, int, int);
 
     void render();
 
@@ -68,7 +69,6 @@ protected:
     SDL_Renderer *renderer;
 
     void render(const int, const int);
-
 };
 
 class Choice : public Image
@@ -100,21 +100,18 @@ class Eg : public Image
 class Cg : public Image
 {
 public:
+    Image part1;
+    Image part2;
+
+    std::string assetRaw;
+
     Cg(SDL_Renderer *, TextureCache &);
 
     void render();
 
     void clear();
 
-    bool isActive() { return !assetRaw.empty(); }
-
     const json dump();
-
-    Image base;
-    Image part1;
-    Image part2;
-
-    std::string assetRaw;
 };
 
 class Fw : public Cg
@@ -173,17 +170,17 @@ public:
         return objects[i];
     }
 
-    const json dump()
-    {
-        json j;
-        for (int i = 0; i < size(); i++)
-        {
-            if (!objects[i].isActive())
-                continue;
-            j[std::to_string(i)] = objects[i].dump();
-        }
-        return j;
-    }
+    // const json dump()
+    // {
+    //     json j;
+    //     for (int i = 0; i < size(); i++)
+    //     {
+    //         if (!objects[i].isActive())
+    //             continue;
+    //         j[std::to_string(i)] = objects[i].dump();
+    //     }
+    //     return j;
+    // }
 
     void clear(size_t i)
     {
