@@ -59,7 +59,7 @@ void Image::render(const int xShift, const int yShift)
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);
 }
 
-// Render image with the offsets set in ctor
+// Render image with the member offsets by default
 void Image::render()
 {
     render(xShift, yShift);
@@ -114,4 +114,14 @@ void Cg::clear()
     Image::clear();
     part1.clear();
     part2.clear();
+}
+
+void Fw::render()
+{
+    auto x = xShift + FW_XSHIFT;
+    auto y = yShift + FW_YSHIFT;
+
+    Image::render(x, y);
+    part1.render(x, y);
+    part2.render(x, y);
 }

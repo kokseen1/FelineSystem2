@@ -502,8 +502,8 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
             return;
 
         // Attempt to match CS2 offsets for FW images
-        xShift += FW_XSHIFT;
-        yShift += FW_YSHIFT;
+        // xShift += FW_XSHIFT;
+        // yShift += FW_YSHIFT;
 
         // Assume same behaviour as CG
 

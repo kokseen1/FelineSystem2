@@ -63,12 +63,12 @@ public:
 
     const json dump();
 
+    void render(const int, const int);
+
 protected:
     TextureCache &textureCache;
 
     SDL_Renderer *renderer;
-
-    void render(const int, const int);
 };
 
 class Choice : public Image
@@ -119,6 +119,8 @@ class Fw : public Cg
     using Cg::Cg;
 
 public:
+    void render();
+
     const json dump();
 };
 
