@@ -145,11 +145,11 @@ public:
 
     constexpr size_t size() { return objects.size(); }
 
-    const _Tp &get(size_t i)
+    const std::pair<int, int> getShifts(size_t i)
     {
         if (i >= size())
             throw std::runtime_error("Out of range access");
-        return objects[i];
+        return {objects[i].xShift, objects[i].yShift};
     }
 
     // const json dump()
@@ -173,13 +173,13 @@ public:
 
     void clear()
     {
-        for (_Tp &image : objects)
+        for (auto &image : objects)
             image.clear();
     }
 
     void render()
     {
-        for (int i = 0; i < _Nm; i++)
-            objects[i].render();
+        for (auto &image : objects)
+            image.render();
     }
 };

@@ -65,7 +65,7 @@ public:
 
     const json dump();
 
-    const Image &getImage(const IMAGE_TYPE, const int);
+    const std::pair<int, int> getShifts(const IMAGE_TYPE, const int);
 
     void setImage(const IMAGE_TYPE, const int, std::string, int, int);
 

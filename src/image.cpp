@@ -128,10 +128,10 @@ void ImageManager::loadDump(const json &j)
 const json ImageManager::dump()
 {
     json j;
-//     j[KEY_BG] = bgLayer.dump();
-//     j[KEY_EG] = egLayer.dump();
-//     j[KEY_CG] = cgLayer.dump();
-//     j[KEY_FW] = fwLayer.dump();
+    //     j[KEY_BG] = bgLayer.dump();
+    //     j[KEY_EG] = egLayer.dump();
+    //     j[KEY_CG] = cgLayer.dump();
+    //     j[KEY_FW] = fwLayer.dump();
     return j;
 }
 
@@ -386,22 +386,22 @@ void ImageManager::clearImageType(const IMAGE_TYPE type)
 
 // Get reference to specified image type at z-index
 // Reference to base image for CG/FW
-const Image &ImageManager::getImage(const IMAGE_TYPE type, const int zIndex)
+const std::pair<int, int> ImageManager::getShifts(const IMAGE_TYPE type, const int zIndex)
 {
     switch (type)
     {
     case IMAGE_TYPE::BG:
-        return bgLayer.get(zIndex);
+        return bgLayer.getShifts(zIndex);
 
     case IMAGE_TYPE::EG:
-        return egLayer.get(zIndex);
+        return egLayer.getShifts(zIndex);
 
     // Assume that any valid CG/FW must always contain a valid base
     case IMAGE_TYPE::CG:
-        return cgLayer.get(zIndex);
+        return cgLayer.getShifts(zIndex);
 
     case IMAGE_TYPE::FW:
-        return fwLayer.get(zIndex);
+        return fwLayer.getShifts(zIndex);
     }
 }
 

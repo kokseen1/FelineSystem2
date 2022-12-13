@@ -348,9 +348,9 @@ void SceneManager::handleCommand(const std::string &cmdString)
         }
 
         // Support for @ symbol referring to previous value
-        const auto &image = imageManager.getImage(imageType, zIndex);
-        auto prevXShift = image.xShift;
-        auto prevYShift = image.yShift;
+        const auto &prevShifts = imageManager.getShifts(imageType, zIndex);
+        const auto &prevXShift = prevShifts.first;
+        const auto &prevYShift = prevShifts.second;
 
         auto xShiftStr = matches[4].str();
         auto yShiftStr = matches[5].str();
