@@ -55,6 +55,10 @@ public:
 
     bool isActive() { return !baseName.empty(); }
 
+    void fetch();
+
+    void update(const std::string &, int, int);
+
     void set(const std::string &, int, int);
 
     void render();
@@ -80,11 +84,12 @@ private:
 
 public:
     const std::string target;
+
     const std::string prompt;
 
     Choice(ImageManager &, const std::string &, const std::string &);
 
-    void render(const int);
+    void render();
 };
 
 class Bg : public Image
@@ -113,6 +118,8 @@ public:
 
     void clear();
 
+    void update(const std::string &, int, int);
+
     const json dump();
 };
 
@@ -128,9 +135,9 @@ public:
 
 typedef struct
 {
-    const Image &image;
     const std::string name; // Cannot be a reference in async
     const int index;
+    const Image *image;
 } ImageData;
 
 // Templated wrapper class for array of image objects
@@ -146,6 +153,13 @@ public:
     _Tp &operator[](size_t i) { return objects[i]; }
 
     constexpr size_t size() { return objects.size(); }
+
+    void update(const int i, const std::string rawName, const int x, const int y)
+    {
+        if (i >= size())
+            throw std::runtime_error("Out of range access");
+        objects[i].update(rawName, x, y);
+    }
 
     const std::pair<int, int> getShifts(size_t i)
     {

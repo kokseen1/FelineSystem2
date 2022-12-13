@@ -16,6 +16,8 @@ public:
 
     SDL_Renderer *getRenderer() { return renderer; }
 
+    void toggleFullscreen();
+
 private:
     void setWindowIcon(SDL_Window *);
 

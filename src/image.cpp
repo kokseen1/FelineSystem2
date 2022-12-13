@@ -164,47 +164,13 @@ ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer) : fileManage
     // Decode and cache choice selection asset
     processImage(sys_sel, sizeof(sys_sel), {SEL, 2});
 
-    mwnd.set(MWND, MWND_XSHIFT, MWND_YSHIFT);
-    mwndDeco.set(MWND_DECO, MWND_XSHIFT, MWND_YSHIFT);
-
     // Decode and cache message window assets
     processImage(sys_mwnd, sizeof(sys_mwnd), {MWND, 43});
     processImage(sys_mwnd, sizeof(sys_mwnd), {MWND_DECO, 42});
     if (textureCache[MWND].first != NULL)
         SDL_SetTextureAlphaMod(textureCache[MWND].first, MWND_ALPHA);
 
-    LOG << "ImageManager initialized";
-}
-
-void ImageManager::toggle_fullscreen()
-{
-#ifdef __EMSCRIPTEN__
-    // Much better for mobile
-    EmscriptenFullscreenChangeEvent fsce;
-    EMSCRIPTEN_RESULT ret = emscripten_get_fullscreen_status(&fsce);
-    if (!fsce.isFullscreen)
-    {
-        ret = emscripten_request_fullscreen("#canvas", 1);
-    }
-    else
-    {
-        ret = emscripten_exit_fullscreen();
-        ret = emscripten_get_fullscreen_status(&fsce);
-    }
-#else
-    // SDL fullscreen
-    static bool isFullscreen = false;
-    switch (isFullscreen)
-    {
-    case false:
-        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-        break;
-    case true:
-        SDL_SetWindowFullscreen(window, 0);
-        break;
-    }
-    isFullscreen = !isFullscreen;
-#endif
+    // LOG << "ImageManager initialized";
 }
 
 // Returns a pointer to a texture from a given frame
@@ -305,7 +271,7 @@ void ImageManager::renderChoices()
 
     for (auto choice : choices)
     {
-        choice.render(yShift);
+        choice.render();
         yShift += SEL_HEIGHT + SEL_SPACING;
     }
 }
@@ -405,181 +371,46 @@ const std::pair<int, int> ImageManager::getShifts(const IMAGE_TYPE type, const i
     }
 }
 
-// Parse comma separated asset names
-std::vector<std::string> ImageManager::getAssetArgs(const std::string &asset)
-{
-    std::stringstream ss(asset);
-    std::vector<std::string> args;
-
-    while (ss.good())
-    {
-        std::string arg;
-        getline(ss, arg, ',');
-        args.push_back(arg);
-    }
-
-    return args;
-}
-
 // Names of assets must be inserted in ascending z-index
-void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string asset, int xShift, int yShift)
+void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string rawName, int xShift, int yShift)
 {
 
 #ifdef LOWERCASE_ASSETS
     // Convert names to lowercase
-    Utils::lowercase(asset);
+    Utils::lowercase(rawName);
 #endif
 
     switch (type)
     {
 
     case IMAGE_TYPE::BG:
-        if (zIndex >= bgLayer.size())
-            return;
-        if (!fileManager.inDB(asset + IMAGE_EXT))
-            return;
-
-        bgLayer[zIndex].set(asset, xShift, yShift);
-        fetchImage(bgLayer[zIndex], asset);
+        bgLayer.update(zIndex, rawName, xShift, yShift);
         break;
-
     case IMAGE_TYPE::EG:
-        if (zIndex >= egLayer.size())
-            return;
-        if (!fileManager.inDB(asset + IMAGE_EXT))
-            return;
-
-        egLayer[zIndex].set(asset, xShift, yShift);
-        fetchImage(egLayer[zIndex], asset);
+        egLayer.update(zIndex, rawName, xShift, yShift);
         break;
-
     case IMAGE_TYPE::CG:
-    {
-        if (zIndex >= cgLayer.size())
-            return;
-
-        auto args = getAssetArgs(asset);
-        if (args.size() < 5)
-        {
-            LOG << "Invalid CG args for '" << asset << "'";
-            return;
-        }
-
-        const std::string &baseRaw = args[0];
-        const std::string &baseName = baseRaw + "_" + args[1];
-        const std::string &part1Name = baseRaw + "_" + Utils::zeroPad(args[3], 3);
-        const std::string &part2Name = baseRaw + "_" + Utils::zeroPad(args[4], 4);
-
-        Cg &cg = cgLayer[zIndex];
-        cg.clear();
-
-        // Store raw asset identifier
-        cg.assetRaw = asset;
-
-        if (fileManager.inDB(baseName + IMAGE_EXT))
-        {
-            cg.set(baseName, xShift, yShift);
-            fetchImage(cg, baseName);
-        }
-
-        if (fileManager.inDB(part1Name + IMAGE_EXT))
-        {
-            cg.part1.set(part1Name, xShift, yShift);
-            fetchImage(cg.part1, part1Name);
-        }
-
-        if (fileManager.inDB(part2Name + IMAGE_EXT))
-        {
-            cg.part2.set(part2Name, xShift, yShift);
-            fetchImage(cg.part2, part2Name);
-        }
-    }
-    break;
-
+        cgLayer.update(zIndex, rawName, xShift, yShift);
+        break;
     case IMAGE_TYPE::FW:
-    {
-        if (zIndex >= fwLayer.size())
-            return;
-
-        // Attempt to match CS2 offsets for FW images
-        // xShift += FW_XSHIFT;
-        // yShift += FW_YSHIFT;
-
-        // Assume same behaviour as CG
-
-        auto args = getAssetArgs(asset);
-        if (args.size() < 5)
-        {
-            LOG << "Invalid FW args for '" << asset << "'";
-            return;
-        }
-
-        const std::string &baseRaw = args[0];
-        const std::string &baseName = baseRaw + "_" + args[1];
-        const std::string &part1Name = baseRaw + "_" + Utils::zeroPad(args[3], 3);
-        const std::string &part2Name = baseRaw + "_" + Utils::zeroPad(args[4], 4);
-
-        Fw &fw = fwLayer[zIndex];
-        fw.clear();
-
-        fw.assetRaw = asset;
-
-        if (fileManager.inDB(baseName + IMAGE_EXT))
-        {
-            fw.set(baseName, xShift, yShift);
-            fetchImage(fw, baseName);
-        }
-
-        if (fileManager.inDB(part1Name + IMAGE_EXT))
-        {
-            fw.part1.set(part1Name, xShift, yShift);
-            fetchImage(fw.part1, part1Name);
-        }
-
-        if (fileManager.inDB(part2Name + IMAGE_EXT))
-        {
-            fw.part2.set(part2Name, xShift, yShift);
-            fetchImage(fw.part2, part2Name);
-        }
+        fwLayer.update(zIndex, rawName, xShift, yShift);
+        break;
     }
-    break;
-    }
-}
-
-// Helper function to fetch images that are not already in cache
-void ImageManager::fetchImage(const Image &image, const std::string &name)
-{
-    // Prevent fetching already cached images
-    auto pos = textureCache.find(name);
-    if (pos != textureCache.end())
-        return;
-
-    // Initialize cache entry with NULL (more efficient but prevents failed fetches from retrying)
-    // textureCache[name];
-
-    // Assume frame 0 for all images
-    fileManager.fetchAssetAndProcess(name + IMAGE_EXT, this, &ImageManager::processImageData, ImageData{image, name, 0});
 }
 
 // Called when image has been fetched
 // Will return early and skip processing in async fetch if image was already passed
-void ImageManager::processImageData(byte *buf, size_t sz, const ImageData &imageData)
+void ImageManager::processImage(byte *buf, size_t sz, const ImageData &imageData)
 {
     const auto &name = imageData.name;
+    const auto &frameIdx = imageData.index;
+    const Image *image = imageData.image;
 
     // Do not process if image was already passed
-    if (imageData.image.baseName != name)
+    if (image != NULL && image->baseName != name)
         return;
 
-    processImage(buf, sz, {name, imageData.index});
-}
-
-// Decode a raw HG buffer and cache the texture
-void ImageManager::processImage(byte *buf, size_t sz, std::pair<std::string, int> nameIdx)
-{
-    auto &name = nameIdx.first;
-    auto frameIdx = nameIdx.second;
-
+    // Decode a raw HG buffer and cache the texture
     HGHeader *hgHeader = reinterpret_cast<HGHeader *>(buf);
 
     // Verify signature

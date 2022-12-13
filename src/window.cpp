@@ -1,3 +1,8 @@
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif
+
 #include <window.hpp>
 #include <utils.hpp>
 
@@ -46,4 +51,35 @@ void WindowManager::setWindowIcon(SDL_Window *window)
 
     SDL_SetWindowIcon(window, surface);
     SDL_FreeSurface(surface);
+}
+
+void WindowManager::toggleFullscreen()
+{
+#ifdef __EMSCRIPTEN__
+    // Much better for mobile
+    EmscriptenFullscreenChangeEvent fsce;
+    EMSCRIPTEN_RESULT ret = emscripten_get_fullscreen_status(&fsce);
+    if (!fsce.isFullscreen)
+    {
+        ret = emscripten_request_fullscreen("#canvas", 1);
+    }
+    else
+    {
+        ret = emscripten_exit_fullscreen();
+        ret = emscripten_get_fullscreen_status(&fsce);
+    }
+#else
+    // SDL fullscreen
+    static bool isFullscreen = false;
+    switch (isFullscreen)
+    {
+    case false:
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        break;
+    case true:
+        SDL_SetWindowFullscreen(window, 0);
+        break;
+    }
+    isFullscreen = !isFullscreen;
+#endif
 }

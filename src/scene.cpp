@@ -225,11 +225,7 @@ int SceneManager::parseLine()
         break;
 
     case 0x20: // Display a message
-        if (stringTable->StringStart == '\0')
-        {
-            LOG << "Empty text!";
-        }
-        else
+        if (stringTable->StringStart != '\0')
         {
             if (speakerCounter == 0)
                 imageManager.currSpeaker.clear();

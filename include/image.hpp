@@ -75,13 +75,15 @@ public:
 
     void render();
 
-    void toggle_fullscreen();
-
     void toggleMwnd() { showMwnd = !showMwnd; };
 
     SDL_Renderer *getRenderer() { return renderer; };
 
     TextureCache &getCache() { return textureCache; };
+
+    FileManager &getFileManager() { return fileManager; };
+
+    void processImage(byte *, size_t, const ImageData &);
 
 private:
     TextureCache textureCache;
@@ -94,8 +96,8 @@ private:
 
     bool showMwnd = true;
 
-    Image mwnd{*this};
-    Image mwndDeco{*this};
+    Image mwnd{*this, MWND, MWND_XSHIFT, MWND_YSHIFT};
+    Image mwndDeco{*this, MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
 
     TTF_Font *font = NULL;
     TTF_Font *selectFont = NULL;
@@ -108,8 +110,6 @@ private:
     ImageLayer<Cg, MAX_CG> cgLayer;
     ImageLayer<Fw, MAX_FW> fwLayer;
 
-    std::vector<std::string> getAssetArgs(const std::string &);
-
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
 
     void renderChoices();
@@ -117,10 +117,6 @@ private:
     void setLogo();
 
     void fetchImage(const Image &, const std::string &);
-
-    void processImageData(byte *, size_t, const ImageData &);
-
-    void processImage(byte *, size_t, std::pair<std::string, int>);
 
     void renderMessage(const std::string &);
 

@@ -57,7 +57,7 @@ void main_loop()
                 break;
 
             case SDLK_f:
-                imageManager.toggle_fullscreen();
+                windowManager.toggleFullscreen();
                 break;
 
             case SDLK_1:

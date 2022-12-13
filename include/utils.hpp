@@ -111,4 +111,6 @@ namespace Utils
     {
         return detail::create_array(value, std::make_index_sequence<N>());
     }
+
+    const std::vector<std::string> getAssetArgs(const std::string &);
 }
