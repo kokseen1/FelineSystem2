@@ -75,11 +75,11 @@ private:
 
     void loadScript(byte *, size_t, const std::string &);
 
-    void loadScriptStart(byte *, size_t, const std::string&);
+    void loadScriptStart(byte *, size_t, const std::string &);
 
     void setScript(const std::string &);
 
-    void loadScriptOffset(byte *, size_t, const SaveData&);
+    void loadScriptOffset(byte *, size_t, const SaveData &);
 
     void setScriptOffset(const SaveData &);
 

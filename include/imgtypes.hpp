@@ -55,6 +55,8 @@ public:
 
     bool isActive() { return !baseName.empty(); }
 
+    const std::pair<int, int> getShifts() { return {xShift, yShift}; }
+
     void fetch();
 
     void update(const std::string &, int, int);
@@ -70,6 +72,8 @@ public:
     void render(const int, const int);
 
 protected:
+    virtual const std::string getRawName() { return baseName; }
+
     ImageManager &imageManager;
 
     TextureCache &textureCache;
@@ -110,7 +114,7 @@ public:
     Image part1;
     Image part2;
 
-    std::string assetRaw;
+    std::string rawName;
 
     Cg(ImageManager &);
 
@@ -120,7 +124,8 @@ public:
 
     void update(const std::string &, int, int);
 
-    const json dump();
+protected:
+    const std::string getRawName() { return rawName; }
 };
 
 class Fw : public Cg
@@ -129,8 +134,6 @@ class Fw : public Cg
 
 public:
     void render();
-
-    const json dump();
 };
 
 typedef struct
@@ -154,8 +157,13 @@ public:
 
     constexpr size_t size() { return objects.size(); }
 
-    void update(const int i, const std::string rawName, const int x, const int y)
+    void update(const int i, std::string rawName, const int x, const int y)
     {
+#ifdef LOWERCASE_ASSETS
+        // Convert names to lowercase
+        Utils::lowercase(rawName);
+#endif
+
         if (i >= size())
             throw std::runtime_error("Out of range access");
         objects[i].update(rawName, x, y);
@@ -165,25 +173,41 @@ public:
     {
         if (i >= size())
             throw std::runtime_error("Out of range access");
-        return {objects[i].xShift, objects[i].yShift};
+        return objects[i].getShifts();
     }
 
-    // const json dump()
-    // {
-    //     json j;
-    //     for (int i = 0; i < size(); i++)
-    //     {
-    //         if (!objects[i].isActive())
-    //             continue;
-    //         j[std::to_string(i)] = objects[i].dump();
-    //     }
-    //     return j;
-    // }
+    const json dump()
+    {
+        json j;
+        for (int i = 0; i < size(); i++)
+        {
+            if (!objects[i].isActive())
+                continue;
+            j[std::to_string(i)] = objects[i].dump();
+        }
+        return j;
+    }
+
+    void load(const json &j)
+    {
+        for (auto &e : j.items())
+        {
+            const auto i = std::stoi(e.key());
+            if (i >= size())
+                throw std::runtime_error("Out of range access");
+
+            const auto &rawName = e.value().at(KEY_NAME).get<std::string>();
+            auto xShift = e.value().at(KEY_XSHIFT).get<int>();
+            auto yShift = e.value().at(KEY_YSHIFT).get<int>();
+
+            objects[i].update(rawName, xShift, yShift);
+        }
+    }
 
     void clear(size_t i)
     {
         if (i >= size())
-            return;
+            throw std::runtime_error("Out of range access");
         objects[i].clear();
     }
 

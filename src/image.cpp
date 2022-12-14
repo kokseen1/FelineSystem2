@@ -11,128 +11,31 @@
 // Clear the entire canvas
 void ImageManager::clearCanvas()
 {
-    clearImageType(IMAGE_TYPE::BG);
-    clearImageType(IMAGE_TYPE::EG);
-    clearImageType(IMAGE_TYPE::CG);
-    clearImageType(IMAGE_TYPE::FW);
+    bgLayer.clear();
+    egLayer.clear();
+    cgLayer.clear();
+    fwLayer.clear();
 }
 
-// void to_json(json &j, const Image &i)
-// {
-//     j = json{
-//         {KEY_NAME, i.baseName},
-//         {KEY_XSHIFT, i.xShift},
-//         {KEY_YSHIFT, i.yShift}};
-// }
-
-// void from_json(const json &j, Image &i)
-// {
-//     j.at(KEY_NAME).get_to(i.baseName);
-//     j.at(KEY_XSHIFT).get_to(i.xShift);
-//     j.at(KEY_YSHIFT).get_to(i.yShift);
-// }
-
-// void to_json(json &j, const Fw &i)
-// {
-//     j = json{
-//         {KEY_NAME, i.assetRaw},
-//         // Assume base is always valid in a valid CG/FW
-//         // Undo hardcoded offset for FW
-//         {KEY_XSHIFT, i.base.xShift - FW_XSHIFT},
-//         {KEY_YSHIFT, i.base.yShift - FW_YSHIFT}};
-// }
-
-// void to_json(json &j, const Cg &i)
-// {
-//     j = json{
-//         {KEY_NAME, i.assetRaw},
-//         // Assume base is always valid in a valid CG
-//         {KEY_XSHIFT, i.base.xShift},
-//         {KEY_YSHIFT, i.base.yShift}};
-// }
-
-// void from_json(const json &j, Cg &i)
-// {
-//     j.at(KEY_NAME).get_to(i.assetRaw);
-//     // Assume base is always valid in a valid CG
-//     j.at(KEY_XSHIFT).get_to(i.base.xShift);
-//     j.at(KEY_YSHIFT).get_to(i.base.yShift);
-// }
-
-// const json Image::dump()
-// {
-//     auto &j = *this;
-//     return j;
-// }
-
-// const json Fw::dump()
-// {
-//     auto &j = *this;
-//     return j;
-// }
-
-// const json Cg::dump()
-// {
-//     auto &j = *this;
-//     return j;
-// }
-
 // Load a json object of dumped image data
-// Throws json::out_of_range if key is missing
 void ImageManager::loadDump(const json &j)
 {
     clearCanvas();
 
-    // if (j.contains(KEY_BG))
-    // {
-    //     for (auto &e : j[KEY_BG].items())
-    //     {
-    //         const auto &idx = std::stoi(e.key());
-    //         auto bg = e.value().get<Bg>();
-    //         setImage(IMAGE_TYPE::BG, idx, bg.baseName, bg.xShift, bg.yShift);
-    //     }
-    // }
-
-    // if (j.contains(KEY_EG))
-    // {
-    //     for (auto &e : j[KEY_EG].items())
-    //     {
-    //         const auto &idx = std::stoi(e.key());
-    //         auto eg = e.value().get<Eg>();
-    //         setImage(IMAGE_TYPE::EG, idx, eg.baseName, eg.xShift, eg.yShift);
-    //     }
-    // }
-
-    // if (j.contains(KEY_CG))
-    // {
-    //     for (auto &e : j[KEY_CG].items())
-    //     {
-    //         const auto &idx = std::stoi(e.key());
-    //         auto cg = e.value().get<Cg>();
-    //         setImage(IMAGE_TYPE::CG, idx, cg.assetRaw, cg.base.xShift, cg.base.yShift);
-    //     }
-    // }
-
-    // if (j.contains(KEY_FW))
-    // {
-    //     for (auto &e : j[KEY_FW].items())
-    //     {
-    //         const auto &idx = std::stoi(e.key());
-    //         auto fw = e.value().get<Fw>();
-    //         setImage(IMAGE_TYPE::FW, idx, fw.assetRaw, fw.base.xShift, fw.base.yShift);
-    //     }
-    // }
+    bgLayer.load(j.at(KEY_BG));
+    egLayer.load(j.at(KEY_EG));
+    cgLayer.load(j.at(KEY_CG));
+    fwLayer.load(j.at(KEY_FW));
 }
 
 // Dump all images currently on the canvas to a json object
 const json ImageManager::dump()
 {
-    json j;
-    //     j[KEY_BG] = bgLayer.dump();
-    //     j[KEY_EG] = egLayer.dump();
-    //     j[KEY_CG] = cgLayer.dump();
-    //     j[KEY_FW] = fwLayer.dump();
-    return j;
+    return {
+        {KEY_BG, bgLayer.dump()},
+        {KEY_EG, egLayer.dump()},
+        {KEY_CG, cgLayer.dump()},
+        {KEY_FW, fwLayer.dump()}};
 }
 
 ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer) : fileManager{fm}, renderer{renderer}, bgLayer{*this}, egLayer{*this}, cgLayer{*this}, fwLayer{*this}
@@ -374,15 +277,8 @@ const std::pair<int, int> ImageManager::getShifts(const IMAGE_TYPE type, const i
 // Names of assets must be inserted in ascending z-index
 void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string rawName, int xShift, int yShift)
 {
-
-#ifdef LOWERCASE_ASSETS
-    // Convert names to lowercase
-    Utils::lowercase(rawName);
-#endif
-
     switch (type)
     {
-
     case IMAGE_TYPE::BG:
         bgLayer.update(zIndex, rawName, xShift, yShift);
         break;

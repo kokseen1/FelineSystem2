@@ -94,6 +94,14 @@ void Image::render()
     render(xShift, yShift);
 }
 
+const json Image::dump()
+{
+    return {
+        {KEY_NAME, getRawName()},
+        {KEY_XSHIFT, xShift},
+        {KEY_YSHIFT, yShift}};
+}
+
 // Render text for a selection box
 void Choice::renderText(const int xShift, const int yShift)
 {
@@ -135,7 +143,7 @@ void Cg::render()
 
 void Cg::clear()
 {
-    assetRaw.clear();
+    rawName.clear();
 
     Image::clear();
     part1.clear();
@@ -150,6 +158,7 @@ void Cg::update(const std::string &rawName, int x, int y)
         return;
 
     clear();
+    Cg::rawName = rawName;
 
     const std::string &rawBase = args[0];
     const std::string &baseName = rawBase + "_" + args[1];

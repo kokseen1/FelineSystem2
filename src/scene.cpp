@@ -6,12 +6,6 @@ using json = nlohmann::json;
 
 #include <algorithm>
 
-void to_json(json &j, const std::vector<Choice> &choices)
-{
-    for (const auto &c : choices)
-        j[c.target] = c.prompt;
-}
-
 SceneManager::SceneManager(AudioManager &mm, ImageManager &im, FileManager &fm) : audioManager{mm}, imageManager{im}, fileManager{fm}
 {
     fileManager.init(this);
@@ -431,9 +425,9 @@ void SceneManager::saveState(const int saveSlot)
     jScene[KEY_SCRIPT_NAME] = currScriptName;
     jScene[KEY_OFFSET] = stringTableBase - reinterpret_cast<byte *>(stringOffsetTable);
 
-    const json &jChoice(currChoices);
-    if (!jChoice.empty())
-        jScene[KEY_CHOICE] = jChoice;
+    json &jChoices = jScene[KEY_CHOICE];
+    for (const auto &c : currChoices)
+        jChoices[c.target] = c.prompt;
 
     Utils::save(std::to_string(saveSlot), j);
 }
@@ -461,12 +455,10 @@ void SceneManager::loadState(const int saveSlot)
         audioManager.loadDump(jAudio);
 
         currChoices.clear();
-        if (jScene.contains(KEY_CHOICE))
-        {
-            // Populate choices from savedata
-            for (auto &el : jScene.at(KEY_CHOICE).items())
-                currChoices.push_back({imageManager, el.key(), el.value()});
-        }
+
+        // Populate choices from savedata
+        for (auto &el : jScene.at(KEY_CHOICE).items())
+            currChoices.push_back({imageManager, el.key(), el.value()});
     }
     catch (const json::out_of_range &e)
     {

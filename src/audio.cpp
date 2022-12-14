@@ -35,6 +35,7 @@ void Sound::set(const std::string &n, const int l)
 
 void Sound::play(byte *buf, const size_t sz, const int channel)
 {
+    Mix_HaltChannel(channel);
     free();
 
     rwOps = SDL_RWFromConstMem(buf, sz);
@@ -153,8 +154,6 @@ void AudioManager::playSoundFromMem(byte *buf, size_t sz, const SoundData& sound
     // Ensure current sound is to be played (async)
     if (name != sound.getName())
         return;
-
-    stopSound(channel);
 
     sound.play(buf, sz, channel);
 }
