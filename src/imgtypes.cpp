@@ -32,23 +32,26 @@ void Image::set(const std::string &name, int x, int y)
     yShift = y;
 }
 
+bool Image::isCached()
+{
+    auto pos = textureCache.find(baseName);
+    if (pos != textureCache.end())
+        return true;
+
+    return false;
+}
+
 // Fetch and cache the current image
 void Image::fetch()
 {
     // Prevent fetching already cached images
-    auto pos = textureCache.find(baseName);
-    if (pos != textureCache.end())
+    if (isCached())
         return;
 
     // Initialize cache entry with NULL (more efficient but prevents failed fetches from retrying)
     // textureCache[name];
 
     imageManager.getFileManager().fetchAssetAndProcess(baseName + IMAGE_EXT, &imageManager, &ImageManager::processImage, ImageData{baseName, 0, this});
-}
-
-void Image::clear()
-{
-    baseName.clear();
 }
 
 void Choice::render()
@@ -134,11 +137,21 @@ void Choice::renderText(const int xShift, const int yShift)
     SDL_FreeSurface(surface);
 }
 
+// Private render implementation
+// Will only render the sprite when all sub-sprites are ready
+void Cg::render(int x, int y)
+{
+    if (!isReady())
+        return;
+
+    Image::render(x, y);
+    part1.render(x, y);
+    part2.render(x, y);
+}
+
 void Cg::render()
 {
-    Image::render();
-    part1.render();
-    part2.render();
+    render(xShift, yShift);
 }
 
 void Cg::clear()
@@ -148,6 +161,21 @@ void Cg::clear()
     Image::clear();
     part1.clear();
     part2.clear();
+}
+
+// Return if the multi-part sprite is cached and ready to be rendered as a whole
+bool Cg::isReady()
+{
+    if (isActive() && !isCached())
+        return false;
+
+    if (part1.isActive() && !part1.isCached())
+        return false;
+
+    if (part2.isActive() && !part2.isCached())
+        return false;
+
+    return true;
 }
 
 void Cg::update(const std::string &rawName, int x, int y)
@@ -170,12 +198,8 @@ void Cg::update(const std::string &rawName, int x, int y)
     part2.update(part2Name, x, y);
 }
 
+// Render at a special shifted offset for FW sprites
 void Fw::render()
 {
-    auto x = xShift + FW_XSHIFT;
-    auto y = yShift + FW_YSHIFT;
-
-    Image::render(x, y);
-    part1.render(x, y);
-    part2.render(x, y);
+    Cg::render(xShift + FW_XSHIFT, yShift + FW_YSHIFT);
 }

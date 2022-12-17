@@ -61,17 +61,19 @@ public:
 
     void update(const std::string &, int, int);
 
-    void set(const std::string &, int, int);
-
     void render();
 
-    void clear();
+    void clear() { baseName.clear(); }
 
     const json dump();
 
     void render(const int, const int);
 
+    bool isCached();
+
 protected:
+    void set(const std::string &, int, int);
+
     virtual const std::string getRawName() { return baseName; }
 
     ImageManager &imageManager;
@@ -118,14 +120,19 @@ public:
 
     Cg(ImageManager &);
 
-    void render();
-
     void clear();
 
     void update(const std::string &, int, int);
 
+    void render();
+
 protected:
+    void render(int, int);
+
     const std::string getRawName() { return rawName; }
+
+private:
+    bool isReady();
 };
 
 class Fw : public Cg
