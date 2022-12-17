@@ -6,10 +6,9 @@ using json = nlohmann::json;
 
 #include <algorithm>
 
-SceneManager::SceneManager(AudioManager &mm, ImageManager &im, FileManager &fm) : audioManager{mm}, imageManager{im}, fileManager{fm}
+SceneManager::SceneManager(AudioManager &mm, ImageManager &im, FileManager &fm, std::vector<Choice>& currChoices) : audioManager{mm}, imageManager{im}, fileManager{fm}, currChoices{currChoices}
 {
     fileManager.init(this);
-    imageManager.init(this);
 }
 
 // Parse a raw CST file from a memory buffer and store the uncompressed script

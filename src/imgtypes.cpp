@@ -54,11 +54,11 @@ void Image::fetch()
     imageManager.getFileManager().fetchAssetAndProcess(baseName + IMAGE_EXT, &imageManager, &ImageManager::processImage, ImageData{baseName, 0, this});
 }
 
-void Choice::render()
+void Choice::render(const int y)
 {
     // Render base box image
-    Image::render(xShift, yShift);
-    renderText(xShift, yShift);
+    Image::render(xShift, y);
+    renderText(xShift, y);
 }
 
 // Render image with given offsets

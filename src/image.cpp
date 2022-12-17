@@ -38,7 +38,7 @@ const json ImageManager::dump()
         {KEY_FW, fwLayer.dump()}};
 }
 
-ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer) : fileManager{fm}, renderer{renderer}, bgLayer{*this}, egLayer{*this}, cgLayer{*this}, fwLayer{*this}
+ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer, std::vector<Choice>& currChoices) : fileManager{fm}, renderer{renderer}, bgLayer{*this}, egLayer{*this}, cgLayer{*this}, fwLayer{*this}, currChoices{currChoices}
 {
     // Background color when rendering transparent textures
     if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0) < 0)
@@ -164,17 +164,16 @@ void ImageManager::renderMessage(const std::string &text)
 // Render choice textures
 void ImageManager::renderChoices()
 {
-    auto &choices = sceneManager->getCurrChoices();
-    auto sz = choices.size();
+    auto sz = currChoices.size();
     if (sz == 0)
         return;
 
     auto blockHeight = sz * SEL_HEIGHT + (sz - 1) * SEL_SPACING;
     auto yShift = WINDOW_HEIGHT / 2 - blockHeight / 2;
 
-    for (auto choice : choices)
+    for (auto choice : currChoices)
     {
-        choice.render();
+        choice.render(yShift);
         yShift += SEL_HEIGHT + SEL_SPACING;
     }
 }

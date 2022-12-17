@@ -17,11 +17,13 @@
 #include <sstream>
 #include <iomanip>
 
+static std::vector<Choice> currChoices;
+
 static FileManager fileManager;
 static WindowManager windowManager;
 static AudioManager audioManager(fileManager);
-static ImageManager imageManager(fileManager, windowManager.getRenderer());
-static SceneManager sceneManager(audioManager, imageManager, fileManager);
+static ImageManager imageManager(fileManager, windowManager.getRenderer(), currChoices);
+static SceneManager sceneManager(audioManager, imageManager, fileManager, currChoices);
 
 void main_loop()
 {

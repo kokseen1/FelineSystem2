@@ -3,7 +3,6 @@
 #include <hgdecoder.hpp>
 #include <file.hpp>
 #include <window.hpp>
-#include <scene.hpp>
 #include <imgtypes.hpp>
 
 #include <asmodean.h>
@@ -55,9 +54,7 @@ public:
     std::string currText;
     std::string currSpeaker;
 
-    ImageManager(FileManager &, SDL_Renderer *);
-
-    void init(SceneManager *sm) { sceneManager = sm; }
+    ImageManager(FileManager &, SDL_Renderer *, std::vector<Choice> &);
 
     void clearCanvas();
 
@@ -86,10 +83,11 @@ public:
     void processImage(byte *, size_t, const ImageData &);
 
 private:
+    std::vector<Choice> &currChoices;
+
     TextureCache textureCache;
 
     FileManager &fileManager;
-    SceneManager *sceneManager = NULL;
 
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;

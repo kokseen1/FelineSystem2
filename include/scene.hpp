@@ -60,7 +60,7 @@ private:
 
     std::string currScriptName;
 
-    std::vector<Choice> currChoices;
+    std::vector<Choice> &currChoices;
 
     // Vector containing uncompressed script data to be traversed
     std::vector<byte> currScriptData;
@@ -90,9 +90,7 @@ private:
     std::string sj2utf8(const std::string &);
 
 public:
-    SceneManager(AudioManager &, ImageManager &, FileManager &);
-
-    std::vector<Choice> &getCurrChoices() { return currChoices; };
+    SceneManager(AudioManager &, ImageManager &, FileManager &, std::vector<Choice>&);
 
     void parse()
     {

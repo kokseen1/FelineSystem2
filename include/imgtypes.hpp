@@ -95,7 +95,7 @@ public:
 
     Choice(ImageManager &, const std::string &, const std::string &);
 
-    void render();
+    void render(const int);
 };
 
 class Bg : public Image
