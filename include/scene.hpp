@@ -17,7 +17,7 @@
 #define SCRIPT_SIGNATURE "CatScene"
 
 #define SCRIPT_ENTRYPOINT "op"
-#define WAIT_DEFAULT_DELAY 100
+#define WAIT_DEFAULT_DELAY 60
 
 #define KEY_SCENE "scene"
 #define KEY_IMAGE "image"
@@ -69,7 +69,7 @@ private:
     StringOffsetTable *stringOffsetTable;
     byte *stringTableBase;
 
-    void setDelay(Uint64 delay) { targetTicks = SDL_GetTicks64() + delay; }
+    void setDelay(Uint64 delay) { targetTicks = SDL_GetTicks64() + delay * 16; }
 
     void handleCommand(const std::string &);
 

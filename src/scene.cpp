@@ -256,8 +256,8 @@ void SceneManager::handleCommand(const std::string &cmdString)
     if (std::regex_search(cmdString, matches, std::regex("^wait(?: (\\d+))")))
     {
         const std::string &arg = matches[1].str();
-        Uint32 ms = arg.empty() ? WAIT_DEFAULT_DELAY : std::stoi(arg);
-        setDelay(ms);
+        Uint32 dur = arg.empty() ? WAIT_DEFAULT_DELAY : std::stoi(arg);
+        setDelay(dur);
     }
     else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
