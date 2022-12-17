@@ -58,10 +58,29 @@ FelineSystem2 implements a custom database of the game's KIF archives and assets
 ### Parser
 
 - If statements must contain a whitespace after the closing parenthesis of the condition
+  - `if (#300==0) #(950+#300)=512`
 - Operators follow C-Style left-to-right precedence and associativity
-- Integers are the only data type that exist
+- Integers and strings are the only data types that exist
+  - `#300=0`
+  - `str 50 bg02`
 - Variable names can only be integers
 - Variable names can be dynamically evaluated
+  - `#(950+#300)=512`
+
+### Script
+
+- `blend` argument specifies the alpha value that the image will be displayed at 
+  - `cg 0 blend 255` will display a completely opaque CG while `cg 0 blend 0` will display a completely transparent CG
+- `rdraw` command after an image specifies the duration to fade to the target opacity
+  - `rdraw 30` will take `30` frames to fade the image from alpha `0` to the target alpha (e.g. `255` by default)
+  - Units are likely in frames at `60`fps (`0.0167s/frame`) regardless of the game's refresh rate setting
+  - An `rdraw` command will apply to all images within a script block (from a user input to the next `wait` command)
+- `wait` command without arguments will block until any time-based command completes
+  - `wait` after a `rdraw 30` command will wait for the `30` frames taken to completely fade in the images before proceeding to the next command
+- `wait` with arguments behaves differently from standalone `wait`
+  - `wait 60` will block for `60` frames before proceeding to the next command
+  - `wait 60` will not be aware of any time-based commands like `rdraw` and will not block until `rdraw` completes
+  - `wait` is sometimes used along with `wait 60` consecutively
 
 ## Special Thanks
 
