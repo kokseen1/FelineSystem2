@@ -6,7 +6,7 @@ using json = nlohmann::json;
 
 #include <algorithm>
 
-SceneManager::SceneManager(AudioManager &mm, ImageManager &im, FileManager &fm, std::vector<Choice>& currChoices) : audioManager{mm}, imageManager{im}, fileManager{fm}, currChoices{currChoices}
+SceneManager::SceneManager(AudioManager &mm, ImageManager &im, FileManager &fm, std::vector<Choice> &currChoices) : audioManager{mm}, imageManager{im}, fileManager{fm}, currChoices{currChoices}
 {
     fileManager.init(this);
 }
@@ -166,7 +166,7 @@ void SceneManager::tickScript()
     //     prevStringOffsetTable = stringOffsetTable;
 
     // Keep parsing lines until reaching a break or wait
-    while (parseScript && SDL_GetTicks64() >= targetTicks)
+    while (parseScript && SDL_GetTicks64() >= targetTicks && imageManager.getFramesElapsed() >= (imageManager.getRdrawStart() + imageManager.getCurrRdraw()))
     {
         // Check for failed parsing and break out of blocking loop
         if (parseLine() != 0)
@@ -224,6 +224,7 @@ int SceneManager::parseLine()
                 imageManager.currSpeaker.clear();
 
             imageManager.currText = cleanText(std::string(&stringTable->StringStart));
+            LOG << imageManager.currText;
             speakerCounter--;
         }
         break;
@@ -249,15 +250,31 @@ int SceneManager::parseLine()
 // Parse command and dispatch to respective handlers
 void SceneManager::handleCommand(const std::string &cmdString)
 {
+    // Number of frames to spend fading from one sprite to the next
+    // Default is 1 frame - no fade effect (alpha 0 to 255 within 1 frame)
+    static unsigned int rdraw;
+
 #ifdef LOG_CMD
     LOG << "'" << cmdString << "'";
 #endif
     std::smatch matches;
-    if (std::regex_search(cmdString, matches, std::regex("^wait(?: (\\d+))")))
+    if (std::regex_search(cmdString, matches, std::regex("^wait\\s?(\\d*)")))
     {
         const std::string &arg = matches[1].str();
-        Uint32 dur = arg.empty() ? WAIT_DEFAULT_DELAY : std::stoi(arg);
-        setDelay(dur);
+        if (!arg.empty())
+        {
+            // Uint32 dur = std::stoi(arg);
+            // setDelay(dur);
+        }
+        else
+        {
+            imageManager.setRdraw(rdraw);
+            rdraw = 0;
+        }
+    }
+    else if (std::regex_search(cmdString, matches, std::regex("^rdraw (\\d+)")))
+    {
+        rdraw = std::stoi(matches[1].str());
     }
     else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {

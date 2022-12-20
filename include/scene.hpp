@@ -90,17 +90,26 @@ private:
     std::string sj2utf8(const std::string &);
 
 public:
-    SceneManager(AudioManager &, ImageManager &, FileManager &, std::vector<Choice>&);
+    SceneManager(AudioManager &, ImageManager &, FileManager &, std::vector<Choice> &);
 
     void parse()
     {
+        // Skip timer if any
         targetTicks = 0;
+
+        // Indicate to parse the next line
         parseScript = true;
+
+        // Skip any remaining transitions/animations
+        imageManager.setRdraw(0);
+        imageManager.render();
+
+        // Hide text when transitioning (follows CS2 behaviour)
+        imageManager.currText.clear();
+        imageManager.currSpeaker.clear();
     }
 
     void tickScript();
-
-    // void parseNext();
 
     void start();
 

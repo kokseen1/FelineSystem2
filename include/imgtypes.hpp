@@ -51,7 +51,7 @@ public:
     int xShift = 0;
     int yShift = 0;
 
-    Image(ImageManager &, std::string = "", int = 0, int = 0);
+    Image(ImageManager &, std::string = "", int = 0, int = 0, unsigned int = 255);
 
     bool isActive() { return !baseName.empty(); }
 
@@ -63,7 +63,7 @@ public:
 
     void render();
 
-    void clear() { baseName.clear(); }
+    void clear();
 
     const json dump();
 
@@ -71,16 +71,29 @@ public:
 
     bool isCached();
 
+    void setTargetAlpha(const unsigned int target) { targetAlpha = target; }
+
 protected:
+    virtual void display(std::string &, int, int, unsigned int);
+
     void set(const std::string &, int, int);
 
-    virtual const std::string getRawName() { return baseName; }
+    unsigned int targetAlpha;
+
+    bool transitioning = false;
 
     ImageManager &imageManager;
 
     TextureCache &textureCache;
 
     SDL_Renderer *renderer;
+
+private:
+    // Info about the image before the current one
+    std::string prevBaseName;
+    int prevTargetAlpha = 255;
+    int prevXShift = 0;
+    int prevYShift = 0;
 };
 
 class Choice : public Image
@@ -110,11 +123,29 @@ class Eg : public Image
     using Image::Image;
 };
 
-class Cg : public Image
+class Base : public Image
+{
+    using Image::Image;
+};
+
+class Part1 : public Image
+{
+    using Image::Image;
+};
+
+class Part2 : public Image
+{
+    using Image::Image;
+};
+
+class Cg : public Base, public Part1, public Part2
 {
 public:
-    Image part1;
-    Image part2;
+    const json dump();
+
+    const std::pair<int, int> getShifts() { return Base::getShifts(); }
+
+    bool isActive() { return Base::isActive(); }
 
     std::string rawName;
 
@@ -126,11 +157,6 @@ public:
 
     void render();
 
-protected:
-    void render(int, int);
-
-    const std::string getRawName() { return rawName; }
-
 private:
     bool isReady();
 };
@@ -139,8 +165,8 @@ class Fw : public Cg
 {
     using Cg::Cg;
 
-public:
-    void render();
+protected:
+    void display(std::string &, int, int, unsigned int);
 };
 
 typedef struct

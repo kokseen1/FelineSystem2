@@ -38,7 +38,7 @@ const json ImageManager::dump()
         {KEY_FW, fwLayer.dump()}};
 }
 
-ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer, std::vector<Choice>& currChoices) : fileManager{fm}, renderer{renderer}, bgLayer{*this}, egLayer{*this}, cgLayer{*this}, fwLayer{*this}, currChoices{currChoices}
+ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer, std::vector<Choice> &currChoices) : fileManager{fm}, renderer{renderer}, bgLayer{*this}, egLayer{*this}, cgLayer{*this}, fwLayer{*this}, currChoices{currChoices}
 {
     // Background color when rendering transparent textures
     if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0) < 0)
@@ -70,8 +70,6 @@ ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer, std::vector<
     // Decode and cache message window assets
     processImage(sys_mwnd, sizeof(sys_mwnd), {MWND, 43});
     processImage(sys_mwnd, sizeof(sys_mwnd), {MWND_DECO, 42});
-    if (textureCache[MWND].first != NULL)
-        SDL_SetTextureAlphaMod(textureCache[MWND].first, MWND_ALPHA);
 
     // LOG << "ImageManager initialized";
 }
@@ -181,6 +179,8 @@ void ImageManager::renderChoices()
 // Render images in order of type precedence and z-index
 void ImageManager::render()
 {
+    framesElapsed++;
+
     // Clear render canvas
     SDL_RenderClear(renderer);
 
@@ -204,6 +204,7 @@ void ImageManager::render()
 
     // Update screen
     SDL_RenderPresent(renderer);
+
 }
 
 // Clear image of type at specified z index

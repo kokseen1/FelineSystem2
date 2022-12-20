@@ -82,7 +82,23 @@ public:
 
     void processImage(byte *, size_t, const ImageData &);
 
+    // Sets the number of frames to take to render any upcoming transition/animation
+    void setRdraw(const unsigned int rdraw)
+    {
+        rdrawStart = getFramesElapsed();
+        currRdraw = rdraw;
+    }
+
+    Uint64 getFramesElapsed() { return framesElapsed; }
+    Uint64 getRdrawStart() { return rdrawStart; }
+    unsigned int getCurrRdraw() { return currRdraw; }
+
 private:
+    // Used for synchronizing transitions/animations with the render framerate
+    Uint64 framesElapsed = 0;
+    Uint64 rdrawStart = 0;
+    unsigned int currRdraw = 0;
+
     std::vector<Choice> &currChoices;
 
     TextureCache textureCache;
@@ -94,7 +110,7 @@ private:
 
     bool showMwnd = true;
 
-    Image mwnd{*this, MWND, MWND_XSHIFT, MWND_YSHIFT};
+    Image mwnd{*this, MWND, MWND_XSHIFT, MWND_YSHIFT, MWND_ALPHA};
     Image mwndDeco{*this, MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
 
     TTF_Font *font = NULL;
