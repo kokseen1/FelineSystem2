@@ -73,6 +73,8 @@ public:
 
     void setTargetAlpha(const unsigned int target) { targetAlpha = target; }
 
+    void move(const unsigned int, const int, const int);
+
 protected:
     virtual void display(std::string &, int, int, unsigned int);
 
@@ -94,6 +96,11 @@ private:
     int prevTargetAlpha = 255;
     int prevXShift = 0;
     int prevYShift = 0;
+
+    bool moving = false;
+    unsigned int moveRdraw;
+    int targetXShift;
+    int targetYShift;
 };
 
 class Choice : public Image
@@ -159,6 +166,8 @@ public:
 
     void setTargetAlpha(const unsigned int);
 
+    void move(const unsigned int, const int, const int);
+
 private:
     bool isReady();
 };
@@ -202,6 +211,13 @@ public:
         if (i >= size())
             throw std::runtime_error("Out of range access");
         objects[i].update(rawName, x, y);
+    }
+
+    void move(const int i, const unsigned int rdraw, const int targetXShift, const int targetYshift)
+    {
+        if (i >= size())
+            throw std::runtime_error("Out of range access");
+        objects[i].move(rdraw, targetXShift, targetYshift);
     }
 
     void setTargetAlpha(const int i, const unsigned int target)

@@ -367,6 +367,11 @@ void SceneManager::handleCommand(const std::string &cmdString)
             return;
         }
 
+        // Support for @ symbol referring to previous value
+        const auto &prevShifts = imageManager.getShifts(imageType, zIndex);
+        const auto &prevXShift = prevShifts.first;
+        const auto &prevYShift = prevShifts.second;
+
         if (asset == "blend")
         {
             imageManager.setBlend(imageType, zIndex, parser.parse(matches[4].str()));
@@ -379,6 +384,16 @@ void SceneManager::handleCommand(const std::string &cmdString)
 
         else if (asset == "move")
         {
+            const auto &rdrawStr = matches[4].str();
+            const auto &xShiftStr = matches[5].str();
+            const auto &yShiftStr = matches[6].str();
+
+            unsigned int rdraw = std::stoi(rdrawStr);
+            int targetXShift = parser.parse(xShiftStr, prevXShift);
+            int targetYShift = parser.parse(yShiftStr, prevYShift);
+
+            imageManager.setMove(imageType, zIndex, rdraw, targetXShift, targetYShift);
+
         }
 
         // eg 5 amove1 240 100+96 300-144
@@ -404,10 +419,6 @@ void SceneManager::handleCommand(const std::string &cmdString)
 
         else
         {
-            // Support for @ symbol referring to previous value
-            const auto &prevShifts = imageManager.getShifts(imageType, zIndex);
-            const auto &prevXShift = prevShifts.first;
-            const auto &prevYShift = prevShifts.second;
 
             const auto &xShiftStr = matches[4].str();
             const auto &yShiftStr = matches[5].str();

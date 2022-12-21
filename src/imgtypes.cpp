@@ -79,6 +79,14 @@ void Choice::render(const int y)
     renderText(xShift, y);
 }
 
+void Image::move(const unsigned int rdraw, const int x, const int y)
+{
+    moveRdraw = rdraw;
+    targetXShift = x;
+    targetYShift = y;
+    moving = true;
+}
+
 // Internal function to render the image
 void Image::display(std::string &name, int x, int y, unsigned int alpha)
 {
@@ -109,7 +117,7 @@ void Image::display(std::string &name, int x, int y, unsigned int alpha)
 }
 
 // Render image with given offsets
-void Image::render(const int xShift, const int yShift)
+void Image::render(const int x, const int y)
 {
     unsigned int alpha = targetAlpha;
     unsigned int prevAlpha = prevTargetAlpha;
@@ -125,8 +133,19 @@ void Image::render(const int xShift, const int yShift)
         prevAlpha = ratio * prevTargetAlpha;
     }
 
+    if (moving && moveRdraw > 0)
+    {
+        xShift += (double)(targetXShift - xShift) / moveRdraw;
+        yShift += (double)(targetYShift - yShift) / moveRdraw;
+        LOG << baseName << " : " << xShift << ", " << yShift << ", " << currRdraw;
+        moveRdraw--;
+    }
+
     if (alpha == targetAlpha)
         transitioning = false;
+
+    if (xShift >= targetXShift && yShift >= targetYShift)
+        moving = false;
 
     display(prevBaseName, prevXShift, prevYShift, prevTargetAlpha - prevAlpha);
     display(baseName, xShift, yShift, alpha);
@@ -205,6 +224,13 @@ void Cg::clear()
     Base::clear();
     Part1::clear();
     Part2::clear();
+}
+
+void Cg::move(const unsigned int rdraw, const int x, const int y)
+{
+    Base::move(rdraw, x, y);
+    Part1::move(rdraw, x, y);
+    Part2::move(rdraw, x, y);
 }
 
 void Cg::setTargetAlpha(const unsigned int target)

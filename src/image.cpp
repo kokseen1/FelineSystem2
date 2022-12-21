@@ -278,6 +278,25 @@ const std::pair<int, int> ImageManager::getShifts(const IMAGE_TYPE type, const i
     }
 }
 
+void ImageManager::setMove(const IMAGE_TYPE type, const int zIndex, const unsigned int rdraw, const int x, const int y)
+{
+    switch (type)
+    {
+    case IMAGE_TYPE::BG:
+        bgLayer.move(zIndex, rdraw, x, y);
+        break;
+    case IMAGE_TYPE::EG:
+        egLayer.move(zIndex, rdraw, x, y);
+        break;
+    case IMAGE_TYPE::CG:
+        cgLayer.move(zIndex, rdraw, x, y);
+        break;
+    case IMAGE_TYPE::FW:
+        fwLayer.move(zIndex, rdraw, x, y);
+        break;
+    }
+}
+
 // Names of assets must be inserted in ascending z-index
 void ImageManager::setBlend(const IMAGE_TYPE type, const int zIndex, const unsigned int alpha)
 {
