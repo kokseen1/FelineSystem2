@@ -15,6 +15,8 @@ void ImageManager::clearCanvas()
     egLayer.clear();
     cgLayer.clear();
     fwLayer.clear();
+
+    killRdraw();
 }
 
 // Load a json object of dumped image data
@@ -194,17 +196,19 @@ void ImageManager::render()
         mwnd.render();
         mwndDeco.render();
 
-        fwLayer.render();
+        if (showText)
+        {
+            fwLayer.render();
 
-        renderMessage(currText);
-        renderSpeaker(currSpeaker);
+            renderMessage(currText);
+            renderSpeaker(currSpeaker);
+        }
     }
 
     renderChoices();
 
     // Update screen
     SDL_RenderPresent(renderer);
-
 }
 
 // Clear image of type at specified z index
@@ -338,4 +342,18 @@ void ImageManager::processImage(byte *buf, size_t sz, const ImageData &imageData
     textureCache[name] = std::make_pair(texture, *frame.Stdinfo);
 
     LOG << "Cached: " << name << "[" << frameIdx << "]";
+}
+
+// Forcefully complete any transition/animation
+void ImageManager::killRdraw()
+{
+    setRdraw(0);
+    render();
+}
+
+// Sets the number of frames to take to render any upcoming transition/animation
+void ImageManager::setRdraw(const unsigned int rdraw)
+{
+    rdrawStart = getFramesElapsed();
+    currRdraw = rdraw;
 }

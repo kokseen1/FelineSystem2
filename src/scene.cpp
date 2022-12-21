@@ -161,12 +161,8 @@ std::string SceneManager::cleanText(const std::string &rawText)
 // Called every event loop as delays need to be async
 void SceneManager::tickScript()
 {
-    // Save previous state only when advancing not by timer
-    // if (parseScript && targetTicks == 0)
-    //     prevStringOffsetTable = stringOffsetTable;
-
     // Keep parsing lines until reaching a break or wait
-    while (parseScript && SDL_GetTicks64() >= targetTicks && imageManager.getFramesElapsed() >= (imageManager.getRdrawStart() + imageManager.getCurrRdraw()))
+    while (parseScript && (imageManager.getFramesElapsed() > waitTargetFrames) && (imageManager.getFramesElapsed() >= (imageManager.getRdrawStart() + imageManager.getCurrRdraw())))
     {
         // Check for failed parsing and break out of blocking loop
         if (parseLine() != 0)
@@ -175,6 +171,21 @@ void SceneManager::tickScript()
             break;
         }
     }
+}
+
+void SceneManager::parse()
+{
+    // Skip timer if any
+    waitTargetFrames = 0;
+
+    // Skip any remaining transitions/animations
+    imageManager.killRdraw();
+
+    // Hide text when transitioning (follows CS2 behaviour)
+    imageManager.setHideText();
+
+    // Indicate to parse the next line
+    parseScript = true;
 }
 
 // Parse the current line of the script
@@ -212,21 +223,24 @@ int SceneManager::parseLine()
         case 0:
         default:
             // TODO: Support various auto mode speeds
-            setDelay(100);
+            setDelay(60);
             break;
         }
         break;
 
     case 0x20: // Display a message
-        if (stringTable->StringStart != '\0')
-        {
-            if (speakerCounter == 0)
-                imageManager.currSpeaker.clear();
+        if (stringTable->StringStart == '\0')
+            break;
 
-            imageManager.currText = cleanText(std::string(&stringTable->StringStart));
-            LOG << imageManager.currText;
-            speakerCounter--;
-        }
+        if (speakerCounter == 0)
+            imageManager.currSpeaker.clear();
+
+        imageManager.currText = cleanText(std::string(&stringTable->StringStart));
+        speakerCounter--;
+
+        imageManager.setShowText();
+
+        LOG << imageManager.currText;
         break;
 
     case 0x21: // Set speaker of the message
@@ -263,8 +277,8 @@ void SceneManager::handleCommand(const std::string &cmdString)
         const std::string &arg = matches[1].str();
         if (!arg.empty())
         {
-            // Uint32 dur = std::stoi(arg);
-            // setDelay(dur);
+            unsigned int frames = std::stoi(arg);
+            setDelay(frames);
         }
         else
         {
@@ -469,6 +483,8 @@ void SceneManager::loadState(const int saveSlot)
         imageManager.currSpeaker = j.at(KEY_SPEAKER);
         imageManager.loadDump(jImage);
         audioManager.loadDump(jAudio);
+
+        autoMode = -1;
 
         currChoices.clear();
 

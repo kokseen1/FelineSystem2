@@ -19,7 +19,10 @@ void Image::update(const std::string &name, int x, int y)
 {
     // Ensure that the asset exists in db
     if (!imageManager.getFileManager().inDB(name + IMAGE_EXT))
+    {
+        clear();
         return;
+    }
 
     set(name, x, y);
     fetch();

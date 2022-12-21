@@ -17,7 +17,6 @@
 #define SCRIPT_SIGNATURE "CatScene"
 
 #define SCRIPT_ENTRYPOINT "op"
-#define WAIT_DEFAULT_DELAY 60
 
 #define KEY_SCENE "scene"
 #define KEY_IMAGE "image"
@@ -52,7 +51,7 @@ private:
     Parser parser;
 
     bool parseScript = false;
-    Uint64 targetTicks = 0;
+    Uint64 waitTargetFrames = 0;
 
     int autoMode = -1;
 
@@ -65,11 +64,10 @@ private:
     // Vector containing uncompressed script data to be traversed
     std::vector<byte> currScriptData;
 
-    // StringOffsetTable *prevStringOffsetTable;
     StringOffsetTable *stringOffsetTable;
     byte *stringTableBase;
 
-    void setDelay(Uint64 delay) { targetTicks = SDL_GetTicks64() + delay * 16; }
+    void setDelay(unsigned int frames) { waitTargetFrames = imageManager.getFramesElapsed() + frames; }
 
     void handleCommand(const std::string &);
 
@@ -92,22 +90,7 @@ private:
 public:
     SceneManager(AudioManager &, ImageManager &, FileManager &, std::vector<Choice> &);
 
-    void parse()
-    {
-        // Skip timer if any
-        targetTicks = 0;
-
-        // Indicate to parse the next line
-        parseScript = true;
-
-        // Skip any remaining transitions/animations
-        imageManager.setRdraw(0);
-        imageManager.render();
-
-        // Hide text when transitioning (follows CS2 behaviour)
-        imageManager.currText.clear();
-        imageManager.currSpeaker.clear();
-    }
+    void parse();
 
     void tickScript();
 

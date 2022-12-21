@@ -74,6 +74,9 @@ public:
 
     void toggleMwnd() { showMwnd = !showMwnd; };
 
+    void setShowText() { showText = true; };
+    void setHideText() { showText = false; };
+
     SDL_Renderer *getRenderer() { return renderer; };
 
     TextureCache &getCache() { return textureCache; };
@@ -82,12 +85,9 @@ public:
 
     void processImage(byte *, size_t, const ImageData &);
 
-    // Sets the number of frames to take to render any upcoming transition/animation
-    void setRdraw(const unsigned int rdraw)
-    {
-        rdrawStart = getFramesElapsed();
-        currRdraw = rdraw;
-    }
+    void killRdraw();
+
+    void setRdraw(const unsigned int);
 
     Uint64 getFramesElapsed() { return framesElapsed; }
     Uint64 getRdrawStart() { return rdrawStart; }
@@ -109,6 +109,7 @@ private:
     SDL_Renderer *renderer = NULL;
 
     bool showMwnd = true;
+    bool showText = true;
 
     Image mwnd{*this, MWND, MWND_XSHIFT, MWND_YSHIFT, MWND_ALPHA};
     Image mwndDeco{*this, MWND_DECO, MWND_XSHIFT, MWND_YSHIFT};
