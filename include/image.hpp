@@ -64,6 +64,8 @@ public:
 
     const std::pair<int, int> getShifts(const IMAGE_TYPE, const int);
 
+    void setBlend(const IMAGE_TYPE, const int, const unsigned int);
+
     void setImage(const IMAGE_TYPE, const int, std::string, int, int);
 
     void clearImageType(const IMAGE_TYPE);

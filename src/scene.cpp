@@ -330,7 +330,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     }
 
     // Display images
-    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|cg|fw)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^a-z][^%\\s]*)(?: ([^a-z][^%\\s]*)(?: (\\d+)(?: (\\d+))?)?)?)?)?)?")))
+    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|cg|fw)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
     {
         // bg 0 BG15_d 0 0 0
         // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
@@ -367,18 +367,58 @@ void SceneManager::handleCommand(const std::string &cmdString)
             return;
         }
 
-        // Support for @ symbol referring to previous value
-        const auto &prevShifts = imageManager.getShifts(imageType, zIndex);
-        const auto &prevXShift = prevShifts.first;
-        const auto &prevYShift = prevShifts.second;
+        if (asset == "blend")
+        {
+            imageManager.setBlend(imageType, zIndex, parser.parse(matches[4].str()));
+        }
 
-        auto xShiftStr = matches[4].str();
-        auto yShiftStr = matches[5].str();
+        else if (asset == "fade")
+        {
+            // eg 5 fade 240 255 0
+        }
 
-        int xShift = xShiftStr.empty() ? 0 : parser.parse(xShiftStr, prevXShift);
-        int yShift = yShiftStr.empty() ? 0 : parser.parse(yShiftStr, prevYShift);
+        else if (asset == "move")
+        {
+        }
 
-        imageManager.setImage(imageType, zIndex, asset, xShift, yShift);
+        // eg 5 amove1 240 100+96 300-144
+        else if (asset == "amove1")
+        {
+        }
+        else if (asset == "amove2")
+        {
+        }
+        else if (asset == "amove3")
+        {
+        }
+
+        else if (asset == "scale")
+        {
+            // eg 4 scale 100% 100%
+        }
+
+        else if (asset == "mode")
+        {
+            // imageManager.setMode(imageType, zIndex, matches[4].str());
+        }
+
+        else
+        {
+            // Support for @ symbol referring to previous value
+            const auto &prevShifts = imageManager.getShifts(imageType, zIndex);
+            const auto &prevXShift = prevShifts.first;
+            const auto &prevYShift = prevShifts.second;
+
+            const auto &xShiftStr = matches[4].str();
+            const auto &yShiftStr = matches[5].str();
+            const auto &opt1 = matches[6].str();
+            const auto &opt2 = matches[7].str();
+
+            int xShift = xShiftStr.empty() ? 0 : parser.parse(xShiftStr, prevXShift);
+            int yShift = yShiftStr.empty() ? 0 : parser.parse(yShiftStr, prevYShift);
+
+            imageManager.setImage(imageType, zIndex, asset, xShift, yShift);
+        }
     }
 
     // Conditional statement

@@ -279,6 +279,26 @@ const std::pair<int, int> ImageManager::getShifts(const IMAGE_TYPE type, const i
 }
 
 // Names of assets must be inserted in ascending z-index
+void ImageManager::setBlend(const IMAGE_TYPE type, const int zIndex, const unsigned int alpha)
+{
+    switch (type)
+    {
+    case IMAGE_TYPE::BG:
+        bgLayer.setTargetAlpha(zIndex, alpha);
+        break;
+    case IMAGE_TYPE::EG:
+        egLayer.setTargetAlpha(zIndex, alpha);
+        break;
+    case IMAGE_TYPE::CG:
+        cgLayer.setTargetAlpha(zIndex, alpha);
+        break;
+    case IMAGE_TYPE::FW:
+        fwLayer.setTargetAlpha(zIndex, alpha);
+        break;
+    }
+}
+
+// Names of assets must be inserted in ascending z-index
 void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string rawName, int xShift, int yShift)
 {
     switch (type)

@@ -207,6 +207,13 @@ void Cg::clear()
     Part2::clear();
 }
 
+void Cg::setTargetAlpha(const unsigned int target)
+{
+    Base::setTargetAlpha(target);
+    Part1::setTargetAlpha(target);
+    Part2::setTargetAlpha(target);
+}
+
 // Return if the multi-part sprite is cached and ready to be rendered as a whole
 bool Cg::isReady()
 {

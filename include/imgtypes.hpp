@@ -157,6 +157,8 @@ public:
 
     void render();
 
+    void setTargetAlpha(const unsigned int);
+
 private:
     bool isReady();
 };
@@ -200,6 +202,13 @@ public:
         if (i >= size())
             throw std::runtime_error("Out of range access");
         objects[i].update(rawName, x, y);
+    }
+
+    void setTargetAlpha(const int i, const unsigned int target)
+    {
+        if (i >= size())
+            throw std::runtime_error("Out of range access");
+        objects[i].setTargetAlpha(target);
     }
 
     const std::pair<int, int> getShifts(size_t i)
