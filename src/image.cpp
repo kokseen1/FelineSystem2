@@ -181,7 +181,7 @@ void ImageManager::renderChoices()
 // Render images in order of type precedence and z-index
 void ImageManager::render()
 {
-    framesElapsed++;
+    framestamp++;
 
     // Clear render canvas
     SDL_RenderClear(renderer);
@@ -297,27 +297,25 @@ void ImageManager::setMove(const IMAGE_TYPE type, const int zIndex, const unsign
     }
 }
 
-// Names of assets must be inserted in ascending z-index
 void ImageManager::setBlend(const IMAGE_TYPE type, const int zIndex, const unsigned int alpha)
 {
     switch (type)
     {
     case IMAGE_TYPE::BG:
-        bgLayer.setTargetAlpha(zIndex, alpha);
+        bgLayer.blend(zIndex, alpha);
         break;
     case IMAGE_TYPE::EG:
-        egLayer.setTargetAlpha(zIndex, alpha);
+        egLayer.blend(zIndex, alpha);
         break;
     case IMAGE_TYPE::CG:
-        cgLayer.setTargetAlpha(zIndex, alpha);
+        cgLayer.blend(zIndex, alpha);
         break;
     case IMAGE_TYPE::FW:
-        fwLayer.setTargetAlpha(zIndex, alpha);
+        fwLayer.blend(zIndex, alpha);
         break;
     }
 }
 
-// Names of assets must be inserted in ascending z-index
 void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string rawName, int xShift, int yShift)
 {
     switch (type)
@@ -393,6 +391,6 @@ void ImageManager::killRdraw()
 // Sets the number of frames to take to render any upcoming transition/animation
 void ImageManager::setRdraw(const unsigned int rdraw)
 {
-    rdrawStart = getFramesElapsed();
+    rdrawStart = getFramestamp();
     currRdraw = rdraw;
 }

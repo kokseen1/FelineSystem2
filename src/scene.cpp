@@ -161,7 +161,7 @@ std::string SceneManager::cleanText(const std::string &rawText)
 // Will wait for the longest number given
 void SceneManager::wait(unsigned int frames)
 {
-    Uint64 target = imageManager.getFramesElapsed() + frames;
+    Uint64 target = imageManager.getFramestamp() + frames;
 
     if (target >= waitTargetFrames)
         waitTargetFrames = target;
@@ -171,9 +171,9 @@ void SceneManager::wait(unsigned int frames)
 // Called every event loop as delays need to be async
 void SceneManager::tickScript()
 {
-    // LOG << imageManager.getFramesElapsed() << " : " << waitTargetFrames;
+    // LOG << imageManager.getFramestamp() << " : " << waitTargetFrames;
     // Keep parsing lines until reaching a break or wait
-    while (parseScript && (imageManager.getFramesElapsed() > waitTargetFrames))
+    while (parseScript && (imageManager.getFramestamp() > waitTargetFrames))
     {
         // Check for failed parsing and break out of blocking loop
         if (parseLine() != 0)
@@ -225,6 +225,7 @@ int SceneManager::parseLine()
     {
     case 0x02: // Wait for input after message
     case 0x03: // Novel page break and wait for input after message
+        // LOG << "Break";
         switch (autoMode)
         {
         case -1:
@@ -367,6 +368,12 @@ void SceneManager::handleCommand(const std::string &cmdString)
             imageType = IMAGE_TYPE::CG;
         else if (t == "fw")
             imageType = IMAGE_TYPE::FW;
+        else if (t == "pl")
+        {
+        }
+        else if (t == "fg")
+        {
+        }
         else
         {
             LOG << "Unknown image type identifier!";

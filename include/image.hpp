@@ -93,13 +93,13 @@ public:
 
     void setRdraw(const unsigned int);
 
-    Uint64 getFramesElapsed() { return framesElapsed; }
+    Uint64 getFramestamp() { return framestamp; }
     Uint64 getRdrawStart() { return rdrawStart; }
     unsigned int getRdraw() { return currRdraw; }
 
 private:
     // Used for synchronizing transitions/animations with the render framerate
-    Uint64 framesElapsed = 0;
+    Uint64 framestamp = 0;
     Uint64 rdrawStart = 0;
     unsigned int currRdraw = 0;
 

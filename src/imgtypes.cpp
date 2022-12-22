@@ -4,7 +4,7 @@
 #include <SDL2/SDL_ttf.h>
 
 // Constructor for non-updating images
-Image::Image(ImageManager &imageManager, std::string n, int x, int y, unsigned int alpha) : imageManager{imageManager}, renderer{imageManager.getRenderer()}, textureCache{imageManager.getCache()}, baseName{n}, xShift{x}, yShift{y}, targetAlpha{alpha} {}
+Image::Image(ImageManager &imageManager, std::string n, int x, int y, Uint8 alpha) : imageManager{imageManager}, renderer{imageManager.getRenderer()}, textureCache{imageManager.getCache()}, baseName{n}, xShift{x}, yShift{y}, targetAlpha{alpha} {}
 
 // Main constructor to init with renderer and cache (not required as default arguments are available for the above constructor)
 // Image::Image(ImageManager &imageManager) : imageManager{imageManager}, renderer{imageManager.getRenderer()}, textureCache{imageManager.getCache()} {}
@@ -84,7 +84,7 @@ void Choice::render(const int y)
 void Image::move(const unsigned int rdraw, const int x, const int y)
 {
     moveRdraw = rdraw;
-    moveStart = imageManager.getFramesElapsed();
+    moveStart = imageManager.getFramestamp();
     targetXShift = x;
     targetYShift = y;
     moving = true;
@@ -123,43 +123,42 @@ void Image::display(std::string &name, const int x, const int y, const Uint8 alp
 void Image::render(int x, int y)
 {
     Uint8 alpha = targetAlpha;
-    Uint8 prevAlpha = prevTargetAlpha;
+    Uint8 prevAlphaInverse = prevTargetAlpha;
 
     auto currRdraw = imageManager.getRdraw();
 
-    // // Only fade if rdraw is a valid value
+    // Only fade if rdraw is a valid value
+    // Otherwise, set to target alpha values directly from above
     if (transitioning && currRdraw > 0)
     {
-        double ratio = (double)(imageManager.getFramesElapsed() - imageManager.getRdrawStart()) / currRdraw;
+        double ratio = (double)(imageManager.getFramestamp() - imageManager.getRdrawStart()) / currRdraw;
 
         alpha = ratio * targetAlpha;
-        prevAlpha = ratio * prevTargetAlpha;
-        // LOG << baseName << " : " << (int)alpha << ", " << prevBaseName << " : " << (int) prevTargetAlpha - prevAlpha;
+        prevAlphaInverse = ratio * prevTargetAlpha;
+        // LOG << baseName << " : " << (int)alpha << ", " << prevBaseName << " : " << (int) prevTargetAlpha - prevAlphaInverse;
     }
 
     if (moving && moveRdraw > 0)
     {
-        double ratio = (double)(imageManager.getFramesElapsed() - moveStart) / moveRdraw;
+        double ratio = (double)(imageManager.getFramestamp() - moveStart) / moveRdraw;
 
-        int nextX = (double)(targetXShift - xShift) * ratio + xShift;
-        int nextY = (double)(targetYShift - yShift) * ratio + yShift;
+        x = (double)(targetXShift - xShift) * ratio + xShift;
+        y = (double)(targetYShift - yShift) * ratio + yShift;
         // LOG << baseName << " : " << nextX << ", " << nextY << ", " << moveRdraw;
-
-        x = nextX;
-        y = nextY;
     }
 
     if (x == targetXShift && y == targetYShift)
     {
-        xShift = x;
-        yShift = y;
+        xShift = targetXShift;
+        yShift = targetYShift;
         moving = false;
     }
 
     if (alpha == targetAlpha)
         transitioning = false;
 
-    display(prevBaseName, prevXShift, prevYShift, prevTargetAlpha - prevAlpha);
+    // LOG << baseName << prevTargetAlpha << prevBaseName << prevAlphaInverse;
+    display(prevBaseName, prevXShift, prevYShift, prevTargetAlpha - prevAlphaInverse);
     display(baseName, x, y, alpha);
 }
 
@@ -245,11 +244,11 @@ void Cg::move(const unsigned int rdraw, const int x, const int y)
     Part2::move(rdraw, x, y);
 }
 
-void Cg::setTargetAlpha(const unsigned int target)
+void Cg::blend(const unsigned int target)
 {
-    Base::setTargetAlpha(target);
-    Part1::setTargetAlpha(target);
-    Part2::setTargetAlpha(target);
+    Base::blend(target);
+    Part1::blend(target);
+    Part2::blend(target);
 }
 
 // Return if the multi-part sprite is cached and ready to be rendered as a whole
