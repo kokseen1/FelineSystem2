@@ -157,12 +157,23 @@ std::string SceneManager::cleanText(const std::string &rawText)
     return text;
 }
 
+// Block script from proceeding for a number of frames
+// Will wait for the longest number given
+void SceneManager::wait(unsigned int frames)
+{
+    Uint64 target = imageManager.getFramesElapsed() + frames;
+
+    if (target >= waitTargetFrames)
+        waitTargetFrames = target;
+}
+
 // Parsing of the script called from main loop
 // Called every event loop as delays need to be async
 void SceneManager::tickScript()
 {
+    // LOG << imageManager.getFramesElapsed() << " : " << waitTargetFrames;
     // Keep parsing lines until reaching a break or wait
-    while (parseScript && (imageManager.getFramesElapsed() > waitTargetFrames) && (imageManager.getFramesElapsed() >= (imageManager.getRdrawStart() + imageManager.getCurrRdraw())))
+    while (parseScript && (imageManager.getFramesElapsed() > waitTargetFrames))
     {
         // Check for failed parsing and break out of blocking loop
         if (parseLine() != 0)
@@ -223,7 +234,7 @@ int SceneManager::parseLine()
         case 0:
         default:
             // TODO: Support various auto mode speeds
-            setDelay(60);
+            wait(60);
             break;
         }
         break;
@@ -264,9 +275,8 @@ int SceneManager::parseLine()
 // Parse command and dispatch to respective handlers
 void SceneManager::handleCommand(const std::string &cmdString)
 {
-    // Number of frames to spend fading from one sprite to the next
-    // Default is 1 frame - no fade effect (alpha 0 to 255 within 1 frame)
-    static unsigned int rdraw;
+    static unsigned int maxMoveRdraw = 0;
+    static unsigned int currRdraw = 0;
 
 #ifdef LOG_CMD
     LOG << "'" << cmdString << "'";
@@ -277,18 +287,29 @@ void SceneManager::handleCommand(const std::string &cmdString)
         const std::string &arg = matches[1].str();
         if (!arg.empty())
         {
-            unsigned int frames = std::stoi(arg);
-            setDelay(frames);
+            // Wait for x frames
+            wait(std::stoi(arg));
         }
         else
         {
-            imageManager.setRdraw(rdraw);
-            rdraw = 0;
+            // Wait until animations complete
+            imageManager.setRdraw(currRdraw);
+            wait(currRdraw);
+
+            // Wait until longest move completes
+            wait(maxMoveRdraw);
+
+            // Set defaults
+            maxMoveRdraw = 0;
+            currRdraw = 0;
         }
     }
     else if (std::regex_search(cmdString, matches, std::regex("^rdraw (\\d+)")))
     {
-        rdraw = std::stoi(matches[1].str());
+        // Number of frames to spend fading from one sprite to the next
+        // Default is 1 frame - no fade effect (alpha 0 to 255 within 1 frame)
+        // Set frames taken to transition images
+        currRdraw = std::stoi(matches[1].str());
     }
     else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -392,8 +413,10 @@ void SceneManager::handleCommand(const std::string &cmdString)
             int targetXShift = parser.parse(xShiftStr, prevXShift);
             int targetYShift = parser.parse(yShiftStr, prevYShift);
 
-            imageManager.setMove(imageType, zIndex, rdraw, targetXShift, targetYShift);
+            if (rdraw > maxMoveRdraw)
+                maxMoveRdraw = rdraw;
 
+            imageManager.setMove(imageType, zIndex, rdraw, targetXShift, targetYShift);
         }
 
         // eg 5 amove1 240 100+96 300-144

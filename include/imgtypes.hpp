@@ -67,16 +67,16 @@ public:
 
     const json dump();
 
-    void render(const int, const int);
-
     bool isCached();
 
     void setTargetAlpha(const unsigned int target) { targetAlpha = target; }
 
     void move(const unsigned int, const int, const int);
 
+    virtual void render(int, int);
+
 protected:
-    virtual void display(std::string &, int, int, unsigned int);
+    virtual void display(std::string &, const int, const int, const Uint8);
 
     void set(const std::string &, int, int);
 
@@ -99,6 +99,7 @@ private:
 
     bool moving = false;
     unsigned int moveRdraw;
+    Uint64 moveStart;
     int targetXShift;
     int targetYShift;
 };
@@ -177,7 +178,7 @@ class Fw : public Cg
     using Cg::Cg;
 
 protected:
-    void display(std::string &, int, int, unsigned int);
+    void display(std::string &name, const int x, const int y, const Uint8 alpha) { Base::display(name, x + FW_XSHIFT, y + FW_YSHIFT, alpha); }
 };
 
 typedef struct

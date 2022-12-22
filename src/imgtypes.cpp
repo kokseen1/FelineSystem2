@@ -45,6 +45,8 @@ void Image::set(const std::string &name, int x, int y)
     prevXShift = xShift;
     prevYShift = yShift;
 
+    moving = false;
+
     baseName = name;
     xShift = x;
     yShift = y;
@@ -82,13 +84,14 @@ void Choice::render(const int y)
 void Image::move(const unsigned int rdraw, const int x, const int y)
 {
     moveRdraw = rdraw;
+    moveStart = imageManager.getFramesElapsed();
     targetXShift = x;
     targetYShift = y;
     moving = true;
 }
 
 // Internal function to render the image
-void Image::display(std::string &name, int x, int y, unsigned int alpha)
+void Image::display(std::string &name, const int x, const int y, const Uint8 alpha)
 {
     // Look for texture in cache
     auto got = textureCache.find(name);
@@ -117,38 +120,47 @@ void Image::display(std::string &name, int x, int y, unsigned int alpha)
 }
 
 // Render image with given offsets
-void Image::render(const int x, const int y)
+void Image::render(int x, int y)
 {
-    unsigned int alpha = targetAlpha;
-    unsigned int prevAlpha = prevTargetAlpha;
+    Uint8 alpha = targetAlpha;
+    Uint8 prevAlpha = prevTargetAlpha;
 
-    auto currRdraw = imageManager.getCurrRdraw();
+    auto currRdraw = imageManager.getRdraw();
 
-    // Only fade if rdraw is a valid value
+    // // Only fade if rdraw is a valid value
     if (transitioning && currRdraw > 0)
     {
         double ratio = (double)(imageManager.getFramesElapsed() - imageManager.getRdrawStart()) / currRdraw;
 
         alpha = ratio * targetAlpha;
         prevAlpha = ratio * prevTargetAlpha;
+        // LOG << baseName << " : " << (int)alpha << ", " << prevBaseName << " : " << (int) prevTargetAlpha - prevAlpha;
     }
 
     if (moving && moveRdraw > 0)
     {
-        xShift += (double)(targetXShift - xShift) / moveRdraw;
-        yShift += (double)(targetYShift - yShift) / moveRdraw;
-        LOG << baseName << " : " << xShift << ", " << yShift << ", " << currRdraw;
-        moveRdraw--;
+        double ratio = (double)(imageManager.getFramesElapsed() - moveStart) / moveRdraw;
+
+        int nextX = (double)(targetXShift - xShift) * ratio + xShift;
+        int nextY = (double)(targetYShift - yShift) * ratio + yShift;
+        // LOG << baseName << " : " << nextX << ", " << nextY << ", " << moveRdraw;
+
+        x = nextX;
+        y = nextY;
+    }
+
+    if (x == targetXShift && y == targetYShift)
+    {
+        xShift = x;
+        yShift = y;
+        moving = false;
     }
 
     if (alpha == targetAlpha)
         transitioning = false;
 
-    if (xShift >= targetXShift && yShift >= targetYShift)
-        moving = false;
-
     display(prevBaseName, prevXShift, prevYShift, prevTargetAlpha - prevAlpha);
-    display(baseName, xShift, yShift, alpha);
+    display(baseName, x, y, alpha);
 }
 
 // Render image with the member offsets by default
@@ -272,10 +284,4 @@ void Cg::update(const std::string &rawName, int x, int y)
     Base::update(baseName, x, y);
     Part1::update(part1Name, x, y);
     Part2::update(part2Name, x, y);
-}
-
-// Render at a special shifted offset for FW sprites
-void Fw::display(std::string &name, int x, int y, unsigned int alpha)
-{
-    Base::display(name, x + FW_XSHIFT, y + FW_YSHIFT, alpha);
 }

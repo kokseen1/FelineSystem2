@@ -67,7 +67,7 @@ private:
     StringOffsetTable *stringOffsetTable;
     byte *stringTableBase;
 
-    void setDelay(unsigned int frames) { waitTargetFrames = imageManager.getFramesElapsed() + frames; }
+    void wait(unsigned int);
 
     void handleCommand(const std::string &);
 

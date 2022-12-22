@@ -95,7 +95,7 @@ public:
 
     Uint64 getFramesElapsed() { return framesElapsed; }
     Uint64 getRdrawStart() { return rdrawStart; }
-    unsigned int getCurrRdraw() { return currRdraw; }
+    unsigned int getRdraw() { return currRdraw; }
 
 private:
     // Used for synchronizing transitions/animations with the render framerate
