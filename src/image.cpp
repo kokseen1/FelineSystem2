@@ -27,7 +27,7 @@ void ImageManager::loadDump(const json &j)
 
     bgLayer.load(j.at(KEY_BG));
     egLayer.load(j.at(KEY_EG));
-    fgLayer.load(j.at(KEY_FG));
+    // fgLayer.load(j.at(KEY_FG));
     cgLayer.load(j.at(KEY_CG));
     fwLayer.load(j.at(KEY_FW));
 }
@@ -38,7 +38,7 @@ const json ImageManager::dump()
     return {
         {KEY_BG, bgLayer.dump()},
         {KEY_EG, egLayer.dump()},
-        {KEY_FG, fgLayer.dump()},
+        // {KEY_FG, fgLayer.dump()},
         {KEY_CG, cgLayer.dump()},
         {KEY_FW, fwLayer.dump()}};
 }
