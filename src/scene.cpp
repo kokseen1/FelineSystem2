@@ -270,6 +270,10 @@ void SceneManager::parseLine()
         imageManager.currText = cleanText(std::string(&stringTable->StringStart));
         speakerCounter--;
 
+        // Also show here in cases of appended text without break in-between
+        imageManager.setShowText();
+        imageManager.setShowMwnd();
+
         LOG << imageManager.currText;
         break;
 
