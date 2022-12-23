@@ -57,6 +57,10 @@ public:
 
     ImageManager(FileManager &, SDL_Renderer *, std::vector<Choice> &);
 
+    void setFrameon(const unsigned int);
+
+    void setFrameoff(const unsigned int);
+
     void clearCanvas();
 
     void loadDump(const json &);
@@ -79,8 +83,8 @@ public:
 
     void render();
 
-    void setShowMwnd() { showMwnd = true; };
-    void setHideMwnd() { showMwnd = false; };
+    void setShowMwnd();
+    void setHideMwnd();
     void toggleMwnd() { showMwnd = !showMwnd; };
 
     void setShowText() { showText = true; };

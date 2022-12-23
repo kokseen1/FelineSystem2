@@ -319,7 +319,6 @@ void ImageManager::setFade(const IMAGE_TYPE type, const int zIndex, const unsign
     }
 }
 
-
 void ImageManager::setMove(const IMAGE_TYPE type, const int zIndex, const unsigned int rdraw, const int x, const int y)
 {
     switch (type)
@@ -457,4 +456,28 @@ void ImageManager::setRdraw(const unsigned int rdraw)
 {
     rdrawStart = getFramestamp();
     globalRdraw = rdraw;
+}
+
+void ImageManager::setShowMwnd()
+{
+    mwnd.blend(MWND_ALPHA);
+    mwndDeco.blend(MAX_ALPHA);
+    showMwnd = true;
+}
+
+void ImageManager::setHideMwnd()
+{
+    showMwnd = false;
+}
+
+void ImageManager::setFrameon(const unsigned int frames)
+{
+    mwnd.fade(frames, 0, MWND_ALPHA);
+    mwndDeco.fade(frames, 0, MAX_ALPHA);
+}
+
+void ImageManager::setFrameoff(const unsigned int frames)
+{
+    mwnd.fade(frames, MWND_ALPHA, 0);
+    mwndDeco.fade(frames, MAX_ALPHA, 0);
 }

@@ -15,6 +15,8 @@
 #define KEY_XSHIFT "x"
 #define KEY_YSHIFT "y"
 
+#define MAX_ALPHA 255
+
 #define FW_XSHIFT 90
 #define FW_YSHIFT 160
 

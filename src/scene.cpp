@@ -327,9 +327,29 @@ void SceneManager::handleCommand(const std::string &cmdString)
             waitTargetFrames = maxWaitFramestamp;
         }
     }
+    else if (std::regex_search(cmdString, matches, std::regex("^frameon(?: (\\w+) (\\d+))?")))
+    {
+        const auto &framesStr = matches[2].str();
+        if (framesStr.empty())
+            imageManager.setShowMwnd();
+
+        unsigned int frames = std::stoi(framesStr);
+        const auto &mode = matches[1].str();
+
+        // Assume only fade
+        imageManager.setFrameon(frames);
+    }
     else if (std::regex_search(cmdString, matches, std::regex("^frameoff(?: (\\w+) (\\d+))?")))
     {
-        imageManager.setHideMwnd();
+        const auto &framesStr = matches[2].str();
+        if (framesStr.empty())
+            imageManager.setHideMwnd();
+
+        unsigned int frames = std::stoi(framesStr);
+        const auto &mode = matches[1].str();
+
+        // Assume only fade
+        imageManager.setFrameoff(frames);
     }
     else if (std::regex_search(cmdString, matches, std::regex("^rdraw (\\d+)")))
     {
