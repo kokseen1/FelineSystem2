@@ -158,30 +158,42 @@ std::string SceneManager::cleanText(const std::string &rawText)
 }
 
 // Block script from proceeding for a number of frames
-// Will wait for the longest number given
 void SceneManager::wait(unsigned int frames)
 {
-    Uint64 target = imageManager.getFramestamp() + frames;
-
-    if (target >= waitTargetFrames)
-        waitTargetFrames = target;
+    waitTargetFrames = imageManager.getFramestamp() + frames;
 }
 
-// Parsing of the script called from main loop
-// Called every event loop as delays need to be async
+bool SceneManager::rdrawWaited()
+{
+    return imageManager.getFramestamp() > (imageManager.getRdrawStart() + imageManager.getRdraw());
+}
+
+bool SceneManager::canProceed()
+{
+    return parseScript && (imageManager.getFramestamp() > waitTargetFrames);
+}
+
+// Called from main loop to proceed script if needed
 void SceneManager::tickScript()
 {
     // LOG << imageManager.getFramestamp() << " : " << waitTargetFrames;
-    // Keep parsing lines until reaching a break or wait
-    while (parseScript && (imageManager.getFramestamp() > waitTargetFrames))
+
+    if (canProceed())
     {
-        // Check for failed parsing and break out of blocking loop
-        if (parseLine() != 0)
-        {
-            parseScript = false;
-            break;
-        }
+        LOG << "Start section";
     }
+    else
+        return;
+
+    // Parse a `section` of commands until encountering break or wait command
+    // Iterative instead of recursive to avoid stack overflow
+    while (canProceed())
+        parseLine();
+
+    LOG << "End section";
+    // End of section
+    imageManager.setRdraw(sectionRdraw);
+    sectionRdraw = 0;
 }
 
 void SceneManager::parse()
@@ -201,19 +213,23 @@ void SceneManager::parse()
 
 // Parse the current line of the script
 // Return 0 on success
-int SceneManager::parseLine()
+void SceneManager::parseLine()
 {
     if (currScriptData.empty())
     {
         LOG << "Script not loaded!";
-        return 1;
+
+        // Break loop to prevent blocking other processes (e.g. fetching next script)
+        parseScript = false;
+        return;
     }
 
     // Check if pointer exceeded end of script
     if (reinterpret_cast<byte *>(stringOffsetTable) >= stringTableBase)
     {
         LOG << "End of script!";
-        return 1;
+        parseScript = false;
+        return;
     }
 
     // Parse script
@@ -225,7 +241,7 @@ int SceneManager::parseLine()
     {
     case 0x02: // Wait for input after message
     case 0x03: // Novel page break and wait for input after message
-        // LOG << "Break";
+        LOG << "Break";
         switch (autoMode)
         {
         case -1:
@@ -270,14 +286,20 @@ int SceneManager::parseLine()
         break;
     }
 
-    return 0;
+    return;
+}
+
+// Determine the framestamp when the longest animation of the current section ends
+void SceneManager::addSectionRdraw(unsigned int rdraw)
+{
+    Uint64 waitFramestamp = imageManager.getFramestamp() + rdraw;
+    if (waitFramestamp > maxWaitFramestamp)
+        maxWaitFramestamp = waitFramestamp;
 }
 
 // Parse command and dispatch to respective handlers
 void SceneManager::handleCommand(const std::string &cmdString)
 {
-    static unsigned int maxMoveRdraw = 0;
-    static unsigned int currRdraw = 0;
 
 #ifdef LOG_CMD
     LOG << "'" << cmdString << "'";
@@ -293,16 +315,10 @@ void SceneManager::handleCommand(const std::string &cmdString)
         }
         else
         {
-            // Wait until animations complete
-            imageManager.setRdraw(currRdraw);
-            wait(currRdraw);
+            addSectionRdraw(sectionRdraw);
 
-            // Wait until longest move completes
-            wait(maxMoveRdraw);
-
-            // Set defaults
-            maxMoveRdraw = 0;
-            currRdraw = 0;
+            // Wait until longest existing animation completes
+            waitTargetFrames = maxWaitFramestamp;
         }
     }
     else if (std::regex_search(cmdString, matches, std::regex("^rdraw (\\d+)")))
@@ -310,7 +326,9 @@ void SceneManager::handleCommand(const std::string &cmdString)
         // Number of frames to spend fading from one sprite to the next
         // Default is 1 frame - no fade effect (alpha 0 to 255 within 1 frame)
         // Set frames taken to transition images
-        currRdraw = std::stoi(matches[1].str());
+        // currRdraw = std::stoi(matches[1].str());
+        unsigned int rdraw = std::stoi(matches[1].str());
+        sectionRdraw = rdraw;
     }
     else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -415,6 +433,11 @@ void SceneManager::handleCommand(const std::string &cmdString)
         else if (asset == "fade")
         {
             // eg 5 fade 240 255 0
+            const unsigned int rdraw = std::stoi(matches[4].str());
+            const Uint8 startAlpha = std::stoi(matches[5].str());
+            const Uint8 endAlpha = std::stoi(matches[6].str());
+
+            // addSectionRdraw(rdraw);
         }
 
         else if (asset == "move")
@@ -427,8 +450,8 @@ void SceneManager::handleCommand(const std::string &cmdString)
             int targetXShift = parser.parse(xShiftStr, prevXShift);
             int targetYShift = parser.parse(yShiftStr, prevYShift);
 
-            if (rdraw > maxMoveRdraw)
-                maxMoveRdraw = rdraw;
+            // If there are multiple animations `wait` will wait for the longest one
+            addSectionRdraw(rdraw);
 
             imageManager.setMove(imageType, zIndex, rdraw, targetXShift, targetYShift);
         }

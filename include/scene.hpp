@@ -42,6 +42,14 @@ class ImageManager;
 class SceneManager
 {
 private:
+    unsigned int sectionRdraw = 0;
+    Uint64 maxWaitFramestamp = 0;
+
+    void addSectionRdraw(unsigned int);
+
+    bool canProceed();
+    bool rdrawWaited();
+
     // Pointers to other manager classes
     FileManager &fileManager;
     AudioManager &audioManager;
@@ -81,7 +89,7 @@ private:
 
     void setScriptOffset(const SaveData &);
 
-    int parseLine();
+    void parseLine();
 
     std::string cleanText(const std::string &);
 

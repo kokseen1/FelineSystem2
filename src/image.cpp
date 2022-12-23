@@ -425,6 +425,7 @@ void ImageManager::killRdraw()
 }
 
 // Sets the number of frames to take to render any upcoming transition/animation
+// Setting rdraw to 0 instantly displays the resulting appearance
 void ImageManager::setRdraw(const unsigned int rdraw)
 {
     rdrawStart = getFramestamp();
