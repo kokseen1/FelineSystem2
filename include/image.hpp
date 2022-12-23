@@ -85,6 +85,7 @@ public:
 
     void setShowMwnd();
     void setHideMwnd();
+    bool getShowMwnd() { return showMwnd; }
     void toggleMwnd() { showMwnd = !showMwnd; };
 
     void setShowText() { showText = true; };

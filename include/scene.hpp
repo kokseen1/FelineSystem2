@@ -45,6 +45,7 @@ private:
     unsigned int sectionRdraw = 0;
     Uint64 maxWaitFramestamp = 0;
 
+    void wait();
     void addSectionFrames(unsigned int);
 
     bool canProceed();

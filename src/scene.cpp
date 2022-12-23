@@ -170,7 +170,7 @@ bool SceneManager::rdrawWaited()
 
 bool SceneManager::canProceed()
 {
-    return parseScript && (imageManager.getFramestamp() >= waitTargetFrames);
+    return parseScript && (imageManager.getFramestamp() >= waitTargetFrames) && currChoices.empty();
 }
 
 // Called from main loop to proceed script if needed
@@ -203,6 +203,12 @@ void SceneManager::tickScript()
 // User input initiated parse
 void SceneManager::parse()
 {
+    if (!imageManager.getShowMwnd())
+    {
+        imageManager.setShowMwnd();
+        return;
+    }
+
     // Skip timer if any
     waitTargetFrames = 0;
 
@@ -295,6 +301,12 @@ void SceneManager::parseLine()
     return;
 }
 
+// Wait without args to wait for frame-consuming actions within the current section
+void SceneManager::wait()
+{
+    waitTargetFrames = maxWaitFramestamp;
+}
+
 // Determine the framestamp when the longest animation of the current section ends
 void SceneManager::addSectionFrames(unsigned int rdraw)
 {
@@ -324,7 +336,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
             addSectionFrames(sectionRdraw);
 
             // Wait until longest existing animation completes
-            waitTargetFrames = maxWaitFramestamp;
+            wait();
         }
     }
     else if (std::regex_search(cmdString, matches, std::regex("^frameon(?: (\\w+) (\\d+))?")))
@@ -338,6 +350,8 @@ void SceneManager::handleCommand(const std::string &cmdString)
 
         // Assume only fade
         imageManager.setFrameon(frames);
+        addSectionFrames(frames);
+        wait();
     }
     else if (std::regex_search(cmdString, matches, std::regex("^frameoff(?: (\\w+) (\\d+))?")))
     {
@@ -350,6 +364,8 @@ void SceneManager::handleCommand(const std::string &cmdString)
 
         // Assume only fade
         imageManager.setFrameoff(frames);
+        addSectionFrames(frames);
+        wait();
     }
     else if (std::regex_search(cmdString, matches, std::regex("^rdraw (\\d+)")))
     {
@@ -481,7 +497,11 @@ void SceneManager::handleCommand(const std::string &cmdString)
         {
             const auto &rdrawStr = matches[4].str();
             const auto &xShiftStr = matches[5].str();
-            const auto &yShiftStr = matches[6].str();
+            auto yShiftStr = matches[6].str();
+
+            // No movement on axis if empty
+            if (yShiftStr.empty())
+                yShiftStr = "@";
 
             unsigned int rdraw = std::stoi(rdrawStr);
             int targetXShift = parser.parse(xShiftStr, prevXShift);
