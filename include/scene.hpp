@@ -42,6 +42,15 @@ class ImageManager;
 class SceneManager
 {
 private:
+    unsigned int sectionRdraw = 0;
+    Uint64 maxWaitFramestamp = 0;
+
+    void wait();
+    void addSectionFrames(unsigned int);
+
+    bool canProceed();
+    bool rdrawWaited();
+
     // Pointers to other manager classes
     FileManager &fileManager;
     AudioManager &audioManager;
@@ -67,7 +76,7 @@ private:
     StringOffsetTable *stringOffsetTable;
     byte *stringTableBase;
 
-    void setDelay(unsigned int frames) { waitTargetFrames = imageManager.getFramesElapsed() + frames; }
+    void wait(unsigned int);
 
     void handleCommand(const std::string &);
 
@@ -81,7 +90,7 @@ private:
 
     void setScriptOffset(const SaveData &);
 
-    int parseLine();
+    void parseLine();
 
     std::string cleanText(const std::string &);
 

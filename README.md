@@ -81,6 +81,9 @@ FelineSystem2 implements a custom database of the game's KIF archives and assets
   - `wait 60` will block for `60` frames before proceeding to the next command
   - `wait 60` will not be aware of any time-based commands like `rdraw` and will not block until `rdraw` completes
   - `wait` is sometimes used along with `wait 60` consecutively
+- `cg 0 attr 1 (70+0) (80+0)`
+- `cg 0 attr 2 (75+0) (85+0)`
+  - Assigns the `BaseX`, `BaseY` values of the specified image `cg 0` to the variables `#(75+0)` and `#(85+0)` respectively
 
 ## Special Thanks
 

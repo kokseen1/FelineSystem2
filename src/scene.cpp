@@ -157,32 +157,63 @@ std::string SceneManager::cleanText(const std::string &rawText)
     return text;
 }
 
-// Parsing of the script called from main loop
-// Called every event loop as delays need to be async
-void SceneManager::tickScript()
+// Block script from proceeding for a number of frames
+void SceneManager::wait(unsigned int frames)
 {
-    // Keep parsing lines until reaching a break or wait
-    while (parseScript && (imageManager.getFramesElapsed() > waitTargetFrames) && (imageManager.getFramesElapsed() >= (imageManager.getRdrawStart() + imageManager.getCurrRdraw())))
-    {
-        // Check for failed parsing and break out of blocking loop
-        if (parseLine() != 0)
-        {
-            parseScript = false;
-            break;
-        }
-    }
+    waitTargetFrames = imageManager.getFramestamp() + frames;
 }
 
+bool SceneManager::rdrawWaited()
+{
+    return imageManager.getFramestamp() > (imageManager.getRdrawStart() + imageManager.getGlobalRdraw());
+}
+
+bool SceneManager::canProceed()
+{
+    return parseScript && (imageManager.getFramestamp() >= waitTargetFrames) && currChoices.empty();
+}
+
+// Called from main loop to proceed script if needed
+void SceneManager::tickScript()
+{
+    // LOG << imageManager.getFramestamp() << " : " << waitTargetFrames;
+
+    if (canProceed())
+    {
+        LOG << "Start section";
+
+        // Hide text when transitioning (follows CS2 behaviour)
+        // Show when reaching break
+        imageManager.setHideText();
+    }
+    else
+        return;
+
+    // Parse a `section` of commands until encountering break or wait command
+    // Iterative instead of recursive to avoid stack overflow
+    while (canProceed())
+        parseLine();
+
+    LOG << "End section";
+    // End of section
+    imageManager.setRdraw(sectionRdraw);
+    sectionRdraw = 0;
+}
+
+// User input initiated parse
 void SceneManager::parse()
 {
+    if (!imageManager.getShowMwnd())
+    {
+        imageManager.setShowMwnd();
+        return;
+    }
+
     // Skip timer if any
     waitTargetFrames = 0;
 
     // Skip any remaining transitions/animations
-    imageManager.killRdraw();
-
-    // Hide text when transitioning (follows CS2 behaviour)
-    imageManager.setHideText();
+    // imageManager.killRdraw();
 
     // Indicate to parse the next line
     parseScript = true;
@@ -190,19 +221,23 @@ void SceneManager::parse()
 
 // Parse the current line of the script
 // Return 0 on success
-int SceneManager::parseLine()
+void SceneManager::parseLine()
 {
     if (currScriptData.empty())
     {
         LOG << "Script not loaded!";
-        return 1;
+
+        // Break loop to prevent blocking other processes (e.g. fetching next script)
+        parseScript = false;
+        return;
     }
 
     // Check if pointer exceeded end of script
     if (reinterpret_cast<byte *>(stringOffsetTable) >= stringTableBase)
     {
         LOG << "End of script!";
-        return 1;
+        parseScript = false;
+        return;
     }
 
     // Parse script
@@ -214,6 +249,9 @@ int SceneManager::parseLine()
     {
     case 0x02: // Wait for input after message
     case 0x03: // Novel page break and wait for input after message
+        imageManager.setShowText();
+        imageManager.setShowMwnd();
+        LOG << "Break";
         switch (autoMode)
         {
         case -1:
@@ -223,7 +261,7 @@ int SceneManager::parseLine()
         case 0:
         default:
             // TODO: Support various auto mode speeds
-            setDelay(60);
+            wait(60);
             break;
         }
         break;
@@ -238,7 +276,9 @@ int SceneManager::parseLine()
         imageManager.currText = cleanText(std::string(&stringTable->StringStart));
         speakerCounter--;
 
+        // Also show here in cases of appended text without break in-between
         imageManager.setShowText();
+        imageManager.setShowMwnd();
 
         LOG << imageManager.currText;
         break;
@@ -258,15 +298,26 @@ int SceneManager::parseLine()
         break;
     }
 
-    return 0;
+    return;
+}
+
+// Wait without args to wait for frame-consuming actions within the current section
+void SceneManager::wait()
+{
+    waitTargetFrames = maxWaitFramestamp;
+}
+
+// Determine the framestamp when the longest animation of the current section ends
+void SceneManager::addSectionFrames(unsigned int rdraw)
+{
+    Uint64 waitFramestamp = imageManager.getFramestamp() + rdraw;
+    if (waitFramestamp > maxWaitFramestamp)
+        maxWaitFramestamp = waitFramestamp;
 }
 
 // Parse command and dispatch to respective handlers
 void SceneManager::handleCommand(const std::string &cmdString)
 {
-    // Number of frames to spend fading from one sprite to the next
-    // Default is 1 frame - no fade effect (alpha 0 to 255 within 1 frame)
-    static unsigned int rdraw;
 
 #ifdef LOG_CMD
     LOG << "'" << cmdString << "'";
@@ -277,18 +328,58 @@ void SceneManager::handleCommand(const std::string &cmdString)
         const std::string &arg = matches[1].str();
         if (!arg.empty())
         {
-            unsigned int frames = std::stoi(arg);
-            setDelay(frames);
+            // Wait for x frames
+            wait(std::stoi(arg));
         }
         else
         {
-            imageManager.setRdraw(rdraw);
-            rdraw = 0;
+            addSectionFrames(sectionRdraw);
+
+            // Wait until longest existing animation completes
+            wait();
         }
+    }
+    else if (std::regex_search(cmdString, matches, std::regex("^frameon(?: (\\w+) (\\d+))?")))
+    {
+        const auto &framesStr = matches[2].str();
+        if (framesStr.empty())
+            imageManager.setShowMwnd();
+
+        unsigned int frames = std::stoi(framesStr);
+        const auto &mode = matches[1].str();
+
+        // Assume only fade
+        imageManager.setFrameon(frames);
+        addSectionFrames(frames);
+        wait();
+    }
+    else if (std::regex_search(cmdString, matches, std::regex("^frameoff(?: (\\w+) (\\d+))?")))
+    {
+        const auto &framesStr = matches[2].str();
+        if (framesStr.empty())
+            imageManager.setHideMwnd();
+
+        unsigned int frames = std::stoi(framesStr);
+        const auto &mode = matches[1].str();
+
+        // Assume only fade
+        imageManager.setFrameoff(frames);
+        addSectionFrames(frames);
+        wait();
     }
     else if (std::regex_search(cmdString, matches, std::regex("^rdraw (\\d+)")))
     {
-        rdraw = std::stoi(matches[1].str());
+        // Number of frames to spend fading from one sprite to the next
+        // Default is 1 frame - no fade effect (alpha 0 to 255 within 1 frame)
+        // Set frames taken to transition images
+        // currRdraw = std::stoi(matches[1].str());
+        unsigned int rdraw = std::stoi(matches[1].str());
+        sectionRdraw = rdraw;
+    }
+    else if (std::regex_search(cmdString, matches, std::regex("^r?wipe2? (\\w+) (\\d+)")))
+    {
+        // Use transition for wipes
+        sectionRdraw = std::stoi(matches[2].str());
     }
     else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -302,7 +393,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     {
         audioManager.setMusic(matches[2].str());
     }
-    else if (std::regex_search(cmdString, matches, std::regex("^se (\\d) ([\\w\\d]+)(?: ([\\w\\d]+))?")))
+    else if (std::regex_search(cmdString, matches, std::regex("^se (\\d) ([\\w]+)(?: ([\\w]+))?")))
     {
         std::string asset = matches[2].str();
         const std::string &arg2 = matches[3].str();
@@ -330,7 +421,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     }
 
     // Display images
-    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|cg|fw)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
+    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|fg|cg|fw)(?: (\\d)(?: ([\\w,]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
     {
         // bg 0 BG15_d 0 0 0
         // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
@@ -342,10 +433,15 @@ void SceneManager::handleCommand(const std::string &cmdString)
             imageType = IMAGE_TYPE::BG;
         else if (t == "eg")
             imageType = IMAGE_TYPE::EG;
+        else if (t == "fg")
+            imageType = IMAGE_TYPE::FG;
         else if (t == "cg")
             imageType = IMAGE_TYPE::CG;
         else if (t == "fw")
             imageType = IMAGE_TYPE::FW;
+        else if (t == "pl")
+        {
+        }
         else
         {
             LOG << "Unknown image type identifier!";
@@ -367,18 +463,54 @@ void SceneManager::handleCommand(const std::string &cmdString)
             return;
         }
 
+        // Support for @ symbol referring to previous value
+        const auto &prevShifts = imageManager.getShifts(imageType, zIndex);
+        const auto &prevXShift = prevShifts.first;
+        const auto &prevYShift = prevShifts.second;
+
         if (asset == "blend")
         {
             imageManager.setBlend(imageType, zIndex, parser.parse(matches[4].str()));
         }
 
+        else if (asset == "attr")
+        {
+        }
+
+        else if (asset == "disp")
+        {
+        }
+
         else if (asset == "fade")
         {
             // eg 5 fade 240 255 0
+            const unsigned int frames = std::stoi(matches[4].str());
+            const Uint8 startAlpha = std::stoi(matches[5].str());
+            const Uint8 targetAlpha = std::stoi(matches[6].str());
+
+            addSectionFrames(frames);
+
+            imageManager.setFade(imageType, zIndex, frames, startAlpha, targetAlpha);
         }
 
         else if (asset == "move")
         {
+            const auto &rdrawStr = matches[4].str();
+            const auto &xShiftStr = matches[5].str();
+            auto yShiftStr = matches[6].str();
+
+            // No movement on axis if empty
+            if (yShiftStr.empty())
+                yShiftStr = "@";
+
+            unsigned int rdraw = std::stoi(rdrawStr);
+            int targetXShift = parser.parse(xShiftStr, prevXShift);
+            int targetYShift = parser.parse(yShiftStr, prevYShift);
+
+            // If there are multiple animations `wait` will wait for the longest one
+            addSectionFrames(rdraw);
+
+            imageManager.setMove(imageType, zIndex, rdraw, targetXShift, targetYShift);
         }
 
         // eg 5 amove1 240 100+96 300-144
@@ -404,10 +536,6 @@ void SceneManager::handleCommand(const std::string &cmdString)
 
         else
         {
-            // Support for @ symbol referring to previous value
-            const auto &prevShifts = imageManager.getShifts(imageType, zIndex);
-            const auto &prevXShift = prevShifts.first;
-            const auto &prevYShift = prevShifts.second;
 
             const auto &xShiftStr = matches[4].str();
             const auto &yShiftStr = matches[5].str();

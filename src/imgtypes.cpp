@@ -4,7 +4,7 @@
 #include <SDL2/SDL_ttf.h>
 
 // Constructor for non-updating images
-Image::Image(ImageManager &imageManager, std::string n, int x, int y, unsigned int alpha) : imageManager{imageManager}, renderer{imageManager.getRenderer()}, textureCache{imageManager.getCache()}, baseName{n}, xShift{x}, yShift{y}, targetAlpha{alpha} {}
+Image::Image(ImageManager &imageManager, std::string n, int x, int y, Uint8 alpha) : imageManager{imageManager}, renderer{imageManager.getRenderer()}, textureCache{imageManager.getCache()}, baseName{n}, xShift{x}, yShift{y}, targetAlpha{alpha} {}
 
 // Main constructor to init with renderer and cache (not required as default arguments are available for the above constructor)
 // Image::Image(ImageManager &imageManager) : imageManager{imageManager}, renderer{imageManager.getRenderer()}, textureCache{imageManager.getCache()} {}
@@ -32,6 +32,9 @@ void Image::update(const std::string &name, int x, int y)
 void Image::clear()
 {
     set("", xShift, yShift);
+
+    // Reset target alpha
+    blend(255);
 }
 
 void Image::set(const std::string &name, int x, int y)
@@ -44,6 +47,8 @@ void Image::set(const std::string &name, int x, int y)
     prevTargetAlpha = targetAlpha;
     prevXShift = xShift;
     prevYShift = yShift;
+
+    moving = false;
 
     baseName = name;
     xShift = x;
@@ -79,8 +84,26 @@ void Choice::render(const int y)
     renderText(xShift, y);
 }
 
+void Image::fade(const unsigned int frames, const Uint8 start, const Uint8 end)
+{
+    fadeFrames = frames;
+    fadeStart = imageManager.getFramestamp();
+    startAlpha = start;
+    targetAlpha = end;
+    fading = true;
+}
+
+void Image::move(const unsigned int rdraw, const int x, const int y)
+{
+    moveRdraw = rdraw;
+    moveStart = imageManager.getFramestamp();
+    targetXShift = x;
+    targetYShift = y;
+    moving = true;
+}
+
 // Internal function to render the image
-void Image::display(std::string &name, int x, int y, unsigned int alpha)
+void Image::display(std::string &name, const int x, const int y, const Uint8 alpha)
 {
     // Look for texture in cache
     auto got = textureCache.find(name);
@@ -103,33 +126,64 @@ void Image::display(std::string &name, int x, int y, unsigned int alpha)
     auto xPos = stdinfo.OffsetX - stdinfo.BaseX + x;
     auto yPos = stdinfo.OffsetY - stdinfo.BaseY + y;
 
+    // LOG << baseName << " " << stdinfo.OffsetX << " " << stdinfo.BaseX << " " << x << " " << stdinfo.Width << " " << xPos;
+    // LOG << baseName << " " << stdinfo.OffsetY << " " << stdinfo.BaseY << " " << y << " " << stdinfo.Height << " " << yPos;
+
     // Render onto canvas
     SDL_Rect DestR{xPos, yPos, static_cast<int>(stdinfo.Width), static_cast<int>(stdinfo.Height)};
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);
 }
 
 // Render image with given offsets
-void Image::render(const int xShift, const int yShift)
+void Image::render(int x, int y)
 {
-    unsigned int alpha = targetAlpha;
-    unsigned int prevAlpha = prevTargetAlpha;
-
-    auto currRdraw = imageManager.getCurrRdraw();
+    Uint8 alpha = targetAlpha;
+    Uint8 prevAlphaInverse = prevTargetAlpha;
 
     // Only fade if rdraw is a valid value
-    if (transitioning && currRdraw > 0)
+    // Otherwise, set to target alpha values directly from above
+    if (transitioning && imageManager.getGlobalRdraw() > 0)
     {
-        double ratio = (double)(imageManager.getFramesElapsed() - imageManager.getRdrawStart()) / currRdraw;
+        double ratio = (double)(imageManager.getFramestamp() - imageManager.getRdrawStart()) / imageManager.getGlobalRdraw();
 
         alpha = ratio * targetAlpha;
-        prevAlpha = ratio * prevTargetAlpha;
+        prevAlphaInverse = ratio * prevTargetAlpha;
+        // LOG << baseName << " : " << (int)alpha << ", " << prevBaseName << " : " << (int) prevTargetAlpha - prevAlphaInverse;
+    }
+
+    // Fade overrides any transitions
+    if (fading && fadeFrames > 0)
+    {
+        double ratio = (double)(imageManager.getFramestamp() - fadeStart) / fadeFrames;
+
+        alpha = startAlpha + (targetAlpha - startAlpha) * ratio;
+    }
+
+    if (moving && moveRdraw > 0)
+    {
+        double ratio = (double)(imageManager.getFramestamp() - moveStart) / moveRdraw;
+
+        x = (double)(targetXShift - xShift) * ratio + xShift;
+        y = (double)(targetYShift - yShift) * ratio + yShift;
+        // LOG << baseName << " : " << nextX << ", " << nextY << ", " << moveRdraw;
+    }
+
+    if (x == targetXShift && y == targetYShift)
+    {
+        xShift = targetXShift;
+        yShift = targetYShift;
+        moving = false;
     }
 
     if (alpha == targetAlpha)
+    {
         transitioning = false;
+        fading = false;
+    }
 
-    display(prevBaseName, prevXShift, prevYShift, prevTargetAlpha - prevAlpha);
-    display(baseName, xShift, yShift, alpha);
+    // LOG << baseName << prevTargetAlpha << prevBaseName << prevAlphaInverse;
+    display(prevBaseName, prevXShift, prevYShift, prevTargetAlpha - prevAlphaInverse);
+    display(baseName, x, y, alpha);
 }
 
 // Render image with the member offsets by default
@@ -207,11 +261,25 @@ void Cg::clear()
     Part2::clear();
 }
 
-void Cg::setTargetAlpha(const unsigned int target)
+void Cg::fade(const unsigned int frames, const Uint8 start, const Uint8 end)
 {
-    Base::setTargetAlpha(target);
-    Part1::setTargetAlpha(target);
-    Part2::setTargetAlpha(target);
+    Base::fade(frames, start, end);
+    Part1::fade(frames, start, end);
+    Part2::fade(frames, start, end);
+}
+
+void Cg::move(const unsigned int rdraw, const int x, const int y)
+{
+    Base::move(rdraw, x, y);
+    Part1::move(rdraw, x, y);
+    Part2::move(rdraw, x, y);
+}
+
+void Cg::blend(const unsigned int target)
+{
+    Base::blend(target);
+    Part1::blend(target);
+    Part2::blend(target);
 }
 
 // Return if the multi-part sprite is cached and ready to be rendered as a whole
@@ -246,10 +314,4 @@ void Cg::update(const std::string &rawName, int x, int y)
     Base::update(baseName, x, y);
     Part1::update(part1Name, x, y);
     Part2::update(part2Name, x, y);
-}
-
-// Render at a special shifted offset for FW sprites
-void Fw::display(std::string &name, int x, int y, unsigned int alpha)
-{
-    Base::display(name, x + FW_XSHIFT, y + FW_YSHIFT, alpha);
 }

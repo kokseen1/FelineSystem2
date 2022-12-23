@@ -42,8 +42,9 @@
 enum class IMAGE_TYPE
 {
     BG,
-    CG,
     EG,
+    FG,
+    CG,
     FW,
 };
 
@@ -56,6 +57,10 @@ public:
 
     ImageManager(FileManager &, SDL_Renderer *, std::vector<Choice> &);
 
+    void setFrameon(const unsigned int);
+
+    void setFrameoff(const unsigned int);
+
     void clearCanvas();
 
     void loadDump(const json &);
@@ -63,6 +68,10 @@ public:
     const json dump();
 
     const std::pair<int, int> getShifts(const IMAGE_TYPE, const int);
+
+    void setFade(const IMAGE_TYPE, const int, const unsigned int, const Uint8, const Uint8);
+
+    void setMove(const IMAGE_TYPE, const int, const unsigned int, const int, const int);
 
     void setBlend(const IMAGE_TYPE, const int, const unsigned int);
 
@@ -74,6 +83,9 @@ public:
 
     void render();
 
+    void setShowMwnd();
+    void setHideMwnd();
+    bool getShowMwnd() { return showMwnd; }
     void toggleMwnd() { showMwnd = !showMwnd; };
 
     void setShowText() { showText = true; };
@@ -91,15 +103,15 @@ public:
 
     void setRdraw(const unsigned int);
 
-    Uint64 getFramesElapsed() { return framesElapsed; }
+    Uint64 getFramestamp() { return framestamp; }
     Uint64 getRdrawStart() { return rdrawStart; }
-    unsigned int getCurrRdraw() { return currRdraw; }
+    unsigned int getGlobalRdraw() { return globalRdraw; }
 
 private:
     // Used for synchronizing transitions/animations with the render framerate
-    Uint64 framesElapsed = 0;
+    Uint64 framestamp = 0;
     Uint64 rdrawStart = 0;
-    unsigned int currRdraw = 0;
+    unsigned int globalRdraw = 0;
 
     std::vector<Choice> &currChoices;
 
@@ -126,6 +138,7 @@ private:
     ImageLayer<Eg, MAX_EG> egLayer;
     ImageLayer<Cg, MAX_CG> cgLayer;
     ImageLayer<Fw, MAX_FW> fwLayer;
+    ImageLayer<Fg, MAX_FG> fgLayer;
 
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
 

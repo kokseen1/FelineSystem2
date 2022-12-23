@@ -15,6 +15,7 @@ void ImageManager::clearCanvas()
     egLayer.clear();
     cgLayer.clear();
     fwLayer.clear();
+    fgLayer.clear();
 
     killRdraw();
 }
@@ -26,6 +27,7 @@ void ImageManager::loadDump(const json &j)
 
     bgLayer.load(j.at(KEY_BG));
     egLayer.load(j.at(KEY_EG));
+    // fgLayer.load(j.at(KEY_FG));
     cgLayer.load(j.at(KEY_CG));
     fwLayer.load(j.at(KEY_FW));
 }
@@ -36,11 +38,12 @@ const json ImageManager::dump()
     return {
         {KEY_BG, bgLayer.dump()},
         {KEY_EG, egLayer.dump()},
+        // {KEY_FG, fgLayer.dump()},
         {KEY_CG, cgLayer.dump()},
         {KEY_FW, fwLayer.dump()}};
 }
 
-ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer, std::vector<Choice> &currChoices) : fileManager{fm}, renderer{renderer}, bgLayer{*this}, egLayer{*this}, cgLayer{*this}, fwLayer{*this}, currChoices{currChoices}
+ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer, std::vector<Choice> &currChoices) : fileManager{fm}, renderer{renderer}, bgLayer{*this}, egLayer{*this}, cgLayer{*this}, fwLayer{*this}, fgLayer{*this}, currChoices{currChoices}
 {
     // Background color when rendering transparent textures
     if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0) < 0)
@@ -181,7 +184,7 @@ void ImageManager::renderChoices()
 // Render images in order of type precedence and z-index
 void ImageManager::render()
 {
-    framesElapsed++;
+    framestamp++;
 
     // Clear render canvas
     SDL_RenderClear(renderer);
@@ -189,6 +192,7 @@ void ImageManager::render()
     bgLayer.render();
     cgLayer.render();
     egLayer.render();
+    fgLayer.render();
 
     if (showMwnd)
     {
@@ -224,6 +228,10 @@ void ImageManager::clearZIndex(const IMAGE_TYPE type, const int zIndex)
         egLayer.clear(zIndex);
         break;
 
+    case IMAGE_TYPE::FG:
+        fgLayer.clear(zIndex);
+        break;
+
     case IMAGE_TYPE::CG:
         cgLayer.clear(zIndex);
         break;
@@ -245,6 +253,10 @@ void ImageManager::clearImageType(const IMAGE_TYPE type)
 
     case IMAGE_TYPE::EG:
         egLayer.clear();
+        break;
+
+    case IMAGE_TYPE::FG:
+        fgLayer.clear();
         break;
 
     case IMAGE_TYPE::CG:
@@ -269,6 +281,9 @@ const std::pair<int, int> ImageManager::getShifts(const IMAGE_TYPE type, const i
     case IMAGE_TYPE::EG:
         return egLayer.getShifts(zIndex);
 
+    case IMAGE_TYPE::FG:
+        return fgLayer.getShifts(zIndex);
+
     // Assume that any valid CG/FW must always contain a valid base
     case IMAGE_TYPE::CG:
         return cgLayer.getShifts(zIndex);
@@ -278,27 +293,84 @@ const std::pair<int, int> ImageManager::getShifts(const IMAGE_TYPE type, const i
     }
 }
 
-// Names of assets must be inserted in ascending z-index
+void ImageManager::setFade(const IMAGE_TYPE type, const int zIndex, const unsigned int frames, const Uint8 start, const Uint8 end)
+{
+    switch (type)
+    {
+    case IMAGE_TYPE::BG:
+        bgLayer.fade(zIndex, frames, start, end);
+        break;
+
+    case IMAGE_TYPE::EG:
+        egLayer.fade(zIndex, frames, start, end);
+        break;
+
+    case IMAGE_TYPE::FG:
+        fgLayer.fade(zIndex, frames, start, end);
+        break;
+
+    case IMAGE_TYPE::CG:
+        cgLayer.fade(zIndex, frames, start, end);
+        break;
+
+    case IMAGE_TYPE::FW:
+        fwLayer.fade(zIndex, frames, start, end);
+        break;
+    }
+}
+
+void ImageManager::setMove(const IMAGE_TYPE type, const int zIndex, const unsigned int rdraw, const int x, const int y)
+{
+    switch (type)
+    {
+    case IMAGE_TYPE::BG:
+        bgLayer.move(zIndex, rdraw, x, y);
+        break;
+
+    case IMAGE_TYPE::EG:
+        egLayer.move(zIndex, rdraw, x, y);
+        break;
+
+    case IMAGE_TYPE::FG:
+        fgLayer.move(zIndex, rdraw, x, y);
+        break;
+
+    case IMAGE_TYPE::CG:
+        cgLayer.move(zIndex, rdraw, x, y);
+        break;
+
+    case IMAGE_TYPE::FW:
+        fwLayer.move(zIndex, rdraw, x, y);
+        break;
+    }
+}
+
 void ImageManager::setBlend(const IMAGE_TYPE type, const int zIndex, const unsigned int alpha)
 {
     switch (type)
     {
     case IMAGE_TYPE::BG:
-        bgLayer.setTargetAlpha(zIndex, alpha);
+        bgLayer.blend(zIndex, alpha);
         break;
+
     case IMAGE_TYPE::EG:
-        egLayer.setTargetAlpha(zIndex, alpha);
+        egLayer.blend(zIndex, alpha);
         break;
+
+    case IMAGE_TYPE::FG:
+        fgLayer.blend(zIndex, alpha);
+        break;
+
     case IMAGE_TYPE::CG:
-        cgLayer.setTargetAlpha(zIndex, alpha);
+        cgLayer.blend(zIndex, alpha);
         break;
+
     case IMAGE_TYPE::FW:
-        fwLayer.setTargetAlpha(zIndex, alpha);
+        fwLayer.blend(zIndex, alpha);
         break;
     }
 }
 
-// Names of assets must be inserted in ascending z-index
 void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string rawName, int xShift, int yShift)
 {
     switch (type)
@@ -306,12 +378,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
     case IMAGE_TYPE::BG:
         bgLayer.update(zIndex, rawName, xShift, yShift);
         break;
+
     case IMAGE_TYPE::EG:
         egLayer.update(zIndex, rawName, xShift, yShift);
         break;
+
+    case IMAGE_TYPE::FG:
+        fgLayer.update(zIndex, rawName, xShift, yShift);
+        break;
+
     case IMAGE_TYPE::CG:
         cgLayer.update(zIndex, rawName, xShift, yShift);
         break;
+
     case IMAGE_TYPE::FW:
         fwLayer.update(zIndex, rawName, xShift, yShift);
         break;
@@ -372,8 +451,33 @@ void ImageManager::killRdraw()
 }
 
 // Sets the number of frames to take to render any upcoming transition/animation
+// Setting rdraw to 0 instantly displays the resulting appearance
 void ImageManager::setRdraw(const unsigned int rdraw)
 {
-    rdrawStart = getFramesElapsed();
-    currRdraw = rdraw;
+    rdrawStart = getFramestamp();
+    globalRdraw = rdraw;
+}
+
+void ImageManager::setShowMwnd()
+{
+    mwnd.blend(MWND_ALPHA);
+    mwndDeco.blend(MAX_ALPHA);
+    showMwnd = true;
+}
+
+void ImageManager::setHideMwnd()
+{
+    showMwnd = false;
+}
+
+void ImageManager::setFrameon(const unsigned int frames)
+{
+    mwnd.fade(frames, 0, MWND_ALPHA);
+    mwndDeco.fade(frames, 0, MAX_ALPHA);
+}
+
+void ImageManager::setFrameoff(const unsigned int frames)
+{
+    mwnd.fade(frames, MWND_ALPHA, 0);
+    mwndDeco.fade(frames, MAX_ALPHA, 0);
 }

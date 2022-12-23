@@ -8,11 +8,14 @@
 
 #define KEY_BG "bg"
 #define KEY_EG "eg"
+#define KEY_FG "fg"
 #define KEY_CG "cg"
 #define KEY_FW "fw"
 #define KEY_NAME "name"
 #define KEY_XSHIFT "x"
 #define KEY_YSHIFT "y"
+
+#define MAX_ALPHA 255
 
 #define FW_XSHIFT 90
 #define FW_YSHIFT 160
@@ -21,6 +24,7 @@
 #define MAX_EG 10
 #define MAX_CG 10
 #define MAX_FW 10
+#define MAX_FG 10
 
 #define FONT_PATH ASSETS "font.ttf"
 #define FONT_SIZE 20
@@ -51,7 +55,7 @@ public:
     int xShift = 0;
     int yShift = 0;
 
-    Image(ImageManager &, std::string = "", int = 0, int = 0, unsigned int = 255);
+    Image(ImageManager &, std::string = "", int = 0, int = 0, Uint8 = 255);
 
     bool isActive() { return !baseName.empty(); }
 
@@ -67,20 +71,20 @@ public:
 
     const json dump();
 
-    void render(const int, const int);
-
     bool isCached();
 
-    void setTargetAlpha(const unsigned int target) { targetAlpha = target; }
+    void blend(const unsigned int target) { targetAlpha = target; }
+
+    void move(const unsigned int, const int, const int);
+
+    void fade(const unsigned int, const Uint8, const Uint8);
+
+    virtual void render(int, int);
 
 protected:
-    virtual void display(std::string &, int, int, unsigned int);
+    virtual void display(std::string &, const int, const int, const Uint8);
 
     void set(const std::string &, int, int);
-
-    unsigned int targetAlpha;
-
-    bool transitioning = false;
 
     ImageManager &imageManager;
 
@@ -89,11 +93,30 @@ protected:
     SDL_Renderer *renderer;
 
 private:
-    // Info about the image before the current one
+    bool moving = false;
+    bool transitioning = false;
+    bool fading = false;
+
+    // Info about the previous image for fading out
     std::string prevBaseName;
-    int prevTargetAlpha = 255;
-    int prevXShift = 0;
-    int prevYShift = 0;
+    Uint8 prevTargetAlpha;
+    int prevXShift;
+    int prevYShift;
+
+    // Number of frames to take for movement
+    unsigned int moveRdraw;
+
+    // Framestamp of start of movement
+    Uint64 moveStart;
+
+    int targetXShift;
+    int targetYShift;
+
+    Uint8 targetAlpha;
+
+    Uint64 fadeStart;
+    Uint8 startAlpha;
+    unsigned int fadeFrames;
 };
 
 class Choice : public Image
@@ -118,6 +141,12 @@ class Bg : public Image
 };
 
 class Eg : public Image
+{
+    // Inherit ctors
+    using Image::Image;
+};
+
+class Fg : public Image
 {
     // Inherit ctors
     using Image::Image;
@@ -157,7 +186,11 @@ public:
 
     void render();
 
-    void setTargetAlpha(const unsigned int);
+    void blend(const unsigned int);
+
+    void move(const unsigned int, const int, const int);
+
+    void fade(const unsigned int, const Uint8, const Uint8);
 
 private:
     bool isReady();
@@ -168,7 +201,7 @@ class Fw : public Cg
     using Cg::Cg;
 
 protected:
-    void display(std::string &, int, int, unsigned int);
+    void display(std::string &name, const int x, const int y, const Uint8 alpha) { Base::display(name, x + FW_XSHIFT, y + FW_YSHIFT, alpha); }
 };
 
 typedef struct
@@ -204,11 +237,25 @@ public:
         objects[i].update(rawName, x, y);
     }
 
-    void setTargetAlpha(const int i, const unsigned int target)
+    void fade(const int i, const unsigned int frames, const Uint8 start, const Uint8 end)
     {
         if (i >= size())
             throw std::runtime_error("Out of range access");
-        objects[i].setTargetAlpha(target);
+        objects[i].fade(frames, start, end);
+    }
+
+    void move(const int i, const unsigned int rdraw, const int targetXShift, const int targetYshift)
+    {
+        if (i >= size())
+            throw std::runtime_error("Out of range access");
+        objects[i].move(rdraw, targetXShift, targetYshift);
+    }
+
+    void blend(const int i, const unsigned int target)
+    {
+        if (i >= size())
+            throw std::runtime_error("Out of range access");
+        objects[i].blend(target);
     }
 
     const std::pair<int, int> getShifts(size_t i)
