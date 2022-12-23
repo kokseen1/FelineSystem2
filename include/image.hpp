@@ -42,8 +42,9 @@
 enum class IMAGE_TYPE
 {
     BG,
-    CG,
     EG,
+    FG,
+    CG,
     FW,
 };
 
@@ -128,6 +129,7 @@ private:
     ImageLayer<Eg, MAX_EG> egLayer;
     ImageLayer<Cg, MAX_CG> cgLayer;
     ImageLayer<Fw, MAX_FW> fwLayer;
+    ImageLayer<Fg, MAX_FG> fgLayer;
 
     SDL_Texture *getTextureFromFrame(HGDecoder::Frame);
 

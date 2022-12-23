@@ -115,6 +115,9 @@ void Image::display(std::string &name, const int x, const int y, const Uint8 alp
     auto xPos = stdinfo.OffsetX - stdinfo.BaseX + x;
     auto yPos = stdinfo.OffsetY - stdinfo.BaseY + y;
 
+    // LOG << baseName << " " << stdinfo.OffsetX << " " << stdinfo.BaseX << " " << x << " " << stdinfo.Width << " " << xPos;
+    // LOG << baseName << " " << stdinfo.OffsetY << " " << stdinfo.BaseY << " " << y << " " << stdinfo.Height << " " << yPos;
+
     // Render onto canvas
     SDL_Rect DestR{xPos, yPos, static_cast<int>(stdinfo.Width), static_cast<int>(stdinfo.Height)};
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);

@@ -15,6 +15,7 @@ void ImageManager::clearCanvas()
     egLayer.clear();
     cgLayer.clear();
     fwLayer.clear();
+    fgLayer.clear();
 
     killRdraw();
 }
@@ -26,6 +27,7 @@ void ImageManager::loadDump(const json &j)
 
     bgLayer.load(j.at(KEY_BG));
     egLayer.load(j.at(KEY_EG));
+    fgLayer.load(j.at(KEY_FG));
     cgLayer.load(j.at(KEY_CG));
     fwLayer.load(j.at(KEY_FW));
 }
@@ -36,11 +38,12 @@ const json ImageManager::dump()
     return {
         {KEY_BG, bgLayer.dump()},
         {KEY_EG, egLayer.dump()},
+        {KEY_FG, fgLayer.dump()},
         {KEY_CG, cgLayer.dump()},
         {KEY_FW, fwLayer.dump()}};
 }
 
-ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer, std::vector<Choice> &currChoices) : fileManager{fm}, renderer{renderer}, bgLayer{*this}, egLayer{*this}, cgLayer{*this}, fwLayer{*this}, currChoices{currChoices}
+ImageManager::ImageManager(FileManager &fm, SDL_Renderer *renderer, std::vector<Choice> &currChoices) : fileManager{fm}, renderer{renderer}, bgLayer{*this}, egLayer{*this}, cgLayer{*this}, fwLayer{*this}, fgLayer{*this}, currChoices{currChoices}
 {
     // Background color when rendering transparent textures
     if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0) < 0)
@@ -189,6 +192,7 @@ void ImageManager::render()
     bgLayer.render();
     cgLayer.render();
     egLayer.render();
+    fgLayer.render();
 
     if (showMwnd)
     {
@@ -224,6 +228,10 @@ void ImageManager::clearZIndex(const IMAGE_TYPE type, const int zIndex)
         egLayer.clear(zIndex);
         break;
 
+    case IMAGE_TYPE::FG:
+        fgLayer.clear(zIndex);
+        break;
+
     case IMAGE_TYPE::CG:
         cgLayer.clear(zIndex);
         break;
@@ -245,6 +253,10 @@ void ImageManager::clearImageType(const IMAGE_TYPE type)
 
     case IMAGE_TYPE::EG:
         egLayer.clear();
+        break;
+
+    case IMAGE_TYPE::FG:
+        fgLayer.clear();
         break;
 
     case IMAGE_TYPE::CG:
@@ -269,6 +281,9 @@ const std::pair<int, int> ImageManager::getShifts(const IMAGE_TYPE type, const i
     case IMAGE_TYPE::EG:
         return egLayer.getShifts(zIndex);
 
+    case IMAGE_TYPE::FG:
+        return fgLayer.getShifts(zIndex);
+
     // Assume that any valid CG/FW must always contain a valid base
     case IMAGE_TYPE::CG:
         return cgLayer.getShifts(zIndex);
@@ -285,12 +300,19 @@ void ImageManager::setMove(const IMAGE_TYPE type, const int zIndex, const unsign
     case IMAGE_TYPE::BG:
         bgLayer.move(zIndex, rdraw, x, y);
         break;
+
     case IMAGE_TYPE::EG:
         egLayer.move(zIndex, rdraw, x, y);
         break;
+
+    case IMAGE_TYPE::FG:
+        fgLayer.move(zIndex, rdraw, x, y);
+        break;
+
     case IMAGE_TYPE::CG:
         cgLayer.move(zIndex, rdraw, x, y);
         break;
+
     case IMAGE_TYPE::FW:
         fwLayer.move(zIndex, rdraw, x, y);
         break;
@@ -304,12 +326,19 @@ void ImageManager::setBlend(const IMAGE_TYPE type, const int zIndex, const unsig
     case IMAGE_TYPE::BG:
         bgLayer.blend(zIndex, alpha);
         break;
+
     case IMAGE_TYPE::EG:
         egLayer.blend(zIndex, alpha);
         break;
+
+    case IMAGE_TYPE::FG:
+        fgLayer.blend(zIndex, alpha);
+        break;
+
     case IMAGE_TYPE::CG:
         cgLayer.blend(zIndex, alpha);
         break;
+
     case IMAGE_TYPE::FW:
         fwLayer.blend(zIndex, alpha);
         break;
@@ -323,12 +352,19 @@ void ImageManager::setImage(const IMAGE_TYPE type, const int zIndex, std::string
     case IMAGE_TYPE::BG:
         bgLayer.update(zIndex, rawName, xShift, yShift);
         break;
+
     case IMAGE_TYPE::EG:
         egLayer.update(zIndex, rawName, xShift, yShift);
         break;
+
+    case IMAGE_TYPE::FG:
+        fgLayer.update(zIndex, rawName, xShift, yShift);
+        break;
+
     case IMAGE_TYPE::CG:
         cgLayer.update(zIndex, rawName, xShift, yShift);
         break;
+
     case IMAGE_TYPE::FW:
         fwLayer.update(zIndex, rawName, xShift, yShift);
         break;

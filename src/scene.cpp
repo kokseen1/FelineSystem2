@@ -352,7 +352,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     }
 
     // Display images
-    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|cg|fw)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
+    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|fg|cg|fw)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
     {
         // bg 0 BG15_d 0 0 0
         // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
@@ -364,14 +364,13 @@ void SceneManager::handleCommand(const std::string &cmdString)
             imageType = IMAGE_TYPE::BG;
         else if (t == "eg")
             imageType = IMAGE_TYPE::EG;
+        else if (t == "fg")
+            imageType = IMAGE_TYPE::FG;
         else if (t == "cg")
             imageType = IMAGE_TYPE::CG;
         else if (t == "fw")
             imageType = IMAGE_TYPE::FW;
         else if (t == "pl")
-        {
-        }
-        else if (t == "fg")
         {
         }
         else
@@ -403,6 +402,14 @@ void SceneManager::handleCommand(const std::string &cmdString)
         if (asset == "blend")
         {
             imageManager.setBlend(imageType, zIndex, parser.parse(matches[4].str()));
+        }
+
+        else if (asset == "attr")
+        {
+        }
+
+        else if (asset == "disp")
+        {
         }
 
         else if (asset == "fade")

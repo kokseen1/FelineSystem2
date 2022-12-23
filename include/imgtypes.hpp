@@ -8,6 +8,7 @@
 
 #define KEY_BG "bg"
 #define KEY_EG "eg"
+#define KEY_FG "fg"
 #define KEY_CG "cg"
 #define KEY_FW "fw"
 #define KEY_NAME "name"
@@ -21,6 +22,7 @@
 #define MAX_EG 10
 #define MAX_CG 10
 #define MAX_FW 10
+#define MAX_FG 10
 
 #define FONT_PATH ASSETS "font.ttf"
 #define FONT_SIZE 20
@@ -130,6 +132,12 @@ class Bg : public Image
 };
 
 class Eg : public Image
+{
+    // Inherit ctors
+    using Image::Image;
+};
+
+class Fg : public Image
 {
     // Inherit ctors
     using Image::Image;
