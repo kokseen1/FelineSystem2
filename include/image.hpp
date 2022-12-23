@@ -65,6 +65,8 @@ public:
 
     const std::pair<int, int> getShifts(const IMAGE_TYPE, const int);
 
+    void setFade(const IMAGE_TYPE, const int, const unsigned int, const Uint8, const Uint8);
+
     void setMove(const IMAGE_TYPE, const int, const unsigned int, const int, const int);
 
     void setBlend(const IMAGE_TYPE, const int, const unsigned int);
@@ -96,13 +98,13 @@ public:
 
     Uint64 getFramestamp() { return framestamp; }
     Uint64 getRdrawStart() { return rdrawStart; }
-    unsigned int getRdraw() { return currRdraw; }
+    unsigned int getGlobalRdraw() { return globalRdraw; }
 
 private:
     // Used for synchronizing transitions/animations with the render framerate
     Uint64 framestamp = 0;
     Uint64 rdrawStart = 0;
-    unsigned int currRdraw = 0;
+    unsigned int globalRdraw = 0;
 
     std::vector<Choice> &currChoices;
 

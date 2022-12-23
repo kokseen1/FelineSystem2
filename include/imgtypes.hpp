@@ -75,6 +75,8 @@ public:
 
     void move(const unsigned int, const int, const int);
 
+    void fade(const unsigned int, const Uint8, const Uint8);
+
     virtual void render(int, int);
 
 protected:
@@ -91,6 +93,7 @@ protected:
 private:
     bool moving = false;
     bool transitioning = false;
+    bool fading = false;
 
     // Info about the previous image for fading out
     std::string prevBaseName;
@@ -108,6 +111,10 @@ private:
     int targetYShift;
 
     Uint8 targetAlpha;
+
+    Uint64 fadeStart;
+    Uint8 startAlpha;
+    unsigned int fadeFrames;
 };
 
 class Choice : public Image
@@ -181,6 +188,8 @@ public:
 
     void move(const unsigned int, const int, const int);
 
+    void fade(const unsigned int, const Uint8, const Uint8);
+
 private:
     bool isReady();
 };
@@ -224,6 +233,13 @@ public:
         if (i >= size())
             throw std::runtime_error("Out of range access");
         objects[i].update(rawName, x, y);
+    }
+
+    void fade(const int i, const unsigned int frames, const Uint8 start, const Uint8 end)
+    {
+        if (i >= size())
+            throw std::runtime_error("Out of range access");
+        objects[i].fade(frames, start, end);
     }
 
     void move(const int i, const unsigned int rdraw, const int targetXShift, const int targetYshift)

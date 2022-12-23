@@ -82,6 +82,15 @@ void Choice::render(const int y)
     renderText(xShift, y);
 }
 
+void Image::fade(const unsigned int frames, const Uint8 start, const Uint8 end)
+{
+    fadeFrames = frames;
+    fadeStart = imageManager.getFramestamp();
+    startAlpha = start;
+    targetAlpha = end;
+    fading = true;
+}
+
 void Image::move(const unsigned int rdraw, const int x, const int y)
 {
     moveRdraw = rdraw;
@@ -129,17 +138,23 @@ void Image::render(int x, int y)
     Uint8 alpha = targetAlpha;
     Uint8 prevAlphaInverse = prevTargetAlpha;
 
-    auto currRdraw = imageManager.getRdraw();
-
     // Only fade if rdraw is a valid value
     // Otherwise, set to target alpha values directly from above
-    if (transitioning && currRdraw > 0)
+    if (transitioning && imageManager.getGlobalRdraw() > 0)
     {
-        double ratio = (double)(imageManager.getFramestamp() - imageManager.getRdrawStart()) / currRdraw;
+        double ratio = (double)(imageManager.getFramestamp() - imageManager.getRdrawStart()) / imageManager.getGlobalRdraw();
 
         alpha = ratio * targetAlpha;
         prevAlphaInverse = ratio * prevTargetAlpha;
         // LOG << baseName << " : " << (int)alpha << ", " << prevBaseName << " : " << (int) prevTargetAlpha - prevAlphaInverse;
+    }
+
+    // Fade overrides any transitions
+    if (fading && fadeFrames > 0)
+    {
+        double ratio = (double)(imageManager.getFramestamp() - fadeStart) / fadeFrames;
+
+        alpha = startAlpha + (targetAlpha - startAlpha) * ratio;
     }
 
     if (moving && moveRdraw > 0)
@@ -159,7 +174,10 @@ void Image::render(int x, int y)
     }
 
     if (alpha == targetAlpha)
+    {
         transitioning = false;
+        fading = false;
+    }
 
     // LOG << baseName << prevTargetAlpha << prevBaseName << prevAlphaInverse;
     display(prevBaseName, prevXShift, prevYShift, prevTargetAlpha - prevAlphaInverse);
@@ -239,6 +257,13 @@ void Cg::clear()
     Base::clear();
     Part1::clear();
     Part2::clear();
+}
+
+void Cg::fade(const unsigned int frames, const Uint8 start, const Uint8 end)
+{
+    Base::fade(frames, start, end);
+    Part1::fade(frames, start, end);
+    Part2::fade(frames, start, end);
 }
 
 void Cg::move(const unsigned int rdraw, const int x, const int y)

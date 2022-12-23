@@ -165,7 +165,7 @@ void SceneManager::wait(unsigned int frames)
 
 bool SceneManager::rdrawWaited()
 {
-    return imageManager.getFramestamp() > (imageManager.getRdrawStart() + imageManager.getRdraw());
+    return imageManager.getFramestamp() > (imageManager.getRdrawStart() + imageManager.getGlobalRdraw());
 }
 
 bool SceneManager::canProceed()
@@ -290,7 +290,7 @@ void SceneManager::parseLine()
 }
 
 // Determine the framestamp when the longest animation of the current section ends
-void SceneManager::addSectionRdraw(unsigned int rdraw)
+void SceneManager::addSectionFrames(unsigned int rdraw)
 {
     Uint64 waitFramestamp = imageManager.getFramestamp() + rdraw;
     if (waitFramestamp > maxWaitFramestamp)
@@ -315,7 +315,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
         }
         else
         {
-            addSectionRdraw(sectionRdraw);
+            addSectionFrames(sectionRdraw);
 
             // Wait until longest existing animation completes
             waitTargetFrames = maxWaitFramestamp;
@@ -433,11 +433,13 @@ void SceneManager::handleCommand(const std::string &cmdString)
         else if (asset == "fade")
         {
             // eg 5 fade 240 255 0
-            const unsigned int rdraw = std::stoi(matches[4].str());
+            const unsigned int frames = std::stoi(matches[4].str());
             const Uint8 startAlpha = std::stoi(matches[5].str());
-            const Uint8 endAlpha = std::stoi(matches[6].str());
+            const Uint8 targetAlpha = std::stoi(matches[6].str());
 
-            // addSectionRdraw(rdraw);
+            addSectionFrames(frames);
+
+            imageManager.setFade(imageType, zIndex, frames, startAlpha, targetAlpha);
         }
 
         else if (asset == "move")
@@ -451,7 +453,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
             int targetYShift = parser.parse(yShiftStr, prevYShift);
 
             // If there are multiple animations `wait` will wait for the longest one
-            addSectionRdraw(rdraw);
+            addSectionFrames(rdraw);
 
             imageManager.setMove(imageType, zIndex, rdraw, targetXShift, targetYShift);
         }

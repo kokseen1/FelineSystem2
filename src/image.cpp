@@ -293,6 +293,33 @@ const std::pair<int, int> ImageManager::getShifts(const IMAGE_TYPE type, const i
     }
 }
 
+void ImageManager::setFade(const IMAGE_TYPE type, const int zIndex, const unsigned int frames, const Uint8 start, const Uint8 end)
+{
+    switch (type)
+    {
+    case IMAGE_TYPE::BG:
+        bgLayer.fade(zIndex, frames, start, end);
+        break;
+
+    case IMAGE_TYPE::EG:
+        egLayer.fade(zIndex, frames, start, end);
+        break;
+
+    case IMAGE_TYPE::FG:
+        fgLayer.fade(zIndex, frames, start, end);
+        break;
+
+    case IMAGE_TYPE::CG:
+        cgLayer.fade(zIndex, frames, start, end);
+        break;
+
+    case IMAGE_TYPE::FW:
+        fwLayer.fade(zIndex, frames, start, end);
+        break;
+    }
+}
+
+
 void ImageManager::setMove(const IMAGE_TYPE type, const int zIndex, const unsigned int rdraw, const int x, const int y)
 {
     switch (type)
@@ -429,5 +456,5 @@ void ImageManager::killRdraw()
 void ImageManager::setRdraw(const unsigned int rdraw)
 {
     rdrawStart = getFramestamp();
-    currRdraw = rdraw;
+    globalRdraw = rdraw;
 }
