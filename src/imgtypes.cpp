@@ -31,8 +31,10 @@ void Image::update(const std::string &name, int x, int y)
 // Clear by setting the current name to blank to simulate a transition
 void Image::clear()
 {
-    blend(255);
     set("", xShift, yShift);
+
+    // Reset target alpha
+    blend(255);
 }
 
 void Image::set(const std::string &name, int x, int y)

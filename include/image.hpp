@@ -79,6 +79,8 @@ public:
 
     void render();
 
+    void setShowMwnd() { showMwnd = true; };
+    void setHideMwnd() { showMwnd = false; };
     void toggleMwnd() { showMwnd = !showMwnd; };
 
     void setShowText() { showText = true; };

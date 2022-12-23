@@ -170,7 +170,7 @@ bool SceneManager::rdrawWaited()
 
 bool SceneManager::canProceed()
 {
-    return parseScript && (imageManager.getFramestamp() > waitTargetFrames);
+    return parseScript && (imageManager.getFramestamp() >= waitTargetFrames);
 }
 
 // Called from main loop to proceed script if needed
@@ -181,6 +181,10 @@ void SceneManager::tickScript()
     if (canProceed())
     {
         LOG << "Start section";
+
+        // Hide text when transitioning (follows CS2 behaviour)
+        // Show when reaching break
+        imageManager.setHideText();
     }
     else
         return;
@@ -196,16 +200,14 @@ void SceneManager::tickScript()
     sectionRdraw = 0;
 }
 
+// User input initiated parse
 void SceneManager::parse()
 {
     // Skip timer if any
     waitTargetFrames = 0;
 
     // Skip any remaining transitions/animations
-    imageManager.killRdraw();
-
-    // Hide text when transitioning (follows CS2 behaviour)
-    imageManager.setHideText();
+    // imageManager.killRdraw();
 
     // Indicate to parse the next line
     parseScript = true;
@@ -241,6 +243,8 @@ void SceneManager::parseLine()
     {
     case 0x02: // Wait for input after message
     case 0x03: // Novel page break and wait for input after message
+        imageManager.setShowText();
+        imageManager.setShowMwnd();
         LOG << "Break";
         switch (autoMode)
         {
@@ -265,8 +269,6 @@ void SceneManager::parseLine()
 
         imageManager.currText = cleanText(std::string(&stringTable->StringStart));
         speakerCounter--;
-
-        imageManager.setShowText();
 
         LOG << imageManager.currText;
         break;
@@ -321,6 +323,10 @@ void SceneManager::handleCommand(const std::string &cmdString)
             waitTargetFrames = maxWaitFramestamp;
         }
     }
+    else if (std::regex_search(cmdString, matches, std::regex("^frameoff(?: (\\w+) (\\d+))?")))
+    {
+        imageManager.setHideMwnd();
+    }
     else if (std::regex_search(cmdString, matches, std::regex("^rdraw (\\d+)")))
     {
         // Number of frames to spend fading from one sprite to the next
@@ -329,6 +335,11 @@ void SceneManager::handleCommand(const std::string &cmdString)
         // currRdraw = std::stoi(matches[1].str());
         unsigned int rdraw = std::stoi(matches[1].str());
         sectionRdraw = rdraw;
+    }
+    else if (std::regex_search(cmdString, matches, std::regex("^r?wipe2? (\\w+) (\\d+)")))
+    {
+        // Use transition for wipes
+        sectionRdraw = std::stoi(matches[2].str());
     }
     else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -342,7 +353,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     {
         audioManager.setMusic(matches[2].str());
     }
-    else if (std::regex_search(cmdString, matches, std::regex("^se (\\d) ([\\w\\d]+)(?: ([\\w\\d]+))?")))
+    else if (std::regex_search(cmdString, matches, std::regex("^se (\\d) ([\\w]+)(?: ([\\w]+))?")))
     {
         std::string asset = matches[2].str();
         const std::string &arg2 = matches[3].str();
@@ -370,7 +381,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     }
 
     // Display images
-    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|fg|cg|fw)(?: (\\d)(?: ([\\w\\d,]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
+    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|fg|cg|fw)(?: (\\d)(?: ([\\w,]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
     {
         // bg 0 BG15_d 0 0 0
         // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
