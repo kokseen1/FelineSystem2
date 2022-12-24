@@ -438,7 +438,7 @@ void ImageManager::processImage(byte *buf, size_t sz, const ImageData &imageData
     SDL_Texture *texture = getTextureFromFrame(frame);
 
     // Store texture in cache
-    textureCache[name] = std::make_pair(texture, *frame.Stdinfo);
+    textureCache[name] = {texture, *frame.Stdinfo};
 
     LOG << "Cached: " << name << "[" << frameIdx << "]";
 }
@@ -480,4 +480,30 @@ void ImageManager::setFrameoff(const unsigned int frames)
 {
     mwnd.fade(frames, MWND_ALPHA, 0);
     mwndDeco.fade(frames, MAX_ALPHA, 0);
+}
+
+bool ImageManager::isCached(const std::string &name)
+{
+    auto pos = textureCache.find(name);
+    if (pos != textureCache.end())
+        return true;
+
+    return false;
+}
+
+// Create a new solid rectangle texture and cache it
+void ImageManager::createSolid(const std::string &name, const int width, const int height, Uint32 color)
+{
+    if (isCached(name))
+        return;
+
+    SDL_Surface *surface = SDL_CreateRGBSurface(0, width, height, 32, 0xFF0000, 0xFF00, 0xFF, 0xFF000000);
+    SDL_FillRect(surface, NULL, color);
+
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    Stdinfo stdinfo = {width, height};
+
+    textureCache[name] = {texture, stdinfo};
+
+    SDL_FreeSurface(surface);
 }

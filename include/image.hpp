@@ -57,6 +57,10 @@ public:
 
     ImageManager(FileManager &, SDL_Renderer *, std::vector<Choice> &);
 
+    bool isCached(const std::string &);
+
+    void createSolid(const std::string &, const int, const int, Uint32);
+
     void setFrameon(const unsigned int);
 
     void setFrameoff(const unsigned int);

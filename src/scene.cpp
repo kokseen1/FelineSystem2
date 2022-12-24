@@ -184,7 +184,7 @@ void SceneManager::tickScript()
 
         // Hide text when transitioning (follows CS2 behaviour)
         // Show when reaching break
-        imageManager.setHideText();
+        // imageManager.setHideText();
     }
     else
         return;
@@ -375,11 +375,13 @@ void SceneManager::handleCommand(const std::string &cmdString)
         // currRdraw = std::stoi(matches[1].str());
         unsigned int rdraw = std::stoi(matches[1].str());
         sectionRdraw = rdraw;
+        imageManager.setHideText();
     }
     else if (std::regex_search(cmdString, matches, std::regex("^r?wipe2? (\\w+) (\\d+)")))
     {
         // Use transition for wipes
         sectionRdraw = std::stoi(matches[2].str());
+        imageManager.setHideText();
     }
     else if (std::regex_search(cmdString, matches, std::regex("^pcm (\\S+)")))
     {
@@ -421,7 +423,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     }
 
     // Display images
-    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|fg|cg|fw)(?: (\\d)(?: ([\\w,]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
+    else if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|fg|cg|fw)(?: (\\d)(?: ([\\w,$]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
     {
         // bg 0 BG15_d 0 0 0
         // cg 0 Tchi01m,1,1,g,g #(950+#300) #(955+0) 1 0
@@ -441,6 +443,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
             imageType = IMAGE_TYPE::FW;
         else if (t == "pl")
         {
+            return;
         }
         else
         {
@@ -532,6 +535,32 @@ void SceneManager::handleCommand(const std::string &cmdString)
         else if (asset == "mode")
         {
             // imageManager.setMode(imageType, zIndex, matches[4].str());
+        }
+        else if (asset[0] == '$')
+        {
+            // $AARRGGBB
+            if (asset.length() < 9)
+                return;
+
+            int width = parser.parse(matches[4].str());
+            int height = parser.parse(matches[5].str());
+
+            Uint32 color = std::stoul(&asset[1], nullptr, 16);
+
+            // Uint8 a = color >> 24;
+            // Uint8 r = color >> 16;
+            // Uint8 g = color >> 8;
+            // Uint8 b = color;
+
+            imageManager.createSolid(asset, width, height, color);
+
+            const auto &xShiftStr = matches[6].str();
+            const auto &yShiftStr = matches[7].str();
+
+            int xShift = xShiftStr.empty() ? 0 : parser.parse(xShiftStr, prevXShift);
+            int yShift = yShiftStr.empty() ? 0 : parser.parse(yShiftStr, prevYShift);
+
+            imageManager.setImage(imageType, zIndex, asset, xShift, yShift);
         }
 
         else

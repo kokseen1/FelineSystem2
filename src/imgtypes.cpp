@@ -18,7 +18,7 @@ Choice::Choice(ImageManager &imageManager, const std::string &t, const std::stri
 void Image::update(const std::string &name, int x, int y)
 {
     // Ensure that the asset exists in db
-    if (!imageManager.getFileManager().inDB(name + IMAGE_EXT))
+    if (textureCache.find(name) == textureCache.end() && !imageManager.getFileManager().inDB(name + IMAGE_EXT))
     {
         clear();
         return;
@@ -57,11 +57,7 @@ void Image::set(const std::string &name, int x, int y)
 
 bool Image::isCached()
 {
-    auto pos = textureCache.find(baseName);
-    if (pos != textureCache.end())
-        return true;
-
-    return false;
+    return imageManager.isCached(baseName);
 }
 
 // Fetch and cache the current image
@@ -105,10 +101,16 @@ void Image::move(const unsigned int rdraw, const int x, const int y)
 // Internal function to render the image
 void Image::display(std::string &name, const int x, const int y, const Uint8 alpha)
 {
+    if (name.empty())
+        return;
+
     // Look for texture in cache
     auto got = textureCache.find(name);
     if (got == textureCache.end())
+    {
+        LOG << "Cannot find in cache " << name;
         return;
+    }
 
     const auto &textureData = got->second;
 
@@ -148,7 +150,7 @@ void Image::render(int x, int y)
 
         alpha = ratio * targetAlpha;
         prevAlphaInverse = ratio * prevTargetAlpha;
-        // LOG << baseName << " : " << (int)alpha << ", " << prevBaseName << " : " << (int) prevTargetAlpha - prevAlphaInverse;
+        // LOG << baseName << " : " << (int)alpha << ", " << prevBaseName << " : " << (int) prevTargetAlpha - prevAlphaInverse << " p"<< (int)prevTargetAlpha;
     }
 
     // Fade overrides any transitions
@@ -157,6 +159,7 @@ void Image::render(int x, int y)
         double ratio = (double)(imageManager.getFramestamp() - fadeStart) / fadeFrames;
 
         alpha = startAlpha + (targetAlpha - startAlpha) * ratio;
+        // LOG << baseName << " : " << (int)alpha << " t" << (int)targetAlpha;
     }
 
     if (moving && moveRdraw > 0)
