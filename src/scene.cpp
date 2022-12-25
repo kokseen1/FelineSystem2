@@ -542,15 +542,12 @@ void SceneManager::handleCommand(const std::string &cmdString)
             if (asset.length() < 9)
                 return;
 
-            int width = parser.parse(matches[4].str());
-            int height = parser.parse(matches[5].str());
+            const auto &widthStr = matches[4].str();
+            const auto &heightStr = matches[5].str();
+            int width = widthStr.empty() ? WINDOW_WIDTH : parser.parse(widthStr);
+            int height = heightStr.empty() ? WINDOW_HEIGHT : parser.parse(heightStr);
 
             Uint32 color = std::stoul(&asset[1], nullptr, 16);
-
-            // Uint8 a = color >> 24;
-            // Uint8 r = color >> 16;
-            // Uint8 g = color >> 8;
-            // Uint8 b = color;
 
             imageManager.createSolid(asset, width, height, color);
 
