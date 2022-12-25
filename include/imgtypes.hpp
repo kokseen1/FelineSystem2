@@ -19,6 +19,7 @@
 
 #define FW_XSHIFT 90
 #define FW_YSHIFT 160
+#define FG_YSHIFT -400
 
 #define MAX_BG 10
 #define MAX_EG 10
@@ -150,6 +151,9 @@ class Fg : public Image
 {
     // Inherit ctors
     using Image::Image;
+
+protected:
+    void display(std::string &name, const int x, const int y, const Uint8 alpha) { Image::display(name, x, y + FG_YSHIFT, alpha); }
 };
 
 class Base : public Image
