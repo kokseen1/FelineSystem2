@@ -136,6 +136,11 @@ void Image::display(std::string &name, const int x, const int y, const Uint8 alp
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);
 }
 
+double easeInOutQuad(double x)
+{
+    return x < 0.5 ? 2 * x * x : 1 - pow(-2 * x + 2, 2) / 2;
+}
+
 // Render image with given offsets
 void Image::render(int x, int y)
 {
@@ -148,8 +153,8 @@ void Image::render(int x, int y)
     {
         double ratio = (double)(imageManager.getFramestamp() - imageManager.getRdrawStart()) / imageManager.getGlobalRdraw();
 
-        alpha = ratio * targetAlpha;
-        prevAlphaInverse = ratio * prevTargetAlpha;
+        alpha = easeInOutQuad(ratio) * targetAlpha;
+        prevAlphaInverse = easeInOutQuad(ratio) * prevTargetAlpha;
         // LOG << baseName << " : " << (int)alpha << ", " << prevBaseName << " : " << (int) prevTargetAlpha - prevAlphaInverse << " p"<< (int)prevTargetAlpha;
     }
 
@@ -158,7 +163,7 @@ void Image::render(int x, int y)
     {
         double ratio = (double)(imageManager.getFramestamp() - fadeStart) / fadeFrames;
 
-        alpha = startAlpha + (targetAlpha - startAlpha) * ratio;
+        alpha = startAlpha + (targetAlpha - startAlpha) * easeInOutQuad(ratio);
         // LOG << baseName << " : " << (int)alpha << " t" << (int)targetAlpha;
     }
 
@@ -166,8 +171,8 @@ void Image::render(int x, int y)
     {
         double ratio = (double)(imageManager.getFramestamp() - moveStart) / moveRdraw;
 
-        x = (double)(targetXShift - xShift) * ratio + xShift;
-        y = (double)(targetYShift - yShift) * ratio + yShift;
+        x = (double)(targetXShift - xShift) * easeInOutQuad(ratio) + xShift;
+        y = (double)(targetYShift - yShift) * easeInOutQuad(ratio) + yShift;
         // LOG << baseName << " : " << nextX << ", " << nextY << ", " << moveRdraw;
     }
 
