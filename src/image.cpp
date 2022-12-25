@@ -478,6 +478,7 @@ void ImageManager::setFrameon(const unsigned int frames)
 
 void ImageManager::setFrameoff(const unsigned int frames)
 {
+    setHideText();
     mwnd.fade(frames, MWND_ALPHA, 0);
     mwndDeco.fade(frames, MAX_ALPHA, 0);
 }
