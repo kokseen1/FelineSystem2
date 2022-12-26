@@ -358,14 +358,16 @@ void SceneManager::handleCommand(const std::string &cmdString)
         const auto &framesStr = matches[2].str();
         if (framesStr.empty())
             imageManager.setHideMwnd();
+        else
+        {
+            unsigned int frames = std::stoi(framesStr);
+            const auto &mode = matches[1].str();
 
-        unsigned int frames = std::stoi(framesStr);
-        const auto &mode = matches[1].str();
-
-        // Assume only fade
-        imageManager.setFrameoff(frames);
-        addSectionFrames(frames);
-        wait();
+            // Assume only fade
+            imageManager.setFrameoff(frames);
+            addSectionFrames(frames);
+            wait();
+        }
     }
     else if (std::regex_search(cmdString, matches, std::regex("^rdraw (\\d+)")))
     {
