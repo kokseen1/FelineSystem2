@@ -510,6 +510,13 @@ double Parser::assign_expr()
     return result;
 }
 
+// Evaluate a lhs variable name and assign rhs to it
+void Parser::setVar(const std::string &lhs, const double rhs)
+{
+    const std::string &varName = std::to_string(parse(lhs));
+    symbol_table[varName] = rhs;
+}
+
 // Evaluate a single string
 double Parser::parse(const std::string &s, const int prev)
 {

@@ -136,6 +136,20 @@ void Image::display(std::string &name, const int x, const int y, const Uint8 alp
     SDL_RenderCopyEx(renderer, texture, NULL, &DestR, 0, 0, RENDERER_FLIP_MODE);
 }
 
+const Stdinfo Image::getStdinfo()
+{
+    if (baseName.empty())
+        return {};
+
+    auto got = textureCache.find(baseName);
+    if (got == textureCache.end())
+        return {};
+
+    const auto &textureData = got->second;
+
+    return textureData.second;
+}
+
 double easeInOutQuad(double x)
 {
     return x < 0.5 ? 2 * x * x : 1 - pow(-2 * x + 2, 2) / 2;

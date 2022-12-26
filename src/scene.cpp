@@ -478,6 +478,24 @@ void SceneManager::handleCommand(const std::string &cmdString)
 
         else if (asset == "attr")
         {
+            int attr = std::stoi(matches[4].str());
+            const auto &xStr = matches[5].str();
+            const auto &yStr = matches[6].str();
+
+            const auto &stdinfo = imageManager.getStdinfo(imageType, zIndex);
+
+            switch (attr)
+            {
+            case 1:
+                parser.setVar(xStr, stdinfo.BaseX);
+                parser.setVar(yStr, stdinfo.BaseY - 350);
+                break;
+
+            case 2:
+                parser.setVar(xStr, stdinfo.BaseX);
+                parser.setVar(yStr, stdinfo.BaseY);
+                break;
+            }
         }
 
         else if (asset == "disp")

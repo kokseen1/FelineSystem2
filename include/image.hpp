@@ -71,6 +71,8 @@ public:
 
     const json dump();
 
+    const Stdinfo getStdinfo(const IMAGE_TYPE, const int);
+
     const std::pair<int, int> getShifts(const IMAGE_TYPE, const int);
 
     void setFade(const IMAGE_TYPE, const int, const unsigned int, const Uint8, const Uint8);

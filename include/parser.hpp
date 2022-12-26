@@ -64,6 +64,8 @@ public:
     // Return a reference to the symbol table map object
     const SymbolTable &getSymbolTable() { return symbol_table; }
 
+    void setVar(const std::string &, const double);
+
 private:
     int prevValue = 0;
     std::string last_var_name; // TODO: Might have better alternative

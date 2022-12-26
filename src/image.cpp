@@ -269,6 +269,27 @@ void ImageManager::clearImageType(const IMAGE_TYPE type)
     }
 }
 
+const Stdinfo ImageManager::getStdinfo(const IMAGE_TYPE type, const int zIndex)
+{
+    switch (type)
+    {
+    case IMAGE_TYPE::BG:
+        return bgLayer.getStdinfo(zIndex);
+
+    case IMAGE_TYPE::EG:
+        return egLayer.getStdinfo(zIndex);
+
+    case IMAGE_TYPE::FG:
+        return fgLayer.getStdinfo(zIndex);
+
+    case IMAGE_TYPE::CG:
+        return cgLayer.getStdinfo(zIndex);
+
+    case IMAGE_TYPE::FW:
+        return fwLayer.getStdinfo(zIndex);
+    }
+}
+
 // Get reference to specified image type at z-index
 // Reference to base image for CG/FW
 const std::pair<int, int> ImageManager::getShifts(const IMAGE_TYPE type, const int zIndex)

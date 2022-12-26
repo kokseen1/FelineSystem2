@@ -60,6 +60,8 @@ public:
 
     bool isActive() { return !baseName.empty(); }
 
+    const Stdinfo getStdinfo();
+
     const std::pair<int, int> getShifts() { return {xShift, yShift}; }
 
     void fetch();
@@ -153,7 +155,7 @@ class Fg : public Image
     using Image::Image;
 
 protected:
-    void display(std::string &name, const int x, const int y, const Uint8 alpha) { Image::display(name, x, y + FG_YSHIFT, alpha); }
+    // void display(std::string &name, const int x, const int y, const Uint8 alpha) { Image::display(name, x, y + FG_YSHIFT, alpha); }
 };
 
 class Base : public Image
@@ -174,6 +176,8 @@ class Part2 : public Image
 class Cg : public Base, public Part1, public Part2
 {
 public:
+    const Stdinfo getStdinfo() { return Base::getStdinfo(); };
+
     const json dump();
 
     const std::pair<int, int> getShifts() { return Base::getShifts(); }
@@ -260,6 +264,13 @@ public:
         if (i >= size())
             throw std::runtime_error("Out of range access");
         objects[i].blend(target);
+    }
+
+    const Stdinfo getStdinfo(size_t i)
+    {
+        if (i >= size())
+            throw std::runtime_error("Out of range access");
+        return objects[i].getStdinfo();
     }
 
     const std::pair<int, int> getShifts(size_t i)
