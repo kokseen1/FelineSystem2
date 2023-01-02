@@ -170,7 +170,7 @@ bool SceneManager::rdrawWaited()
 
 bool SceneManager::canProceed()
 {
-    return parseScript && (imageManager.getFramestamp() >= waitTargetFrames) && currChoices.empty();
+    return parseScript && (imageManager.getFramestamp() >= waitTargetFrames);
 }
 
 // Called from main loop to proceed script if needed
