@@ -186,6 +186,11 @@ void ImageManager::render()
 {
     framestamp++;
 
+    if (getFramestamp() - getRdrawStart() <= getGlobalRdraw())
+        setHideText();
+    else
+        setShowText();
+
     // Clear render canvas
     SDL_RenderClear(renderer);
 
