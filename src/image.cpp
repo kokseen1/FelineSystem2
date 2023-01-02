@@ -523,7 +523,7 @@ void ImageManager::createSolid(const std::string &name, const int width, const i
     SDL_FillRect(surface, NULL, color);
 
     SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-    Stdinfo stdinfo = {width, height};
+    Stdinfo stdinfo = {static_cast<uint32>(width), static_cast<uint32>(height)};
 
     textureCache[name] = {texture, stdinfo};
 
