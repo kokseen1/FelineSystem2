@@ -639,7 +639,14 @@ void SceneManager::handleCommand(const std::string &cmdString)
     // Variable assignment
     else if (std::regex_match(cmdString, std::regex("^#.+")))
     {
-        parser.parse(cmdString);
+        try
+        {
+            parser.parse(cmdString);
+        }
+        catch (const std::runtime_error& error)
+        {
+            // Ignore parse errors
+        }
     }
 }
 
