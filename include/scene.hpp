@@ -16,7 +16,8 @@
 #define SCRIPT_EXT ".cst"
 #define SCRIPT_SIGNATURE "CatScene"
 
-#define SCRIPT_ENTRYPOINT "op"
+// Should always be start.cst
+#define SCRIPT_ENTRYPOINT "start"
 
 #define KEY_SCENE "scene"
 #define KEY_IMAGE "image"
