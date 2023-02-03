@@ -61,7 +61,12 @@ AudioManager::AudioManager(FileManager &fm) : fileManager{fm}
 
 void AudioManager::fadeOutSound(const int channel, const int ms)
 {
-    Mix_FadeOutChannel(channel, ms);
+    #ifdef __EMSCRIPTEN__
+        stopSound(channel);
+    #else
+        // emscripten throws here
+        Mix_FadeOutChannel(channel, ms);
+    #endif
 }
 
 void AudioManager::stopSound(const int channel)
