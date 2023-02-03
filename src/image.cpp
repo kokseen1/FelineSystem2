@@ -186,11 +186,6 @@ void ImageManager::render()
 {
     framestamp++;
 
-    if (getFramestamp() - getRdrawStart() <= getGlobalRdraw())
-        setHideText();
-    else
-        setShowText();
-
     // Clear render canvas
     SDL_RenderClear(renderer);
 
@@ -504,7 +499,6 @@ void ImageManager::setFrameon(const unsigned int frames)
 
 void ImageManager::setFrameoff(const unsigned int frames)
 {
-    setHideText();
     mwnd.fade(frames, MWND_ALPHA, 0);
     mwndDeco.fade(frames, MAX_ALPHA, 0);
 }

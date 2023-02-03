@@ -184,6 +184,7 @@ void SceneManager::tickScript()
 
         // Hide text when transitioning (follows CS2 behaviour)
         // Show when reaching break
+        // Cannot clear here, there might be sections (e.g. animations) after a text section
         // imageManager.setHideText();
     }
     else
@@ -203,11 +204,16 @@ void SceneManager::tickScript()
 // User input initiated parse
 void SceneManager::parse()
 {
+    // Bring up message window if it is hidden
     if (!imageManager.getShowMwnd())
     {
         imageManager.setShowMwnd();
         return;
     }
+
+    // Previous text is wiped as soon as proceeding from a break
+    imageManager.setHideText();
+
 
     // Skip timer if any
     waitTargetFrames = 0;
@@ -356,9 +362,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
     else if (std::regex_search(cmdString, matches, std::regex("^frameoff(?: (\\w+) (\\d+))?")))
     {
         const auto &framesStr = matches[2].str();
-        if (framesStr.empty())
-            imageManager.setHideMwnd();
-        else
+        if (!framesStr.empty())
         {
             unsigned int frames = std::stoi(framesStr);
             const auto &mode = matches[1].str();
@@ -368,6 +372,9 @@ void SceneManager::handleCommand(const std::string &cmdString)
             addSectionFrames(frames);
             wait();
         }
+
+        // Verified
+        imageManager.setHideMwnd();
     }
     else if (std::regex_search(cmdString, matches, std::regex("^rdraw (\\d+)")))
     {
@@ -377,7 +384,6 @@ void SceneManager::handleCommand(const std::string &cmdString)
         // currRdraw = std::stoi(matches[1].str());
         unsigned int rdraw = std::stoi(matches[1].str());
         sectionRdraw = rdraw;
-        imageManager.setHideText();
     }
     else if (std::regex_search(cmdString, matches, std::regex("^r?wipe2? (\\w+) (\\d+)")))
     {
@@ -697,6 +703,12 @@ void SceneManager::loadState(const int saveSlot)
         const json &jScene = j.at(KEY_SCENE);
         const json &jImage = j.at(KEY_IMAGE);
         const json &jAudio = j.at(KEY_AUDIO);
+
+        // Override and reset existing timer/text display
+        parseScript = false;
+        waitTargetFrames = 0;
+        imageManager.setShowMwnd();
+        imageManager.setShowText();
 
         setScriptOffset({jScene.at(KEY_SCRIPT_NAME), reinterpret_cast<byte *>(jScene.at(KEY_OFFSET).get<Uint64>())});
         parser.setSymbolTable(jScene.at(KEY_SYMBOL_TABLE).get<SymbolTable>());
