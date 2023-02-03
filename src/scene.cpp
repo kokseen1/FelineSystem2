@@ -146,6 +146,7 @@ std::string SceneManager::sj2utf8(const std::string &input)
 std::string SceneManager::cleanText(const std::string &rawText)
 {
     std::string text = std::regex_replace(sj2utf8(rawText), std::regex("\\[(.*?)\\]"), "$1");
+    text = std::regex_replace(text, std::regex("¥'"), "'");
     text = std::regex_replace(text, std::regex("¥fn"), "");
     text = std::regex_replace(text, std::regex("¥fs"), " ");
     text = std::regex_replace(text, std::regex("¥n"), " ");
@@ -272,6 +273,7 @@ void SceneManager::parseLine()
         if (speakerCounter == 0)
             imageManager.currSpeaker.clear();
 
+        LOG << std::string(&stringTable->StringStart);
         imageManager.currText = cleanText(std::string(&stringTable->StringStart));
         speakerCounter--;
 
@@ -279,10 +281,10 @@ void SceneManager::parseLine()
         imageManager.setShowText();
         imageManager.setShowMwnd();
 
-        LOG << imageManager.currText;
         break;
 
     case 0x21: // Set speaker of the message
+        LOG << std::string(&stringTable->StringStart);
         imageManager.currSpeaker = cleanText(std::string(&stringTable->StringStart));
         speakerCounter = 1;
         break;
@@ -490,16 +492,6 @@ void SceneManager::handleCommand(const std::string &cmdString)
         if (asset == "disp")
         {
         }
-        // eg 5 amove1 240 100+96 300-144
-        else if (asset == "amove1")
-        {
-        }
-        else if (asset == "amove2")
-        {
-        }
-        else if (asset == "amove3")
-        {
-        }
         else if (asset == "scale")
         {
             // eg 4 scale 100% 100%
@@ -560,7 +552,24 @@ void SceneManager::handleCommand(const std::string &cmdString)
             imageManager.setFade(imageType, zIndex, frames, startAlpha, targetAlpha);
         }
 
-        else if (asset == "move")
+        // https://cs2.suki.jp/manual/scene/reference/motion/move.html
+        // amove 1,2,3 has various acceleration/deceleration
+        // m2 is async
+        // mc is continuous (repeating)
+        else if (
+            asset == "move" ||
+            asset == "mcmove" ||
+            asset == "m2move" ||
+            asset == "amove1" || // eg 5 amove1 240 100+96 300-144
+            asset == "amove2" ||
+            asset == "amove3" ||
+            asset == "mcamove1" ||
+            asset == "mcamove2" ||
+            asset == "mcamove3" ||
+            asset == "m2amove1" ||
+            asset == "m2amove2" ||
+            asset == "m2amove3"
+        )
         {
             const auto &rdrawStr = matches[4].str();
             const auto &xShiftStr = matches[5].str();

@@ -20,24 +20,7 @@
 #define IMAGE_EXT ".hg3"
 #define IMAGE_SIGNATURE "HG-3"
 
-#define MWND "sys_mwnd_43"
-#define MWND_DECO "sys_mwnd_42"
-#define MWND_ALPHA 130
 
-// Fixed position of message window
-#define MWND_XSHIFT 100
-#define MWND_YSHIFT 422
-
-// Determines length before wrapping text
-#define TEXTBOX_WIDTH 650
-
-// Text is relative to center of window based on width
-#define TEXT_XPOS (WINDOW_WIDTH - TEXTBOX_WIDTH) / 2 + 50
-#define TEXT_YPOS WINDOW_HEIGHT - 120
-
-// Speaker name is relative to text position
-#define SPEAKER_XPOS TEXT_XPOS
-#define SPEAKER_YPOS TEXT_YPOS - 25
 
 enum class IMAGE_TYPE
 {

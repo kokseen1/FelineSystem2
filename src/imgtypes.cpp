@@ -99,7 +99,7 @@ void Image::move(const unsigned int rdraw, const int x, const int y)
 }
 
 // Internal function to render the image
-void Image::display(std::string &name, const int x, const int y, const Uint8 alpha)
+void Image::display(std::string &name, long xPos, long yPos, const Uint8 alpha, bool absolute)
 {
     if (name.empty())
         return;
@@ -123,13 +123,17 @@ void Image::display(std::string &name, const int x, const int y, const Uint8 alp
 
     SDL_SetTextureAlphaMod(texture, alpha);
 
-    // Calculate shift
     auto &stdinfo = textureData.second;
-    auto xPos = stdinfo.OffsetX - stdinfo.BaseX + x;
-    auto yPos = stdinfo.OffsetY - stdinfo.BaseY + y;
 
-    // LOG << baseName << " " << stdinfo.OffsetX << " " << stdinfo.BaseX << " " << x << " " << stdinfo.Width << " " << xPos;
-    // LOG << baseName << " " << stdinfo.OffsetY << " " << stdinfo.BaseY << " " << y << " " << stdinfo.Height << " " << yPos;
+    if (!absolute)
+    {
+        // Calculate shift
+        xPos = stdinfo.OffsetX - stdinfo.BaseX + xPos;
+        yPos = stdinfo.OffsetY - stdinfo.BaseY + yPos;
+    }
+
+    // LOG << baseName << " " << stdinfo.OffsetX << " " << stdinfo.BaseX << " " << " " << stdinfo.Width << " " << xPos;
+    // LOG << baseName << " " << stdinfo.OffsetY << " " << stdinfo.BaseY << " " << " " << stdinfo.Height << " " << yPos;
 
     // Render onto canvas
     SDL_Rect DestR{xPos, yPos, static_cast<int>(stdinfo.Width), static_cast<int>(stdinfo.Height)};

@@ -17,8 +17,8 @@
 
 #define MAX_ALPHA 255
 
-#define FW_XSHIFT 90
-#define FW_YSHIFT 160
+#define FW_XSHIFT MWND_XSHIFT + 20
+#define FW_YSHIFT WINDOW_HEIGHT
 #define FG_YSHIFT -400
 
 #define MAX_BG 10
@@ -85,7 +85,7 @@ public:
     virtual void render(int, int);
 
 protected:
-    virtual void display(std::string &, const int, const int, const Uint8);
+    virtual void display(std::string &, long, long, const Uint8, bool=false);
 
     void set(const std::string &, int, int);
 
@@ -209,7 +209,7 @@ class Fw : public Cg
     using Cg::Cg;
 
 protected:
-    void display(std::string &name, const int x, const int y, const Uint8 alpha) { Base::display(name, x + FW_XSHIFT, y + FW_YSHIFT, alpha); }
+    void display(std::string &name, long x, long y, const Uint8 alpha, bool absolute=true) { Base::display(name, FW_XSHIFT, FW_YSHIFT, alpha, absolute); }
 };
 
 typedef struct
