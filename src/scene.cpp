@@ -178,17 +178,10 @@ void SceneManager::tickScript()
 {
     // LOG << imageManager.getFramestamp() << " : " << waitTargetFrames;
 
-    if (canProceed())
-    {
-        LOG << "Start section";
-
-        // Hide text when transitioning (follows CS2 behaviour)
-        // Show when reaching break
-        // Cannot clear here, there might be sections (e.g. animations) after a text section
-        // imageManager.setHideText();
-    }
-    else
+    if (!canProceed())
         return;
+
+    LOG << "Start section";
 
     // Parse a `section` of commands until encountering break or wait command
     // Iterative instead of recursive to avoid stack overflow
@@ -403,22 +396,37 @@ void SceneManager::handleCommand(const std::string &cmdString)
     {
         audioManager.setMusic(matches[2].str());
     }
-    else if (std::regex_search(cmdString, matches, std::regex("^se (\\d) ([\\w]+)(?: ([\\w]+))?")))
+    else if (std::regex_search(cmdString, matches, std::regex("^se (\\d)(?: (\\w+)(?: (\\w+)(?: (\\w+)(?: (\\w+))?)?)?)?")))
     {
-        std::string asset = matches[2].str();
+        const std::string &arg1 = matches[2].str();
         const std::string &arg2 = matches[3].str();
+        const std::string &arg3 = matches[4].str();
+        const std::string &arg4 = matches[5].str();
         const int &channel = std::stoi(matches[1].str());
         int loop = 0;
 
+        std::string asset = arg1;
+
         if (!arg2.empty())
         {
-            if (asset == "end")
+            // Proper fade not implemented, just use SDL impl
+            if (arg1 == "fade")
+            {
+                const int &frames = std::stoi(arg2);
+                if (arg3 != "0" && arg4 == "0")
+                    audioManager.fadeOutSound(channel, frames * 16);
+
+
+                return;
+            }
+
+            if (arg1 == "end")
             {
                 audioManager.stopSound(channel);
                 return;
             }
 
-            if (asset == "loop")
+            if (arg1 == "loop")
             {
                 asset = arg2;
                 loop = -1;
@@ -479,11 +487,44 @@ void SceneManager::handleCommand(const std::string &cmdString)
         const auto &prevXShift = prevShifts.first;
         const auto &prevYShift = prevShifts.second;
 
-        if (asset == "blend")
+        if (asset == "disp")
+        {
+        }
+        // eg 5 amove1 240 100+96 300-144
+        else if (asset == "amove1")
+        {
+        }
+        else if (asset == "amove2")
+        {
+        }
+        else if (asset == "amove3")
+        {
+        }
+        else if (asset == "scale")
+        {
+            // eg 4 scale 100% 100%
+        }
+        else if (asset == "mcarc")
+        {
+        }
+        else if (asset == "mcshake")
+        {
+        }
+        else if (asset == "mcscalecos")
+        {
+        }
+        else if (asset == "mcmove")
+        {
+        }
+        else if (asset == "mode")
+        {
+            // imageManager.setMode(imageType, zIndex, matches[4].str());
+        }
+
+        else if (asset == "blend")
         {
             imageManager.setBlend(imageType, zIndex, parser.parse(matches[4].str()));
         }
-
         else if (asset == "attr")
         {
             int attr = std::stoi(matches[4].str());
@@ -506,9 +547,6 @@ void SceneManager::handleCommand(const std::string &cmdString)
             }
         }
 
-        else if (asset == "disp")
-        {
-        }
 
         else if (asset == "fade")
         {
@@ -542,26 +580,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
             imageManager.setMove(imageType, zIndex, rdraw, targetXShift, targetYShift);
         }
 
-        // eg 5 amove1 240 100+96 300-144
-        else if (asset == "amove1")
-        {
-        }
-        else if (asset == "amove2")
-        {
-        }
-        else if (asset == "amove3")
-        {
-        }
-
-        else if (asset == "scale")
-        {
-            // eg 4 scale 100% 100%
-        }
-
-        else if (asset == "mode")
-        {
-            // imageManager.setMode(imageType, zIndex, matches[4].str());
-        }
+       
         else if (asset[0] == '$')
         {
             // $AARRGGBB

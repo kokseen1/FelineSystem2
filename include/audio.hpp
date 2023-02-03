@@ -69,6 +69,8 @@ public:
 
     void setSE(const std::string &, const int, const int);
 
+    void fadeOutSound(const int, const int);
+
     void stopSound(const int);
 
     void loadDump(const json &);

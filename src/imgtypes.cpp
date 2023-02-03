@@ -20,7 +20,7 @@ void Image::update(const std::string &name, int x, int y)
     // Ensure that the asset exists in db
     if (textureCache.find(name) == textureCache.end() && !imageManager.getFileManager().inDB(name + IMAGE_EXT))
     {
-        clear();
+        // clear();
         return;
     }
 

@@ -59,6 +59,11 @@ AudioManager::AudioManager(FileManager &fm) : fileManager{fm}
     // LOG << "AudioManager initialized";
 }
 
+void AudioManager::fadeOutSound(const int channel, const int ms)
+{
+    Mix_FadeOutChannel(channel, ms);
+}
+
 void AudioManager::stopSound(const int channel)
 {
     Mix_HaltChannel(channel);
