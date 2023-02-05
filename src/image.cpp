@@ -528,3 +528,24 @@ void ImageManager::createSolid(const std::string &name, const int width, const i
 
     SDL_FreeSurface(surface);
 }
+
+void ImageManager::fetch(const std::string &baseName)
+{
+    if (isCached(baseName))
+        return;
+
+    getFileManager().fetchAssetAndProcess(baseName + IMAGE_EXT, this, &ImageManager::processImage, ImageData{baseName, 0, NULL});
+}
+
+void ImageManager::prefetch(const std::string &asset)
+{
+    fetch(asset);
+
+    const auto cgArgs = Cg::getCgArgs(asset);
+    if (cgArgs.size() != 3)
+        return;
+
+    fetch(cgArgs[0]);
+    fetch(cgArgs[1]);
+    fetch(cgArgs[2]);
+}

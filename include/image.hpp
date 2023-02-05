@@ -96,6 +96,9 @@ public:
     Uint64 getRdrawStart() { return rdrawStart; }
     unsigned int getGlobalRdraw() { return globalRdraw; }
 
+    void fetch(const std::string &);
+    void prefetch(const std::string &);
+
 private:
     // Used for synchronizing transitions/animations with the render framerate
     Uint64 framestamp = 0;

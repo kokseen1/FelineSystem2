@@ -176,6 +176,8 @@ class Part2 : public Image
 class Cg : public Base, public Part1, public Part2
 {
 public:
+    static const std::vector<std::string> getCgArgs(const std::string &);
+
     const Stdinfo getStdinfo() { return Base::getStdinfo(); };
 
     const json dump();

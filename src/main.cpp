@@ -53,6 +53,15 @@ void main_loop()
             case SDLK_RETURN:
                 sceneManager.parse();
                 break;
+            case SDLK_n:
+                if (SDL_GetModState() & KMOD_SHIFT)
+                    sceneManager.prevScene();
+                else
+                    sceneManager.nextScene();
+                break;
+            case SDLK_b:
+                sceneManager.back();
+                break;
 
             case SDLK_SPACE:
                 imageManager.toggleMwnd();

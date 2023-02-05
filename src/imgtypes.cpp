@@ -18,7 +18,7 @@ Choice::Choice(ImageManager &imageManager, const std::string &t, const std::stri
 void Image::update(const std::string &name, int x, int y)
 {
     // Ensure that the asset exists in db
-    if (textureCache.find(name) == textureCache.end() && !imageManager.getFileManager().inDB(name + IMAGE_EXT))
+    if (!imageManager.getFileManager().inDB(name + IMAGE_EXT))
     {
         // clear();
         return;
@@ -323,21 +323,35 @@ bool Cg::isReady()
     return true;
 }
 
-void Cg::update(const std::string &rawName, int x, int y)
+const std::vector<std::string> Cg::getCgArgs(const std::string &rawName)
 {
     const auto &args = Utils::getAssetArgs(rawName);
     // TODO: Handle arguments like `blend`
+
     if (args.size() < 5)
+        return {};
+
+    const std::string &rawBase = args[0];
+
+    std::vector<std::string> cgArgs;
+
+    cgArgs.push_back(rawBase + "_" + args[1]);
+    cgArgs.push_back(rawBase + "_" + Utils::zeroPad(args[3], 3));
+    cgArgs.push_back(rawBase + "_" + Utils::zeroPad(args[4], 4));
+
+    return cgArgs;
+}
+
+void Cg::update(const std::string &rawName, int x, int y)
+{
+
+    const auto cgArgs = Cg::getCgArgs(rawName);
+    if (cgArgs.size() != 3)
         return;
 
     Cg::rawName = rawName;
 
-    const std::string &rawBase = args[0];
-    const std::string &baseName = rawBase + "_" + args[1];
-    const std::string &part1Name = rawBase + "_" + Utils::zeroPad(args[3], 3);
-    const std::string &part2Name = rawBase + "_" + Utils::zeroPad(args[4], 4);
-
-    Base::update(baseName, x, y);
-    Part1::update(part1Name, x, y);
-    Part2::update(part2Name, x, y);
+    Base::update(cgArgs[0], x, y);
+    Part1::update(cgArgs[1], x, y);
+    Part2::update(cgArgs[2], x, y);
 }

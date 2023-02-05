@@ -43,14 +43,47 @@ class ImageManager;
 class SceneManager
 {
 private:
+    std::deque<json> stateHistory;
+
     unsigned int sectionRdraw = 0;
     Uint64 maxWaitFramestamp = 0;
+
+    // Takes a callback and calls it on every cmdString in the current script
+    // Callback should return false to break
+    template <typename Functor>
+    void iterateScript(Functor functor)
+    {
+        ScriptDataHeader *scriptDataHeader = reinterpret_cast<ScriptDataHeader *>(currScriptData.data());
+        byte *tablesStart = reinterpret_cast<byte *>(scriptDataHeader + 1);
+
+        // Locate offset table and string table
+        StringOffsetTable *stringOffsetTable = reinterpret_cast<StringOffsetTable *>(tablesStart + scriptDataHeader->StringOffsetTableOffset);
+        byte *stringTableBase = tablesStart + scriptDataHeader->StringTableOffset;
+
+        // Check if pointer exceeded end of script
+        while (reinterpret_cast<byte *>(stringOffsetTable) < stringTableBase)
+        {
+            auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
+
+            stringOffsetTable++;
+
+            if (stringTable->Type != 0x30)
+                continue;
+
+            const auto &cmdString = std::string(&stringTable->StringStart);
+
+            if (functor(cmdString) == false)
+                return;
+        }
+    }
 
     void wait();
     void addSectionFrames(unsigned int);
 
     bool canProceed();
     bool rdrawWaited();
+
+    void prefetch(std::vector<byte>);
 
     // Pointers to other manager classes
     FileManager &fileManager;
@@ -77,6 +110,9 @@ private:
     StringOffsetTable *stringOffsetTable;
     byte *stringTableBase;
 
+    json getCurrentState();
+    void loadStateJson(const json &);
+
     void wait(unsigned int);
 
     void handleCommand(const std::string &);
@@ -98,9 +134,15 @@ private:
     std::string sj2utf8(const std::string &);
 
 public:
+    std::deque<std::string> toPrefetch;
+
     SceneManager(AudioManager &, ImageManager &, FileManager &, std::vector<Choice> &);
 
+    void prevScene();
+    void nextScene();
+
     void parse();
+    void back();
 
     void tickScript();
 

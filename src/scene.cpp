@@ -41,6 +41,20 @@ void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptNam
         }
     }
 
+// #ifdef __EMSCRIPTEN__
+//     iterateScript([this](const std::string &cmdString)
+//                   {
+//         std::smatch matches;
+//         if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|fg|cg|fw)(?: (\\d)(?: ([\\w,$]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
+//         {
+//             const std::string &asset = matches[3].str();
+//             if (asset.empty())
+//                 return true;
+
+//             toPrefetch.push_back(asset);
+//         } return true; });
+// #endif
+
     // Init script data
     ScriptDataHeader *scriptDataHeader = reinterpret_cast<ScriptDataHeader *>(currScriptData.data());
     byte *tablesStart = reinterpret_cast<byte *>(scriptDataHeader + 1);
@@ -51,6 +65,40 @@ void SceneManager::loadScript(byte *buf, size_t sz, const std::string &scriptNam
 
     // Store loaded script name
     currScriptName = scriptName;
+}
+
+void SceneManager::prefetch(std::vector<byte> scriptData)
+{
+    ScriptDataHeader *scriptDataHeader = reinterpret_cast<ScriptDataHeader *>(scriptData.data());
+    byte *tablesStart = reinterpret_cast<byte *>(scriptDataHeader + 1);
+
+    // Locate offset table and string table
+    StringOffsetTable *stringOffsetTable = reinterpret_cast<StringOffsetTable *>(tablesStart + scriptDataHeader->StringOffsetTableOffset);
+    byte *stringTableBase = tablesStart + scriptDataHeader->StringTableOffset;
+
+    // Check if pointer exceeded end of script
+    while (reinterpret_cast<byte *>(stringOffsetTable) < stringTableBase)
+    {
+        auto stringTable = reinterpret_cast<StringTable *>(stringTableBase + stringOffsetTable->Offset);
+
+        stringOffsetTable++;
+
+        if (stringTable->Type != 0x30)
+            continue;
+
+        const auto &cmdString = std::string(&stringTable->StringStart);
+
+        std::smatch matches;
+        if (std::regex_search(cmdString, matches, std::regex("^(bg|eg|fg|cg|fw)(?: (\\d)(?: ([\\w,$]+)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*)(?: ([^\\s]*))?)?)?)?)?)?")))
+        {
+            const std::string &asset = matches[3].str();
+            if (asset.empty())
+                continue;
+
+            // imageManager.prefetch(asset);
+            toPrefetch.push_back(asset);
+        }
+    }
 }
 
 // Load a script from a raw buffer and parse it from the start
@@ -147,6 +195,7 @@ std::string SceneManager::cleanText(const std::string &rawText)
 {
     std::string text = std::regex_replace(sj2utf8(rawText), std::regex("\\[(.*?)\\]"), "$1");
     text = std::regex_replace(text, std::regex("¥'"), "'");
+    text = std::regex_replace(text, std::regex("¥pc"), "");
     text = std::regex_replace(text, std::regex("¥fn"), "");
     text = std::regex_replace(text, std::regex("¥fs"), " ");
     text = std::regex_replace(text, std::regex("¥n"), " ");
@@ -195,6 +244,32 @@ void SceneManager::tickScript()
     sectionRdraw = 0;
 }
 
+void SceneManager::prevScene()
+{
+}
+
+void SceneManager::nextScene()
+{
+    iterateScript([this](const std::string &cmdString)
+                  {
+                      std::smatch matches;
+                      if (std::regex_search(cmdString, matches, std::regex("^next (\\S+)")))
+                      {
+                          setScript(matches[1].str());
+                          return false;
+                      } 
+                      return true; });
+}
+
+void SceneManager::back()
+{
+    if (stateHistory.size() < 2)
+        return;
+
+    stateHistory.pop_back();
+    loadStateJson(stateHistory.back());
+}
+
 // User input initiated parse
 void SceneManager::parse()
 {
@@ -207,7 +282,6 @@ void SceneManager::parse()
 
     // Previous text is wiped as soon as proceeding from a break
     imageManager.setHideText();
-
 
     // Skip timer if any
     waitTargetFrames = 0;
@@ -252,6 +326,9 @@ void SceneManager::parseLine()
         imageManager.setShowText();
         imageManager.setShowMwnd();
         LOG << "Break";
+
+        stateHistory.push_back(getCurrentState());
+
         switch (autoMode)
         {
         case -1:
@@ -342,9 +419,11 @@ void SceneManager::handleCommand(const std::string &cmdString)
     }
     else if (std::regex_search(cmdString, matches, std::regex("^frameon(?: (\\w+) (\\d+))?")))
     {
+        imageManager.setShowMwnd();
+
         const auto &framesStr = matches[2].str();
         if (framesStr.empty())
-            imageManager.setShowMwnd();
+            return;
 
         unsigned int frames = std::stoi(framesStr);
         const auto &mode = matches[1].str();
@@ -352,7 +431,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
         // Assume only fade
         imageManager.setFrameon(frames);
         addSectionFrames(frames);
-        wait();
+        // wait();
     }
     else if (std::regex_search(cmdString, matches, std::regex("^frameoff(?: (\\w+) (\\d+))?")))
     {
@@ -417,7 +496,6 @@ void SceneManager::handleCommand(const std::string &cmdString)
                 const int &frames = std::stoi(arg2);
                 if (arg3 != "0" && arg4 == "0")
                     audioManager.fadeOutSound(channel, frames * 16);
-
 
                 return;
             }
@@ -539,7 +617,6 @@ void SceneManager::handleCommand(const std::string &cmdString)
             }
         }
 
-
         else if (asset == "fade")
         {
             // eg 5 fade 240 255 0
@@ -568,8 +645,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
             asset == "mcamove3" ||
             asset == "m2amove1" ||
             asset == "m2amove2" ||
-            asset == "m2amove3"
-        )
+            asset == "m2amove3")
         {
             const auto &rdrawStr = matches[4].str();
             const auto &xShiftStr = matches[5].str();
@@ -589,7 +665,6 @@ void SceneManager::handleCommand(const std::string &cmdString)
             imageManager.setMove(imageType, zIndex, rdraw, targetXShift, targetYShift);
         }
 
-       
         else if (asset[0] == '$')
         {
             // $AARRGGBB
@@ -677,7 +752,7 @@ void SceneManager::handleCommand(const std::string &cmdString)
         {
             parser.parse(cmdString);
         }
-        catch (const std::runtime_error& error)
+        catch (const std::runtime_error &error)
         {
             // Ignore parse errors
         }
@@ -697,7 +772,7 @@ void SceneManager::selectChoice(int idx)
     }
 }
 
-void SceneManager::saveState(const int saveSlot)
+json SceneManager::getCurrentState()
 {
     json j;
     j[KEY_IMAGE] = imageManager.dump();
@@ -714,7 +789,41 @@ void SceneManager::saveState(const int saveSlot)
     for (const auto &c : currChoices)
         jChoices[c.target] = c.prompt;
 
-    Utils::save(std::to_string(saveSlot), j);
+    return j;
+}
+
+void SceneManager::saveState(const int saveSlot)
+{
+    Utils::save(std::to_string(saveSlot), getCurrentState());
+}
+
+// Throws on json failure
+void SceneManager::loadStateJson(const json &j)
+{
+    const json &jScene = j.at(KEY_SCENE);
+    const json &jImage = j.at(KEY_IMAGE);
+    const json &jAudio = j.at(KEY_AUDIO);
+
+    // Override and reset existing timer/text display
+    parseScript = false;
+    waitTargetFrames = 0;
+    imageManager.setShowMwnd();
+    imageManager.setShowText();
+
+    setScriptOffset({jScene.at(KEY_SCRIPT_NAME), reinterpret_cast<byte *>(jScene.at(KEY_OFFSET).get<Uint64>())});
+    parser.setSymbolTable(jScene.at(KEY_SYMBOL_TABLE).get<SymbolTable>());
+    imageManager.currText = j.at(KEY_TEXT);
+    imageManager.currSpeaker = j.at(KEY_SPEAKER);
+    imageManager.loadDump(jImage);
+    audioManager.loadDump(jAudio);
+
+    autoMode = -1;
+
+    currChoices.clear();
+
+    // Populate choices from savedata
+    for (auto &el : jScene.at(KEY_CHOICE).items())
+        currChoices.push_back({imageManager, el.key(), el.value()});
 }
 
 void SceneManager::loadState(const int saveSlot)
@@ -728,30 +837,7 @@ void SceneManager::loadState(const int saveSlot)
 
     try
     {
-        const json &jScene = j.at(KEY_SCENE);
-        const json &jImage = j.at(KEY_IMAGE);
-        const json &jAudio = j.at(KEY_AUDIO);
-
-        // Override and reset existing timer/text display
-        parseScript = false;
-        waitTargetFrames = 0;
-        imageManager.setShowMwnd();
-        imageManager.setShowText();
-
-        setScriptOffset({jScene.at(KEY_SCRIPT_NAME), reinterpret_cast<byte *>(jScene.at(KEY_OFFSET).get<Uint64>())});
-        parser.setSymbolTable(jScene.at(KEY_SYMBOL_TABLE).get<SymbolTable>());
-        imageManager.currText = j.at(KEY_TEXT);
-        imageManager.currSpeaker = j.at(KEY_SPEAKER);
-        imageManager.loadDump(jImage);
-        audioManager.loadDump(jAudio);
-
-        autoMode = -1;
-
-        currChoices.clear();
-
-        // Populate choices from savedata
-        for (auto &el : jScene.at(KEY_CHOICE).items())
-            currChoices.push_back({imageManager, el.key(), el.value()});
+        loadStateJson(j);
     }
     catch (const json::out_of_range &e)
     {
