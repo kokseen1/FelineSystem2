@@ -4,7 +4,7 @@ An open source remake of the CatSystem2 visual novel engine.
 
 ## Demo
 
-A makeshift demo of the current version can be [found here](http://159.223.50.204/index.html).
+A makeshift demo of the current version can be [found here](https://toori.tech/).
 
 ![screenshot](https://i.imgur.com/den1WpN.png) 
 
