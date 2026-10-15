@@ -29,7 +29,7 @@ A makeshift demo of the current version can be [found here](https://fruit.toori.
 - Multi-platform (WASM, Windows SDL2)
 - Raw KIF archive decryption
 - HG-3 image decoding and caching
-- Custom-built CatScene recursive-descent parser
+- Custom-built CatScene reCATsive-descent parser
 
 ## KIF Database Structure
 
